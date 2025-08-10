@@ -1,76 +1,14 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>دردشة صوتية</title>
-<style>
-:root{--bg:#0f1322;--panel:#141a2c;--muted:#1b2236;--stroke:#2b3550;--ink:#eaf0ff;--lav:#b79cff;--lav2:#a487ff;--gold1:#ffd76b;--gold2:#ffb224;--red1:#ff6b6b;--red2:#ff1f1f}
-*{box-sizing:border-box}
-html,body{height:100dvh;overflow:hidden}
-body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a);font-family:-apple-system,system-ui,"Segoe UI",Tahoma,Arial}
-.screen{display:none}.screen.active{display:block}
-/* Login */
-.login-card{width:420px;max-width:92vw;margin:40px auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:18px;padding:18px 16px 24px;text-align:center;backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.55)}
-.login-icon{width:64px;height:64px;border-radius:16px;background:#222a3e;display:flex;align-items:center;justify-content:center;margin:6px auto 10px;font-size:28px}
-.login-title{margin:0 0 12px;font-size:22px}
-.label{display:block;text-align:right;font-size:13px;color:#cfd6ea;margin:10px 2px 6px}
-.input{width:100%;background:var(--muted);border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;font-size:16px;color:#fff;outline:none}
-.btn-primary{width:100%;margin-top:14px;padding:12px 16px;border:none;border-radius:12px;background:linear-gradient(90deg,var(--lav),var(--lav2));color:#140a2b;font-weight:800;font-size:16px;cursor:pointer}
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-/* Grid */
-.canvas{max-width:920px;margin:0 auto;padding:8px;display:grid;gap:8px;height:100dvh;grid-template-rows:auto 1fr minmax(160px,38vh) auto}
-/* Header */
-.hdr{height:60px;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--panel);border:1px solid var(--stroke);border-radius:12px}
-.hdr .left,.hdr .mid,.hdr .right{display:flex;align-items:center;gap:8px}
-.ib{background:#1a2236;border:1px solid var(--stroke);color:#cfd6ea;border-radius:12px;padding:8px 10px;cursor:pointer}
-.badge{font-size:10px;padding:2px 8px;border-radius:999px;margin-right:6px;vertical-align:middle}
-.badge.owner{background:linear-gradient(90deg,var(--gold1),var(--gold2));color:#1a1200;box-shadow:0 0 12px rgba(255,197,61,.85)}
-.badge.admin{background:linear-gradient(90deg,var(--red1),var(--red2));color:#fff;box-shadow:0 0 12px rgba(255,65,65,.85)}
-/* Avatar */
-.avatar{width:42px;height:42px;border-radius:50%;border:1px solid var(--stroke);overflow:hidden;display:inline-flex;background:#0e1425;cursor:pointer}
-.avatar img{width:100%;height:100%;object-fit:cover}
-/* Stage */
-.stage-strip{overflow:auto;padding:10px;margin:0;background:linear-gradient(180deg,#171d30,#141a2b);border:1px solid var(--stroke);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-#stagePanel.collapsed{height:0;padding:0;border:none;overflow:hidden}
-#stageToggle{font-weight:700}
-.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:end;margin:0 2px}
-.slot{position:relative;text-align:center;padding:10px 6px;display:flex;flex-direction:column;align-items:center}
-.lab{order:-1;margin-bottom:4px;font-size:12px;color:#dde4ff;min-height:1em}
-.ped{height:18px;width:100%;border-radius:9px;background:linear-gradient(90deg,#9a7b2f,#cfa63b,#9a7b2f);box-shadow:0 6px 20px rgba(255,182,70,.35)}
-.bub{width:60px;height:60px;border-radius:50%;margin:6px auto;background:#0c101a;display:flex;align-items:center;justify-content:center;border:3px solid #000;box-shadow:inset 0 0 0 2px #313a5a,0 8px 22px rgba(0,0,0,.45)}
-.slot.on .bub{border-color:#d9b356;box-shadow:inset 0 0 0 2px #59461f,0 0 22px rgba(255,220,120,.7)}
-.mic-img{width:68%;height:68%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))}
-/* Messages */
-.list{overflow:auto;margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,#1a2134,#171d2d);border:1px solid var(--stroke);border-radius:14px}
-.row{display:flex;gap:10px}
-.av{width:40px;height:40px;border-radius:50%;background:#1b2236;border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center}
-.emo{font-size:22px}
-.bubble{flex:1}
-.meta{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px}
-.nick{font-weight:800}
-.sys{text-align:center;opacity:.85;font-style:italic}
-/* Composer */
-.composer{position:static}
-.pill{width:100%;max-width:880px;margin:0 auto;display:flex;align-items:center;gap:8px;background:#1b2236;border:1px solid var(--stroke);border-radius:999px;padding:8px 10px;position:relative}
-.pill input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:16px}
-.btn-r{background:linear-gradient(90deg,var(--lav),var(--lav2));border:none;color:#140a2b;font-weight:800;border-radius:12px;padding:8px 12px;cursor:pointer}
-.btn-ghost{background:transparent;border:none;color:#cfd6ea;font-size:20px;padding:6px 8px;border-radius:10px;cursor:pointer}
-.btn-ghost:active{transform:scale(.96)}
-/* Popovers */
-.popover{position:absolute;bottom:70px;right:20px;background:#171d2e;border:1px solid var(--stroke);border-radius:12px;padding:8px;display:none;box-shadow:0 20px 50px rgba(0,0,0,.5);z-index:20}
-.popover.show{display:grid}
-#emojiPanel{grid-template-columns:repeat(8,28px);gap:6px}
-#emojiPanel button{background:#1b2236;border:1px solid var(--stroke);border-radius:8px;font-size:18px;padding:4px}
-#actionsPanel{grid-template-columns:1fr;gap:8px}
-#actionsPanel button{background:#1b2236;border:1px solid var(--stroke);border-radius:10px;padding:8px 12px;color:#e9eeff;text-align:center}
-/* Responsive */
-@media (max-width:980px){.slots{grid-template-columns:repeat(3,1fr)}}
-@media (max-width:520px){.row-2{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>دردشة صوتية</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- شاشة الدخول -->
 <section id="login" class="screen active">
   <div class="login-card">
     <div class="login-icon">🎧</div>
@@ -86,6 +24,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
       <option value="owner">أونر</option>
     </select>
 
+    <!-- يظهر فقط للـ Admin/Owner -->
     <div id="credWrap" class="row-2" style="display:none; margin-top:10px">
       <input id="loginUser" class="input" placeholder="Username">
       <input id="loginPass" class="input" type="password" placeholder="Password">
@@ -95,130 +34,43 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
   </div>
 </section>
 
+<!-- شاشة الشات -->
 <section id="chat" class="screen">
   <div class="canvas">
     <header class="hdr">
-      <div class="left">
-        <button id="stageToggle" class="ib" title="طي/فتح الاستيج">▾</button>
-        <button id="reqStage"   class="ib">⤴️</button>
+      <div>
+        <button id="reqStage" class="ib">⤴️</button>
         <button id="leaveStage" class="ib">⤵️</button>
       </div>
-      <div class="mid">
-        <label class="avatar" title="غيّر صورتك">
-          <input id="avatarInput" type="file" accept="image/*" hidden>
-          <img id="avatarImg" src="" alt="avatar">
-        </label>
-      </div>
-      <div class="right">
+      <div></div>
+      <div>
         <span id="roleBadge"></span>
         <button id="logoutBtn" class="ib">خروج</button>
       </div>
     </header>
 
-    <div class="stage-strip" id="stagePanel">
+    <div class="stage-strip">
       <div class="slots" id="stage">
-        <div class="slot"><div class="lab"></div><div class="ped"></div><div class="bub"><img class="mic-img" alt="mic"></div></div>
-        <div class="slot"><div class="lab"></div><div class="ped"></div><div class="bub"><img class="mic-img" alt="mic"></div></div>
-        <div class="slot"><div class="lab"></div><div class="ped"></div><div class="bub"><img class="mic-img" alt="mic"></div></div>
-        <div class="slot"><div class="lab"></div><div class="ped"></div><div class="bub"><img class="mic-img" alt="mic"></div></div>
-        <div class="slot"><div class="lab"></div><div class="ped"></div><div class="bub"><img class="mic-img" alt="mic"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
       </div>
     </div>
 
+    <!-- الرسائل تبقى أسفل الصفحة دائماً -->
     <main class="list" id="messages"></main>
 
     <footer class="composer">
       <div class="pill">
-        <button id="emojiBtn"   class="btn-ghost" title="إيموجي">😄</button>
-        <input  id="msgInput"   placeholder="اكتب رسالة..."/>
-        <button id="actionsBtn" class="btn-ghost" title="أوامر">⚙️</button>
-        <button id="sendBtn"    class="btn-r">➤</button>
-      </div>
-
-      <div id="emojiPanel"   class="popover"></div>
-      <div id="actionsPanel" class="popover">
-        <button data-act="kick">طرد</button>
-        <button data-act="makeAdmin">إعطاء أدمن</button>
-        <button data-act="rename">تغيير الاسم</button>
+        <input id="msgInput" placeholder="اكتب رسالة..."/>
+        <button id="sendBtn" class="btn-r">➤</button>
       </div>
     </footer>
   </div>
 </section>
 
-<script>
-/* مفاتيح */
-const CHAT_KEY='kw777_local_chat',STAGE_KEY='kw777_local_stage',INFO_KEY='kw777_login_info',AVA_KEY='kw777_avatar';
-/* عناصر */
-const roleSel=document.getElementById('role'),credWrap=document.getElementById('credWrap'),enterBtn=document.getElementById('enterBtn');
-const logoutBtn=document.getElementById('logoutBtn'),reqBtn=document.getElementById('reqStage'),leaveBtn=document.getElementById('leaveStage');
-const messages=document.getElementById('messages'),msgInput=document.getElementById('msgInput'),roleBadge=document.getElementById('roleBadge');
-const avatarInput=document.getElementById('avatarInput'),avatarImg=document.getElementById('avatarImg');
-/* إعدادات */
-const EMOJIS="😀😄😁😅😂🤣🙂😉😊😍😘😎🤩🥰🤗🙃🤔😴😤😭😡😇🤝👏👍👎🙏🔥✨💯🎉🎁🏆🎧🎤🎵".split("");
-const MIC_SRC="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3a4.svg";
-/* شاشات */
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function toggleCred(){credWrap.style.display=(roleSel.value==='member')?'none':'grid'}
-roleSel&&roleSel.addEventListener('change',toggleCred);
-/* تخزين */
-const saveInfo=o=>localStorage.setItem(INFO_KEY,JSON.stringify(o));
-const loadInfo=_=>{try{return JSON.parse(localStorage.getItem(INFO_KEY)||'{}')}catch{return{}}};
-/* دخول */
-enterBtn&&enterBtn.addEventListener('click',()=>{
-  const name=(document.getElementById('displayName').value||'مستخدم').trim();
-  const role=roleSel.value;
-  const lu=(document.getElementById('loginUser')?.value||'').trim();
-  const lp=(document.getElementById('loginPass')?.value||'').trim();
-  saveInfo({name,role,lu,lp});
-  show('chat'); bootChat();
-});
-/* شات */
-function bootChat(){
-  const info=loadInfo(),name=info.name||'مستخدم',role=info.role||'member';
-  roleBadge.innerHTML=role==='owner'?'<span class="badge owner">owner</span>':role==='admin'?'<span class="badge admin">admin</span>':'';
-  const savedAva=localStorage.getItem(AVA_KEY); avatarImg.src=savedAva||"https://i.ibb.co/4St3gqK/user.png";
-  document.querySelector('.avatar')?.addEventListener('click',()=>avatarInput.click());
-  avatarInput?.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{localStorage.setItem(AVA_KEY,r.result);avatarImg.src=r.result};r.readAsDataURL(f);});
-  document.querySelectorAll('.mic-img').forEach(img=>img.src=MIC_SRC);
-  messages.innerHTML='';
-  try{JSON.parse(localStorage.getItem(CHAT_KEY)||'[]').forEach(m=>addRow({name:m.name,role:m.role},m.text,false));messages.scrollTop=messages.scrollHeight;}catch{}
-  restoreStage();
-  const send=()=>{const t=(msgInput.value||'').trim();if(!t)return;saveChat({name,role,text:t});addRow({name,role},t,true);msgInput.value='';};
-  document.getElementById('sendBtn').onclick=send; msgInput.addEventListener('keydown',e=>{if(e.key==='Enter')send();});
-  document.querySelectorAll('#stage .slot').forEach(slot=>{slot.addEventListener('click',()=>{const on=slot.classList.toggle('on');slot.querySelector('.lab').textContent=on?name:'';saveStageSnapshot();});});
-  reqBtn&&(reqBtn.onclick=()=>{const empty=[...document.querySelectorAll('#stage .slot')].find(s=>!s.classList.contains('on'));if(empty){empty.classList.add('on');empty.querySelector('.lab').textContent=name;saveStageSnapshot();}});
-  leaveBtn&&(leaveBtn.onclick=()=>{clearStage();clearChat();});
-  logoutBtn&&(logoutBtn.onclick=()=>{clearStage();clearChat();show('login');});
-  const stagePanel=document.getElementById('stagePanel'),stageToggle=document.getElementById('stageToggle');let collapsed=false;
-  stageToggle.onclick=()=>{collapsed=!collapsed;stagePanel.classList.toggle('collapsed',collapsed);stageToggle.textContent=collapsed?'▸':'▾';};
-  const emojiBtn=document.getElementById('emojiBtn'),emojiPanel=document.getElementById('emojiPanel');emojiPanel.innerHTML=EMOJIS.map(e=>`<button>${e}</button>`).join('');
-  emojiBtn.onclick=()=>{emojiPanel.classList.toggle('show');actionsPanel.classList.remove('show');};
-  emojiPanel.addEventListener('click',e=>{if(e.target.tagName==='BUTTON'){msgInput.value+=e.target.textContent;msgInput.focus();}});
-  const actionsBtn=document.getElementById('actionsBtn'),actionsPanel=document.getElementById('actionsPanel');
-  if(role==='owner'||role==='admin'){actionsBtn.style.display='inline-block';actionsBtn.onclick=()=>{actionsPanel.classList.toggle('show');emojiPanel.classList.remove('show');};
-    actionsPanel.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;const act=e.target.dataset.act;
-      if(act==='kick'){clearStage();clearChat();show('login');}
-      else if(act==='makeAdmin'){roleBadge.innerHTML='<span class="badge admin">admin</span>';saveInfo({...info,role:'admin'});alert('تم إعطاء أدمن (محلي)');}
-      else if(act==='rename'){const nn=prompt('الاسم الجديد:',info.name||'');if(nn){saveInfo({...info,name:nn});document.querySelectorAll('#stage .slot.on .lab').forEach(l=>l.textContent=nn);}}
-      actionsPanel.classList.remove('show');});}
-  else actionsBtn.style.display='none';
-  document.addEventListener('click',e=>{if(!emojiPanel.contains(e.target)&&e.target!==emojiBtn)emojiPanel.classList.remove('show');
-    if(!actionsPanel.contains(e.target)&&e.target!==actionsBtn)actionsPanel.classList.remove('show');},true);
-}
-function addRow(from,text,scroll=true){
-  const badge=from.role==='owner'?'<span class="badge owner">owner</span>':from.role==='admin'?'<span class="badge admin">admin</span>':'';
-  const row=document.createElement('div');row.className='row';
-  row.innerHTML=`<div class="av"><span class="emo">🙂</span></div><div class="bubble"><div class="meta"><span class="nick">${esc(from.name)} ${badge}</span></div><div>${esc(text)}</div></div>`;
-  messages.appendChild(row); if(scroll)messages.scrollTop=messages.scrollHeight;
-}
-function saveChat(m){const arr=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');arr.push({name:m.name,role:m.role,text:m.text,ts:Date.now()});localStorage.setItem(CHAT_KEY,JSON.stringify(arr.slice(-300)));}
-function clearChat(){localStorage.removeItem(CHAT_KEY);messages.innerHTML='';}
-function saveStageSnapshot(){const state=[...document.querySelectorAll('#stage .slot')].map(s=>({on:s.classList.contains('on'),lab:s.querySelector('.lab').textContent||''}));localStorage.setItem(STAGE_KEY,JSON.stringify(state));}
-function restoreStage(){try{const state=JSON.parse(localStorage.getItem(STAGE_KEY)||'[]');const slots=[...document.querySelectorAll('#stage .slot')];
-  state.forEach((s,i)=>{if(!slots[i])return;slots[i].classList.toggle('on',!!s.on);slots[i].querySelector('.lab').textContent=s.lab||'';});}catch{}}
-function clearStage(){document.querySelectorAll('#stage .slot').forEach(s=>{s.classList.remove('on');s.querySelector('.lab').textContent='';});localStorage.removeItem(STAGE_KEY);}
-function esc(s){return String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-toggleCred();
-</script>
+<script src="script.js"></script>
 </body>
 </html>
