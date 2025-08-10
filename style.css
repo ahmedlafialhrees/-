@@ -43,3 +43,13 @@
 .btn-r{background:linear-gradient(90deg,var(--lav),var(--lav2));border:none;color:#140a2b;font-weight:800;border-radius:12px;padding:8px 12px}
 
 @media(max-width:980px){.slots{grid-template-columns:repeat(3,1fr)}}
+
+
+/* دفع محتوى الشات لأسفل الشاشة */
+.canvas{max-width:920px;margin:0 auto;padding:8px;display:flex;flex-direction:column;min-height:100dvh}
+.stage-strip{flex-shrink:0}
+.list{margin:8px;padding:12px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,#1a2134,#171d2d);border:1px solid var(--stroke);border-radius:14px;min-height:30vh;/* مهم */margin-top:auto}
+.composer{flex-shrink:0}
+
+/* شبكة حقول اليوزرنيم والباسورد */
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
