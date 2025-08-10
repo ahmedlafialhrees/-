@@ -1,0 +1,61 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #1e1e2e;
+    color: white;
+    text-align: center;
+    margin: 0;
+}
+
+.login-container {
+    margin-top: 100px;
+}
+
+.stage {
+    display: flex;
+    justify-content: center;
+    margin: 20px;
+}
+
+.mic-slot {
+    background: #333;
+    margin: 5px;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 24px;
+}
+
+.chat-box {
+    height: 300px;
+    overflow-y: auto;
+    background: #2a2a3b;
+    margin: 20px;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.message-input {
+    display: flex;
+    justify-content: center;
+    margin: 10px;
+}
+
+.message-input input {
+    width: 70%;
+    padding: 10px;
+}
+
+.owner {
+    color: gold;
+    font-weight: bold;
+    animation: blink 1s infinite;
+}
+
+.admin {
+    color: red;
+    font-weight: bold;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0.5; }
+}
