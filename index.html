@@ -1,76 +1,81 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>دردشة صوتية</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<!-- شاشة الدخول -->
-<section id="login" class="screen active">
-  <div class="login-card">
-    <div class="login-icon">🎧</div>
-    <h1 class="login-title">تسجيل الدخول</h1>
-
-    <label class="label">اسمك</label>
-    <input id="displayName" class="input" placeholder="اكتب اسمك">
-
-    <label class="label">الدور</label>
-    <select id="role" class="input">
-      <option value="member">عضو</option>
-      <option value="admin">أدمن</option>
-      <option value="owner">أونر</option>
-    </select>
-
-    <!-- يظهر فقط للـ Admin/Owner -->
-    <div id="credWrap" class="row-2" style="display:none; margin-top:10px">
-      <input id="loginUser" class="input" placeholder="Username">
-      <input id="loginPass" class="input" type="password" placeholder="Password">
-    </div>
-
-    <button id="enterBtn" class="btn-primary">دخول</button>
-  </div>
-</section>
-
-<!-- شاشة الشات -->
 <section id="chat" class="screen">
   <div class="canvas">
+
     <header class="hdr">
-      <div>
+      <div class="left">
+        <button id="stageToggle" class="ib" title="طي/فتح الاستيج">▾</button>
         <button id="reqStage" class="ib">⤴️</button>
         <button id="leaveStage" class="ib">⤵️</button>
       </div>
-      <div></div>
-      <div>
+
+      <div class="mid">
+        <!-- صورة العضو -->
+        <label class="avatar" title="غيّر صورتك">
+          <input id="avatarInput" type="file" accept="image/*" hidden>
+          <img id="avatarImg" src="" alt="avatar">
+        </label>
+      </div>
+
+      <div class="right">
         <span id="roleBadge"></span>
         <button id="logoutBtn" class="ib">خروج</button>
       </div>
     </header>
 
-    <div class="stage-strip">
+    <!-- الاستيج قابل للطي -->
+    <div class="stage-strip" id="stagePanel">
       <div class="slots" id="stage">
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <!-- 5 مايكات -->
+        <div class="slot">
+          <div class="lab"></div>
+          <div class="ped"></div>
+          <div class="bub"><img class="mic-img" src="" alt="mic"></div>
+        </div>
+        <div class="slot">
+          <div class="lab"></div>
+          <div class="ped"></div>
+          <div class="bub"><img class="mic-img" src="" alt="mic"></div>
+        </div>
+        <div class="slot">
+          <div class="lab"></div>
+          <div class="ped"></div>
+          <div class="bub"><img class="mic-img" src="" alt="mic"></div>
+        </div>
+        <div class="slot">
+          <div class="lab"></div>
+          <div class="ped"></div>
+          <div class="bub"><img class="mic-img" src="" alt="mic"></div>
+        </div>
+        <div class="slot">
+          <div class="lab"></div>
+          <div class="ped"></div>
+          <div class="bub"><img class="mic-img" src="" alt="mic"></div>
+        </div>
       </div>
     </div>
 
-    <!-- الرسائل تبقى أسفل الصفحة دائماً -->
+    <!-- الرسائل (ثابتة أسفل) -->
     <main class="list" id="messages"></main>
 
+    <!-- المؤلف + الإيموجي + أوامر -->
     <footer class="composer">
       <div class="pill">
+        <button id="emojiBtn" class="btn-ghost" title="إيموجي">😄</button>
         <input id="msgInput" placeholder="اكتب رسالة..."/>
+        <button id="actionsBtn" class="btn-ghost" title="أوامر">⚙️</button>
         <button id="sendBtn" class="btn-r">➤</button>
       </div>
+
+      <!-- لوحة الإيموجي -->
+      <div id="emojiPanel" class="popover"></div>
+
+      <!-- لوحة الأوامر (تظهر للـ owner/admin فقط) -->
+      <div id="actionsPanel" class="popover">
+        <button data-act="kick">طرد</button>
+        <button data-act="makeAdmin">إعطاء أدمن</button>
+        <button data-act="rename">تغيير الاسم</button>
+      </div>
     </footer>
+
   </div>
 </section>
-
-<script src="script.js"></script>
-</body>
-</html>
