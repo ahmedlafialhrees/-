@@ -1,0 +1,17 @@
+{
+  "name": "kw777-2file-v34",
+  "version": "3.4.0",
+  "description": "Kuwait 777 web voice chat (2-file build) — v3.4 UI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "socket.io": "^4.7.5"
+  }
+}
