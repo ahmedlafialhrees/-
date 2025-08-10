@@ -1,118 +1,151 @@
-// مفاتيح التخزين المحلي
-const CHAT_KEY = 'kw777_local_chat';
-const STAGE_KEY = 'kw777_local_stage';
+/* =========================
+   KW777 — script.js (Static)
+   يعمل على GitHub Pages (تخزين محلي)
+   ========================= */
 
-// تبديل الشاشات
+/* مفاتيح التخزين */
+const CHAT_KEY  = 'kw777_local_chat';
+const STAGE_KEY = 'kw777_local_stage';
+const INFO_KEY  = 'kw777_login_info';
+
+/* عناصر عامة */
+const roleSel   = document.getElementById('role');
+const credWrap  = document.getElementById('credWrap');
+const enterBtn  = document.getElementById('enterBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const reqBtn    = document.getElementById('reqStage');
+const leaveBtn  = document.getElementById('leaveStage');
+const messages  = document.getElementById('messages');
+const msgInput  = document.getElementById('msgInput');
+const roleBadge = document.getElementById('roleBadge');
+
+/* تبديل الشاشات */
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-// إظهار حقول اليوزر/باسورد حسب الدور
-const roleSel = document.getElementById('role');
-const credWrap = document.getElementById('credWrap');
-function toggleCred(){ credWrap.style.display = (roleSel.value==='member') ? 'none':'grid'; }
-roleSel.addEventListener('change', toggleCred); toggleCred();
+/* إظهار/إخفاء حقول اليوزر/الباس حسب الدور */
+function toggleCred(){ credWrap.style.display = (roleSel.value === 'member') ? 'none' : 'grid'; }
+roleSel && roleSel.addEventListener('change', toggleCred); toggleCred();
 
-// دخول
-document.getElementById('enterBtn').addEventListener('click', ()=>{
-  const name=(document.getElementById('displayName').value||'مستخدم').trim();
-  const role=roleSel.value;
-  const u=(document.getElementById('loginUser').value||'').trim();
-  const p=(document.getElementById('loginPass').value||'').trim();
+/* حفظ/قراءة معلومات الدخول */
+function saveLoginInfo(obj){ localStorage.setItem(INFO_KEY, JSON.stringify(obj)); }
+function loadLoginInfo(){ try{ return JSON.parse(localStorage.getItem(INFO_KEY)||'{}'); }catch{ return {}; } }
 
-  localStorage.setItem('displayName',name);
-  localStorage.setItem('role',role);
-  localStorage.setItem('loginUser',u);
-  localStorage.setItem('loginPass',p);
+/* دخول */
+enterBtn && enterBtn.addEventListener('click', ()=>{
+  const name = (document.getElementById('displayName').value || 'مستخدم').trim();
+  const role = roleSel.value;
+  const lu   = (document.getElementById('loginUser')?.value || '').trim();
+  const lp   = (document.getElementById('loginPass')?.value || '').trim();
 
+  saveLoginInfo({ name, role, lu, lp });
   show('chat');
   bootChat();
 });
 
+/* تهيئة شاشة الشات */
 function bootChat(){
-  const name=localStorage.getItem('displayName')||'مستخدم';
-  const role=localStorage.getItem('role')||'member';
+  const info = loadLoginInfo();
+  const name = info.name || 'مستخدم';
+  const role = info.role || 'member';
 
   // شارة الرتبة
-  const badgeBox=document.getElementById('roleBadge');
-  badgeBox.innerHTML = role==='owner' ? '<span class="badge owner">owner</span>' :
-                       role==='admin' ? '<span class="badge admin">admin</span>' : '';
+  roleBadge.innerHTML = role==='owner' ? '<span class="badge owner">owner</span>'
+                     : role==='admin' ? '<span class="badge admin">admin</span>' : '';
 
-  const messages=document.getElementById('messages');
-  const msgInput=document.getElementById('msgInput');
-
-  // تحميل الشات من التخزين المحلي
+  // حمّل الرسائل السابقة إلى الصندوق
   messages.innerHTML = '';
-  try{
+  try {
     JSON.parse(localStorage.getItem(CHAT_KEY)||'[]')
-      .forEach(m=>addRow(messages,{name:m.name,role:m.role},m.text));
-  }catch{}
+      .forEach(m => addRow({name:m.name, role:m.role}, m.text, false));
+    // نزّل لأسفل بعد التحميل
+    messages.scrollTop = messages.scrollHeight;
+  } catch {}
 
-  // تحميل حالة الاستيج (للمعاينة)
-  restoreStage(name);
+  // استرجاع حالة الاستيج
+  restoreStage();
 
-  // إرسال رسالة (محلي)
+  // إرسال رسالة
   function send(){
-    const t=(msgInput.value||'').trim(); if(!t) return;
-    saveChat({name,role,text:t});
-    addRow(messages,{name,role},t);
-    msgInput.value='';
+    const t = (msgInput.value || '').trim(); if(!t) return;
+    saveChat({name, role, text:t});
+    addRow({name, role}, t, true);
+    msgInput.value = '';
   }
   document.getElementById('sendBtn').onclick = send;
-  msgInput.addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
+  msgInput.addEventListener('keydown', e=>{ if(e.key==='Enter') send(); });
 
-  // تشغيل الاستيج محلي: المايك ينوّر بالضغط
-  document.querySelectorAll('#stage .slot').forEach((slot,idx)=>{
-    slot.onclick = ()=>{
-      const on=slot.classList.toggle('on');
-      slot.querySelector('.lab').textContent = on ? name : '';
+  // تفعيل الاستيج: الضغط على المايك يطلّع/ينزل اسمك
+  document.querySelectorAll('#stage .slot').forEach((slot)=>{
+    slot.addEventListener('click', ()=>{
+      const isOn = slot.classList.toggle('on');
+      slot.querySelector('.lab').textContent = isOn ? name : '';
       saveStageSnapshot();
-    };
+    });
   });
 
-  // زر نزول من الاستيج: يطفي كل المايكات + يمسح الشات (حسب طلبك)
-  document.getElementById('leaveStage').onclick = ()=>{
+  // زر صعود/نزول رمزي (معاينة)
+  reqBtn && (reqBtn.onclick = ()=>{
+    // أول خانة فاضية يصير عليها اسمك
+    const empty = [...document.querySelectorAll('#stage .slot')].find(s=>!s.classList.contains('on'));
+    if(empty){ empty.classList.add('on'); empty.querySelector('.lab').textContent = name; saveStageSnapshot(); }
+  });
+
+  // عند النزول من الاستيج: امسح الاستيج + امسح الشات (حسب طلبك)
+  leaveBtn && (leaveBtn.onclick = ()=>{
     clearStage();
     clearChat();
-  };
+  });
 
-  // زر خروج: يمسح كل شيء ويرجع للدخول
-  document.getElementById('logoutBtn').onclick = ()=>{
-    clearStage(); clearChat();
+  // خروج تام: امسح كل شيء وارجع للدخول
+  logoutBtn && (logoutBtn.onclick = ()=>{
+    clearStage();
+    clearChat();
     show('login');
-  };
+  });
 }
 
-// —— وظائف مساعدة —— //
-function addRow(container, from, text){
-  const badge=(from.role==='owner')?'<span class="badge owner">owner</span>':(from.role==='admin')?'<span class="badge admin">admin</span>':'';
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML = `<div class="av"><span class="emo">🙂</span></div>
-    <div class="bubble"><div class="meta"><span class="nick">${from.name} ${badge}</span></div><div>${esc(text)}</div></div>`;
-  container.appendChild(row);
-  container.scrollTop = container.scrollHeight; // يثبت تحت
+/* إضافة رسالة للصندوق */
+function addRow(from, text, scroll=true){
+  const badge = from.role==='owner' ? '<span class="badge owner">owner</span>'
+              : from.role==='admin' ? '<span class="badge admin">admin</span>' : '';
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `
+    <div class="av"><span class="emo">🙂</span></div>
+    <div class="bubble">
+      <div class="meta"><span class="nick">${esc(from.name)} ${badge}</span></div>
+      <div>${esc(text)}</div>
+    </div>`;
+  messages.appendChild(row);
+  if(scroll) messages.scrollTop = messages.scrollHeight; // يبقى تحت
 }
 
+/* حفظ/مسح شات */
 function saveChat(m){
-  const arr=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
-  arr.push({name:m.name,role:m.role,text:m.text,ts:Date.now()});
-  localStorage.setItem(CHAT_KEY, JSON.stringify(arr.slice(-200)));
+  const arr = JSON.parse(localStorage.getItem(CHAT_KEY) || '[]');
+  arr.push({ name:m.name, role:m.role, text:m.text, ts:Date.now() });
+  localStorage.setItem(CHAT_KEY, JSON.stringify(arr.slice(-300)));
 }
-function clearChat(){ localStorage.removeItem(CHAT_KEY); document.getElementById('messages').innerHTML=''; }
+function clearChat(){
+  localStorage.removeItem(CHAT_KEY);
+  messages.innerHTML = '';
+}
 
-// الاستيج (معاينة محلية)
+/* حفظ/استرجاع/مسح حالة الاستيج */
 function saveStageSnapshot(){
   const state = [...document.querySelectorAll('#stage .slot')].map(s=>({
-    on: s.classList.contains('on'),
+    on:  s.classList.contains('on'),
     lab: s.querySelector('.lab').textContent || ''
   }));
   localStorage.setItem(STAGE_KEY, JSON.stringify(state));
 }
-function restoreStage(myName){
+function restoreStage(){
   try{
-    const state=JSON.parse(localStorage.getItem(STAGE_KEY)||'[]');
-    const slots=[...document.querySelectorAll('#stage .slot')];
+    const state = JSON.parse(localStorage.getItem(STAGE_KEY) || '[]');
+    const slots = [...document.querySelectorAll('#stage .slot')];
     state.forEach((s,i)=>{
       if(!slots[i]) return;
       slots[i].classList.toggle('on', !!s.on);
@@ -123,9 +156,17 @@ function restoreStage(myName){
 function clearStage(){
   document.querySelectorAll('#stage .slot').forEach(s=>{
     s.classList.remove('on');
-    s.querySelector('.lab').textContent='';
+    s.querySelector('.lab').textContent = '';
   });
   localStorage.removeItem(STAGE_KEY);
 }
 
-function esc(s){return String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+/* أدوات */
+function esc(s){ return String(s).replace(/[&<>\"']/g, c=>({"&":"&amp;","<":"&lt;","&gt;":">","\"":"&quot;","'":"&#39;"}[c])); }
+
+/* لو رجّعك مباشرة على شاشة الشات بالريلود */
+(() => {
+  if (document.getElementById('chat') && document.getElementById('chat').classList.contains('active')) {
+    bootChat();
+  }
+})();
