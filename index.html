@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2>تسجيل الدخول</h2>
+        <input type="text" id="username" placeholder="اكتب اسمك">
+        <select id="role">
+            <option value="member">عضو</option>
+            <option value="admin">أدمن</option>
+            <option value="owner">أونر</option>
+        </select>
+        <input type="password" id="password" placeholder="كلمة السر (للأونر فقط)">
+        <button onclick="login()">دخول</button>
+    </div>
+
+    <script>
+        function login() {
+            let username = document.getElementById("username").value;
+            let role = document.getElementById("role").value;
+            let password = document.getElementById("password").value;
+
+            if (role === "owner" && password !== "12345") {
+                alert("كلمة السر للأونر غير صحيحة");
+                return;
+            }
+
+            localStorage.setItem("username", username);
+            localStorage.setItem("role", role);
+            window.location.href = "chat.html";
+        }
+    </script>
+</body>
+</html>
