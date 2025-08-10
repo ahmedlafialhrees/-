@@ -8,6 +8,7 @@
 </head>
 <body>
 
+<!-- شاشة الدخول -->
 <section id="login" class="screen active">
   <div class="login-card">
     <div class="login-icon">🎧</div>
@@ -23,38 +24,51 @@
       <option value="owner">أونر</option>
     </select>
 
+    <!-- يظهر فقط للـ Admin/Owner -->
+    <div id="credWrap" class="row-2" style="display:none; margin-top:10px">
+      <input id="loginUser" class="input" placeholder="Username">
+      <input id="loginPass" class="input" type="password" placeholder="Password">
+    </div>
+
     <button id="enterBtn" class="btn-primary">دخول</button>
   </div>
 </section>
 
+<!-- شاشة الشات -->
 <section id="chat" class="screen">
-  <header class="hdr">
-    <div>
-      <button id="reqStage" class="ib">⤴️</button>
-      <button id="leaveStage" class="ib">⤵️</button>
-    </div>
-    <div></div> <!-- فاضي -->
-    <div id="roleBadge"></div>
-  </header>
+  <div class="canvas">
+    <header class="hdr">
+      <div>
+        <button id="reqStage" class="ib">⤴️</button>
+        <button id="leaveStage" class="ib">⤵️</button>
+      </div>
+      <div></div>
+      <div>
+        <span id="roleBadge"></span>
+        <button id="logoutBtn" class="ib">خروج</button>
+      </div>
+    </header>
 
-  <div class="stage-strip">
-    <div class="slots" id="stage">
-      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+    <div class="stage-strip">
+      <div class="slots" id="stage">
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+      </div>
     </div>
+
+    <!-- الرسائل تبقى أسفل الصفحة دائماً -->
+    <main class="list" id="messages"></main>
+
+    <footer class="composer">
+      <div class="pill">
+        <input id="msgInput" placeholder="اكتب رسالة..."/>
+        <button id="sendBtn" class="btn-r">➤</button>
+      </div>
+    </footer>
   </div>
-
-  <main class="list" id="messages"></main>
-
-  <footer class="composer">
-    <div class="pill">
-      <input id="msgInput" placeholder="اكتب رسالة..."/>
-      <button id="sendBtn" class="btn-r">➤</button>
-    </div>
-  </footer>
 </section>
 
 <script src="script.js"></script>
