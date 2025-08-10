@@ -205,13 +205,13 @@ const avatarImg=document.getElementById('avatarImg');
 const loginAvatar=document.getElementById('loginAvatar'),loginAvatarImg=document.getElementById('loginAvatarImg');
 const cpLink=document.getElementById('cpLink'), backToChat=document.getElementById('backToChat');
 
-/* emoji */
+/* emoji + assets */
 const EMOJIS="😀😄😁😅😂🤣🙂😉😊😍😘😎🤩🥰🤗🙃🤔😴😤😭😡😇🤝👏👍👎🙏🔥✨💯🎉🎁🏆🎧🎤🎵".split("");
 const MIC_SRC="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3a4.svg";
 
 /* Helpers */
 const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
-const esc=s=>String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const esc=s=>String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;","\"":"&quot;","'":"&#39;"}[c])).replace(/>/g,'&gt;');
 const saveInfo=o=>localStorage.setItem(INFO_KEY,JSON.stringify(o));
 const loadInfo=_=>{try{return JSON.parse(localStorage.getItem(INFO_KEY)||'{}')}catch{return{}}};
 const getUsers=_=>{try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]')}catch{return[]}};
@@ -220,11 +220,12 @@ const getBans=_=>{try{return JSON.parse(localStorage.getItem(BAN_KEY)||'{}')}cat
 const setBans=m=>localStorage.setItem(BAN_KEY,JSON.stringify(m));
 const now=_=>Date.now();
 function myName(){ return (loadInfo().name || ''); }
+function myRole(){ return (loadInfo().role || 'member'); }
 
 function toggleCred(){const r=roleSel.value;credWrap.style.display=(r==='owner'||r==='admin')?'grid':'none';}
 roleSel&&roleSel.addEventListener('change',toggleCred);
 
-/* Stage */
+/* Stage logic */
 function removeMyFromStage(){
   const me=myName();
   document.querySelectorAll('#stage .slot.on .lab').forEach(l=>{
@@ -233,10 +234,19 @@ function removeMyFromStage(){
 }
 function occupy(slot){
   const me=myName(); if(!me) return;
+  const role=myRole();
   const lab=slot.querySelector('.lab');
-  if(slot.classList.contains('on') && lab.textContent===me){
-    lab.textContent=''; slot.classList.remove('on'); saveStageSnapshot(); return;
+  const isMine=slot.classList.contains('on') && lab.textContent===me;
+
+  // اضغط على مايكي -> نزول
+  if(isMine){ lab.textContent=''; slot.classList.remove('on'); saveStageSnapshot(); return; }
+
+  // عضو عادي: ممنوع يأخذ مكان أحد
+  if(role==='member' && slot.classList.contains('on') && lab.textContent && lab.textContent!==me){
+    return; // تجاهل
   }
+
+  // أدمن/أونر: يقدر يستبدل الموجود
   removeMyFromStage();
   slot.classList.add('on'); lab.textContent=me; saveStageSnapshot();
 }
@@ -249,13 +259,15 @@ function addRow(from,text){
   const row=document.createElement('div'); 
   row.className='msg'; 
   row.dataset.name=from.name;
-  row.innerHTML=`<div class="meta">${esc(from.name)}</div>
-                 <div class="text">${esc(text)}</div>
-                 <div class="ctx" dir="rtl">
-                   <button class="btn-chip act-kick">طرد</button>
-                   <button class="btn-chip act-admin">إعطاء أدمن</button>
-                   <button class="btn-chip danger act-ban2h">طرد ساعتين</button>
-                 </div>`;
+  row.innerHTML=`
+    <div class="meta">${esc(from.name)}</div>
+    <div class="text">${esc(text)}</div>
+    <div class="ctx" dir="rtl">
+      <button class="btn-chip act-dropFromStage">تنزيل من الاستيج</button>
+      <button class="btn-chip act-kick">طرد</button>
+      <button class="btn-chip act-admin">إعطاء أدمن</button>
+      <button class="btn-chip danger act-ban2h">طرد ساعتين</button>
+    </div>`;
   messages.appendChild(row); 
   messages.scrollTop=messages.scrollHeight; 
 }
@@ -269,7 +281,7 @@ loginAvatar?.addEventListener('change',e=>{
 });
 document.querySelector('.avatar-lg')?.addEventListener('click',()=>loginAvatar.click());
 
-/* Auth helpers */
+/* Auth */
 function checkBanned(name){
   const bans=getBans(); const ts=bans[name];
   if(ts && ts>now()){ const mins=Math.ceil((ts-now())/60000); alert(`هذا المستخدم محظور مؤقتًا (${mins} دقيقة متبقية)`); return true; }
@@ -334,7 +346,7 @@ function bootChat(){
   const stagePanel=document.getElementById('stagePanel'), stageToggle=document.getElementById('stageToggle'); let collapsed=false;
   stageToggle.onclick=()=>{ collapsed=!collapsed; stagePanel.classList.toggle('collapsed',collapsed); stageToggle.textContent=collapsed?'▸':'▾'; };
 
-  // emoji
+  // emoji (مهيأ للجوال)
   const emojiBtn=document.getElementById('emojiBtn'), emojiPanel=document.getElementById('emojiPanel');
   emojiPanel.innerHTML=EMOJIS.map(e=>`<button type="button">${e}</button>`).join('');
   emojiBtn.onclick=()=>{ emojiPanel.classList.toggle('show'); };
@@ -347,23 +359,35 @@ function bootChat(){
   const send=()=>{ const t=(msgInput.value||'').trim(); if(!t) return; saveChat({name,role,text:t}); addRow({name},t); msgInput.value=''; };
   document.getElementById('sendBtn').onclick=send; msgInput.addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
 
-  // context actions per message (تظهر فقط للأدمن/الأونر)
+  // context actions per message (للأدمن/الأونر فقط)
   messages.addEventListener('click', (e)=>{
     const box=e.target.closest('.msg'); if(!box) return;
     const panel=box.querySelector('.ctx');
     if(role!=='admin' && role!=='owner') return; // غير مخول
-    // اغلق الباقي
+    // أغلق أي بانلات مفتوحة
     document.querySelectorAll('.ctx.show').forEach(p=>p.classList.remove('show'));
     panel.classList.toggle('show');
 
     const targetName = box.dataset.name;
+
+    // تنزيل من الاستيج لهذا العضو
+    panel.querySelector('.act-dropFromStage').onclick = ()=>{
+      let found=false;
+      document.querySelectorAll('#stage .slot.on .lab').forEach(l=>{
+        if(l.textContent===targetName){
+          l.textContent=''; l.parentElement.classList.remove('on'); found=true;
+        }
+      });
+      saveStageSnapshot();
+      addRow({name:'النظام'}, found?`تم تنزيل ${targetName} من الاستيج`:`${targetName} ليس على الاستيج`);
+      panel.classList.remove('show');
+    };
 
     panel.querySelector('.act-kick').onclick = ()=>{
       addRow({name:'النظام'}, `تم طرد ${targetName} (محلي)`);
       panel.classList.remove('show');
     };
     panel.querySelector('.act-admin').onclick = ()=>{
-      // أضف/حدّث حساب أدمن بنفس الاسم مع كلمة سر افتراضية
       const users=getUsers(); 
       const idx=users.findIndex(u=>u.username===targetName);
       if(idx>=0) users[idx]={...users[idx], role:'admin'};
