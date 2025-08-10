@@ -1,99 +1,71 @@
-// ===== KW777 front: dual-mode (Static Preview for GitHub Pages / Realtime for server) =====
-const isStatic = /github\.io$/.test(location.hostname) || location.protocol === 'file:';
-
-// ===== Common state =====
-let username = localStorage.getItem("username") || "مستخدم";
-let role = localStorage.getItem("role") || "member";
-const CHAT_KEY = "kw777_local_chat"; // للمعاينة فقط
-
-// شارة الرتبة
-function roleBadge(r){
-  if(r === "owner") return '<span class="owner">owner</span>';
-  if(r === "admin") return '<span class="admin">admin</span>';
-  return '';
+// تبديل الشاشات
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
-// رسم رسالة على الصفحة
-function pushMessageLocally(name, role, text){
-  const box = document.getElementById("chatBox");
-  const row = document.createElement("div");
-  row.innerHTML = `${roleBadge(role)} <b>${name}</b>: ${escapeHtml(text)}`;
-  box.appendChild(row);
-  box.scrollTop = box.scrollHeight;
-}
-
-// ===== Static Preview mode (GitHub Pages) =====
-function loadStaticHistory(){
-  const arr = JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
-  arr.forEach(m => pushMessageLocally(m.name, m.role, m.text));
-}
-function saveStaticMessage(name, role, text){
-  const arr = JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
-  arr.push({ name, role, text, ts: Date.now() });
-  localStorage.setItem(CHAT_KEY, JSON.stringify(arr.slice(-200))); // آخر 200 بس
-}
-
-// ===== Realtime (Socket.IO) =====
-let socket = null;
-function initRealtime(){
-  // يحاول الاتصال بالسيرفر إذا الصفحة مو على GitHub Pages
-  try {
-    // /socket.io/socket.io.js لازم يكون متوفر من السيرفر
-    socket = io();
-    socket.on('connect', ()=> {
-      // نرسل دخول (سيرفرنا الحالي البسيط يسوي echo للرسائل فقط – ما يتطلب join)
-      console.log('connected realtime');
-    });
-    socket.on('chat message', (msg)=>{
-      pushMessageLocally(msg.name || "مستخدم", msg.role || "member", msg.text || String(msg));
-    });
-  } catch(e){
-    console.warn('Realtime unavailable, falling back to static mode.');
-  }
-}
-
-// إرسال رسالة (يدعم الوضعين)
-function sendMessage(){
-  const input = document.getElementById("message");
-  const text = (input.value || "").trim();
-  if(!text) return;
-
-  if(!isStatic && typeof io !== "undefined" && socket){
-    // Realtime
-    socket.emit('chat message', { name: username, role, text });
-  } else {
-    // Static Preview
-    saveStaticMessage(username, role, text);
-    pushMessageLocally(username, role, text);
-  }
-
-  input.value = "";
-  input.focus();
-}
-
-// أدوات
-function escapeHtml(s){
-  return String(s).replace(/[&<>\"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
-}
-
-// ===== boot =====
-document.addEventListener('DOMContentLoaded', ()=>{
-  // لو داخلين على chat.html مباشرة بدون ما نخزن اسم – نخزّن افتراضي
-  if(!localStorage.getItem("username")){
-    localStorage.setItem("username", username);
-    localStorage.setItem("role", role);
-  }
-  // حمّل تاريخ محلي للمعاينة
-  if(isStatic) loadStaticHistory();
-  // جرّب الريل تايم إذا مو GitHub Pages
-  if(!isStatic) initRealtime();
-
-  // زر الإرسال
-  const btn = document.querySelector('button[onclick="sendMessage()"]');
-  const input = document.getElementById('message');
-  if(input){
-    input.addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
-  }
+// دخول
+document.getElementById('enterBtn').addEventListener('click', ()=>{
+  const name=(document.getElementById('displayName').value||'مستخدم').trim();
+  const role=document.getElementById('role').value;
+  localStorage.setItem('displayName',name);
+  localStorage.setItem('role',role);
+  show('chat');
+  bootChat();
 });
+
+function bootChat(){
+  const name=localStorage.getItem('displayName')||'مستخدم';
+  const role=localStorage.getItem('role')||'member';
+  const badgeBox=document.getElementById('roleBadge');
+  badgeBox.innerHTML = role==='owner' ? '<span class="badge owner">owner</span>' :
+                       role==='admin' ? '<span class="badge admin">admin</span>' : '';
+
+  const messages=document.getElementById('messages');
+  const msgInput=document.getElementById('msgInput');
+  const LOCAL_KEY='kw777_local_chat';
+
+  // إظهار سطر
+  function addRow(from,text){
+    const row=document.createElement('div'); row.className='row';
+    const badge=(from.role==='owner')?'<span class="badge owner">owner</span>':(from.role==='admin')?'<span class="badge admin">admin</span>':'';
+    row.innerHTML = `<div class="av"><span class="emo">🙂</span></div>
+      <div class="bubble"><div class="meta"><span class="nick">${from.name} ${badge}</span></div><div>${esc(text)}</div></div>`;
+    messages.appendChild(row);
+    messages.scrollTop=messages.scrollHeight;
+  }
+  function saveLocal(n,r,t){
+    const arr=JSON.parse(localStorage.getItem(LOCAL_KEY)||'[]');
+    arr.push({name:n,role:r,text:t,ts:Date.now()});
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(arr.slice(-200)));
+  }
+  function loadLocal(){
+    try{ JSON.parse(localStorage.getItem(LOCAL_KEY)||'[]').forEach(m=>addRow({name:m.name,role:m.role},m.text)); }catch{}
+  }
+
+  // تشغيل الاستيج محلي (ينور بالضغط)
+  document.querySelectorAll('#stage .slot').forEach(slot=>{
+    slot.addEventListener('click', ()=>{
+      const on=slot.classList.toggle('on');
+      slot.querySelector('.lab').textContent = on ? name : '';
+    });
+  });
+  document.getElementById('reqStage').onclick=()=>{}; // للعرض
+  document.getElementById('leaveStage').onclick=()=>{
+    document.querySelectorAll('#stage .slot.on .lab').forEach(l=>l.textContent='');
+    document.querySelectorAll('#stage .slot.on').forEach(s=>s.classList.remove('on'));
+  };
+
+  // إرسال
+  function send(){
+    const t=(msgInput.value||'').trim(); if(!t) return;
+    saveLocal(name,role,t); addRow({name,role},t); msgInput.value='';
+  }
+  document.getElementById('sendBtn').addEventListener('click', send);
+  msgInput.addEventListener('keydown', e=>{ if(e.key==='Enter') send(); });
+
+  // تحميل التاريخ
+  loadLocal();
+
+  function esc(s){return String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+}
