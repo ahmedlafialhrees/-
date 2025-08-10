@@ -22,8 +22,13 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .avatar-lg{width:56px;height:56px;border-radius:50%;overflow:hidden;border:1px solid var(--stroke);background:#0e1425;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .avatar-lg img{width:100%;height:100%;object-fit:cover}
 
-/* Grid */
-.canvas{max-width:920px;margin:0 auto;padding:8px;display:grid;gap:8px;height:100dvh;grid-template-rows:auto 1fr minmax(160px,38vh) auto}
+/* Grid (الترتيب الجديد) */
+.canvas{
+  max-width:920px;margin:0 auto;padding:8px;
+  display:grid;gap:8px;height:100dvh;
+  /* هيدر (auto) – رسائل (1fr) – استيج (auto) – كومبوزر (auto) */
+  grid-template-rows:auto 1fr auto auto;
+}
 
 /* Header */
 .hdr{height:60px;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--panel);border:1px solid var(--stroke);border-radius:12px}
@@ -37,7 +42,13 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .avatar{width:42px;height:42px;border-radius:50%;border:1px solid var(--stroke);overflow:hidden;display:inline-flex;background:#0e1425;cursor:pointer}
 .avatar img{width:100%;height:100%;object-fit:cover}
 
-/* Stage row */
+/* Messages – transparent */
+.list{overflow:auto;margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;background:transparent;border:none;border-radius:14px;box-shadow:none}
+.msg{background:rgba(27,34,54,.35);border:1px solid rgba(43,53,80,.45);border-radius:12px;padding:8px 12px}
+.msg .meta{font-size:12px;color:#cfd6ea;margin-bottom:4px}
+.msg .text{font-size:15px}
+
+/* Stage row تحت الرسائل */
 .stage-strip{overflow:auto;padding:10px;margin:0;background:linear-gradient(180deg,#171d30,#141a2b);border:1px solid var(--stroke);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 #stagePanel.collapsed{height:0;padding:0;border:none;overflow:hidden}
 #stageToggle{font-weight:700}
@@ -48,12 +59,6 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .bub{width:48px;height:48px;border-radius:50%;margin:6px auto;background:#0c101a;display:flex;align-items:center;justify-content:center;border:3px solid #000;box-shadow:inset 0 0 0 2px #313a5a,0 6px 16px rgba(0,0,0,.40)}
 .slot.on .bub{border-color:#d9b356;box-shadow:inset 0 0 0 2px #59461f,0 0 18px rgba(255,220,120,.65)}
 .mic-img{width:68%;height:68%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
-
-/* Messages – transparent (no avatar/badges per message) */
-.list{overflow:auto;margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;background:transparent;border:none;border-radius:14px;box-shadow:none}
-.msg{background:rgba(27,34,54,.35);border:1px solid rgba(43,53,80,.45);border-radius:12px;padding:8px 12px}
-.msg .meta{font-size:12px;color:#cfd6ea;margin-bottom:4px}
-.msg .text{font-size:15px}
 
 /* Composer + admin chips */
 .composer{position:static}
@@ -115,6 +120,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 <!-- شاشة الشات -->
 <section id="chat" class="screen">
   <div class="canvas">
+    <!-- الهيدر -->
     <header class="hdr">
       <div class="left">
         <button id="stageToggle" class="ib" title="طي/فتح الاستيج">▾</button>
@@ -133,6 +139,10 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
       </div>
     </header>
 
+    <!-- الرسائل (فوق) -->
+    <main class="list" id="messages"></main>
+
+    <!-- الاستيج (تحت الرسائل) -->
     <div class="stage-strip" id="stagePanel">
       <div class="slots" id="stage">
         <div class="slot"><div class="lab"></div><div class="ped"></div><div class="bub"><img class="mic-img" alt="mic"></div></div>
@@ -143,23 +153,19 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
       </div>
     </div>
 
-    <main class="list" id="messages"></main>
-
+    <!-- شريط الكتابة -->
     <footer class="composer">
       <div class="pill">
         <button id="emojiBtn" class="btn-ghost" title="إيموجي">😄</button>
-
         <!-- أوامر للأونر/الأدمن فقط -->
         <div id="adminActions" class="chips">
           <button id="dropBtn"   class="btn-chip">تنزيل</button>
           <button id="renameBtn" class="btn-chip">تغيير الاسم</button>
           <button id="kickBtn"   class="btn-chip danger">طرد</button>
         </div>
-
         <input id="msgInput" placeholder="اكتب رسالة..."/>
         <button id="sendBtn" class="btn-r">➤</button>
       </div>
-
       <div id="emojiPanel" class="popover"></div>
     </footer>
   </div>
@@ -167,8 +173,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 
 <script>
 /* ====== LOGIN SECURITY (client-side) ====== */
-const OWNER_PASS = '7770';     // غيّرها
-const ADMIN_PASS = '7771';     // غيّرها
+const OWNER_PASS='7770', ADMIN_PASS='7771';
 function genGuest(){ return 'ضيف-' + Math.floor(1000 + Math.random()*9000); }
 
 /* مفاتيح التخزين */
@@ -186,16 +191,16 @@ const actionsBar=document.getElementById('adminActions');
 const EMOJIS="😀😄😁😅😂🤣🙂😉😊😍😘😎🤩🥰🤗🙃🤔😴😤😭😡😇🤝👏👍👎🙏🔥✨💯🎉🎁🏆🎧🎤🎵".split("");
 const MIC_SRC="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3a4.svg";
 
-/* شاشات + صلاحيات */
+/* شاشات */
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function toggleCred(){ const r=roleSel.value; credWrap.style.display=(r==='owner'||r==='admin')?'grid':'none'; }
+function toggleCred(){const r=roleSel.value;credWrap.style.display=(r==='owner'||r==='admin')?'grid':'none';}
 roleSel&&roleSel.addEventListener('change',toggleCred);
 
 /* تخزين */
 const saveInfo=o=>localStorage.setItem(INFO_KEY,JSON.stringify(o));
 const loadInfo=_=>{try{return JSON.parse(localStorage.getItem(INFO_KEY)||'{}')}catch{return{}}};
 
-/* تحميل صورة باللوق إن */
+/* رفع صورة في شاشة الدخول */
 loginAvatar?.addEventListener('change',e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const r=new FileReader(); r.onload=()=>{ loginAvatarImg.src=r.result; localStorage.setItem(AVA_KEY,r.result); }; r.readAsDataURL(f);
@@ -209,14 +214,13 @@ enterBtn&&enterBtn.addEventListener('click', ()=>{
   const lp=(document.getElementById('loginPass')?.value||'').trim();
 
   if(role==='owner' || role==='admin'){
-    const ok = (role==='owner') ? (lp===OWNER_PASS) : (lp===ADMIN_PASS);
+    const ok=(role==='owner')?(lp===OWNER_PASS):(lp===ADMIN_PASS);
     if(!ok){ alert('كلمة السر غير صحيحة'); return; }
-    if(!name) name = (role==='owner'?'أونر':'أدمن') + '-' + Math.floor(Math.random()*1000);
+    if(!name) name=(role==='owner'?'أونر':'أدمن')+'-'+Math.floor(Math.random()*1000);
   }else{
-    if(!name) name = genGuest();  // عضو: يدخل حتى بدون اسم
+    if(!name) name=genGuest();
   }
-
-  saveInfo({name, role});
+  saveInfo({name,role});
   show('chat'); bootChat();
 });
 
@@ -226,7 +230,7 @@ function bootChat(){
   roleBadge.innerHTML=role==='owner'?'<span class="badge owner">owner</span>':role==='admin'?'<span class="badge admin">admin</span>':'';
   actionsBar.style.display=(role==='owner'||role==='admin')?'flex':'none';
 
-  // آفاتار (من اللوق إن أو سابق)
+  // آفاتار
   const savedAva=localStorage.getItem(AVA_KEY);
   avatarImg.src=savedAva||"https://i.ibb.co/4St3gqK/user.png";
   document.querySelector('.avatar')?.addEventListener('click',()=>avatarInput.click());
@@ -240,10 +244,7 @@ function bootChat(){
 
   // رسائل قديمة
   messages.innerHTML='';
-  try{
-    JSON.parse(localStorage.getItem(CHAT_KEY)||'[]').forEach(m=>addRow({name:m.name},m.text,false));
-    messages.scrollTop=messages.scrollHeight;
-  }catch{}
+  try{ JSON.parse(localStorage.getItem(CHAT_KEY)||'[]').forEach(m=>addRow({name:m.name},m.text,false)); messages.scrollTop=messages.scrollHeight; }catch{}
 
   // استرجاع الاستيج
   restoreStage();
@@ -261,7 +262,6 @@ function bootChat(){
   reqBtn&&(reqBtn.onclick=()=>{ const empty=[...document.querySelectorAll('#stage .slot')].find(s=>!s.classList.contains('on'));
     if(empty){ empty.classList.add('on'); empty.querySelector('.lab').textContent=name; saveStageSnapshot(); }});
   leaveBtn&&(leaveBtn.onclick=()=>{ clearStage(); clearChat(); });
-  logoutBtn&&(logoutBtn.onclick=()=>{ clearStage(); clearChat(); show('login'); });
 
   // طي/فتح الاستيج
   const stagePanel=document.getElementById('stagePanel'), stageToggle=document.getElementById('stageToggle'); let collapsed=false;
@@ -288,11 +288,11 @@ function bootChat(){
     addRow({name:'النظام'},`تم تغيير الاسم إلى ${nn}`,true);
   });
   document.getElementById('kickBtn')?.addEventListener('click', ()=>{
-    clearStage(); clearChat(); show('login'); alert('تم الطرد (عرض محلي). للتأثير على الجميع نحتاج Socket.IO');
+    clearStage(); clearChat(); show('login'); alert('تم الطرد (محلي). للتأثير على الجميع نحتاج Socket.IO');
   });
 }
 
-/* رسائل (بدون صورة وبدون وسم دور) */
+/* رسائل (بدون صور/رتب) */
 function addRow(from,text,scroll=true){
   const row=document.createElement('div'); row.className='msg';
   row.innerHTML=`<div class="meta">${esc(from.name)}</div><div class="text">${esc(text)}</div>`;
@@ -311,10 +311,7 @@ function clearStage(){ document.querySelectorAll('#stage .slot').forEach(s=>{ s.
 
 /* Helpers */
 function esc(s){return String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-toggleCred();
-
-// حمّل الصورة المختارة في شاشة الدخول لو كانت محفوظة سابقًا
-(() => { const a=localStorage.getItem(AVA_KEY); if(a) loginAvatarImg.src=a; })();
+toggleCred(); (function(){ const a=localStorage.getItem(AVA_KEY); if(a) loginAvatarImg.src=a; })();
 </script>
 </body>
 </html>
