@@ -8,7 +8,8 @@
 :root{--bg:#0f1322;--panel:#141a2c;--muted:#1b2236;--stroke:#2b3550;--ink:#eaf0ff;--lav:#b79cff;--lav2:#a487ff;--gold1:#ffd76b;--gold2:#ffb224;--red1:#ff6b6b;--red2:#ff1f1f}
 *{box-sizing:border-box} html,body{height:100dvh;overflow:hidden}
 body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a);font-family:-apple-system,system-ui,"Segoe UI",Tahoma,Arial}
-.screen{display:none}.screen.active{display:block}
+a{color:inherit;text-decoration:none}
+.screen{display:none;height:100dvh}.screen.active{display:block}
 
 /* Login */
 .login-card{width:480px;max-width:94vw;margin:40px auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:18px;padding:18px 16px 24px;text-align:center;backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.55)}
@@ -22,7 +23,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .avatar-lg{width:56px;height:56px;border-radius:50%;overflow:hidden;border:1px solid var(--stroke);background:#0e1425;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .avatar-lg img{width:100%;height:100%;object-fit:cover}
 
-/* Grid */
+/* Layout */
 .canvas{max-width:920px;margin:0 auto;padding:8px;display:grid;gap:8px;height:100dvh;grid-template-rows:auto 1fr auto auto}
 
 /* Header */
@@ -37,9 +38,15 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 
 /* Messages */
 .list{overflow:auto;margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;background:transparent;border:none;border-radius:14px}
-.msg{background:rgba(27,34,54,.35);border:1px solid rgba(43,53,80,.45);border-radius:12px;padding:8px 12px}
+.msg{background:rgba(27,34,54,.35);border:1px solid rgba(43,53,80,.45);border-radius:12px;padding:8px 12px;position:relative}
 .msg .meta{font-size:12px;color:#cfd6ea;margin-bottom:4px}
 .msg .text{font-size:15px}
+
+/* Context actions under message */
+.ctx{margin-top:6px;display:none;gap:6px}
+.ctx.show{display:flex}
+.btn-chip{background:#212a43;color:#e8edff;border:1px solid var(--stroke);border-radius:10px;padding:6px 10px;font-size:12px;cursor:pointer}
+.btn-chip.danger{background:#3a1d25;border-color:#5c2430;color:#ffb7b7}
 
 /* Stage */
 .stage-strip{overflow:auto;padding:10px;margin:0;background:linear-gradient(180deg,#171d30,#141a2b);border:1px solid var(--stroke);border-radius:14px}
@@ -54,34 +61,24 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .mic-img{width:68%;height:68%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
 
 /* Composer + Emoji */
-.composer{position:static}
-.pill{width:100%;max-width:880px;margin:0 auto;display:flex;align-items:center;gap:8px;background:#1b2236;border:1px solid var(--stroke);border-radius:999px;padding:8px 10px;position:relative}
+.pill{width:100%;max-width:880px;margin:0 auto;display:flex;align-items:center;gap:8px;background:#1b2236;border:1px solid var(--stroke);border-radius:999px;padding:8px 10px}
 .pill input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:16px}
 .btn-r{background:linear-gradient(90deg,var(--lav),var(--lav2));border:none;color:#140a2b;font-weight:800;border-radius:12px;padding:8px 12px;cursor:pointer}
 .btn-ghost{background:transparent;border:none;color:#cfd6ea;font-size:20px;padding:6px 8px;border-radius:10px;cursor:pointer}
-.chips{display:flex;gap:6px;margin-inline:6px}
-.btn-chip{background:#212a43;color:#e8edff;border:1px solid var(--stroke);border-radius:10px;padding:6px 10px;font-size:12px;cursor:pointer}
-.btn-chip.danger{background:#3a1d25;border-color:#5c2430;color:#ffb7b7}
 
-/* Emoji popover (معدّل للجوال) */
-.popover{
-  position:fixed;       /* بدّلناها لفوق كل العناصر */
-  bottom:90px;          /* أعلى شريط الكتابة */
-  right:12px;
-  background:#171d2e;
-  border:1px solid var(--stroke);
-  border-radius:12px;
-  padding:8px;
-  display:none;
-  box-shadow:0 20px 50px rgba(0,0,0,.5);
-  z-index:9999;
-}
+.popover{position:fixed;bottom:90px;right:12px;background:#171d2e;border:1px solid var(--stroke);border-radius:12px;padding:8px;display:none;box-shadow:0 20px 50px rgba(0,0,0,.5);z-index:9999}
 .popover.show{display:grid}
 #emojiPanel{grid-template-columns:repeat(8,28px);gap:6px}
 #emojiPanel button{background:#1b2236;border:1px solid var(--stroke);border-radius:8px;font-size:18px;padding:4px}
 
-/* Responsive */
-@media (max-width:520px){.row-2{grid-template-columns:1fr}}
+/* Admin panel */
+.admin-wrap{max-width:920px;margin:14px auto;padding:10px}
+.card{background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:12px;margin-bottom:10px}
+.card h3{margin:0 0 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border:1px solid var(--stroke);padding:8px;border-radius:6px}
+@media (max-width:520px){.row-2,.grid2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -109,8 +106,8 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
     </select>
 
     <div id="credWrap" class="row-2" style="display:none; margin-top:10px">
-      <input id="loginUser" class="input" placeholder="Username">
-      <input id="loginPass" class="input" type="password" placeholder="Password">
+      <input id="loginUser" class="input" placeholder="اسم المستخدم (لو عندك حساب مُنشأ)">
+      <input id="loginPass" class="input" type="password" placeholder="كلمة السر">
     </div>
 
     <button id="enterBtn" class="btn-primary">دخول</button>
@@ -129,6 +126,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
         <span class="avatar"><img id="avatarImg" src="" alt="avatar"></span>
       </div>
       <div class="right">
+        <a id="cpLink" class="ib" style="display:none">لوحة التحكم</a>
         <span id="roleBadge"></span>
         <button id="logoutBtn" class="ib">خروج</button>
       </div>
@@ -152,11 +150,6 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
     <footer class="composer">
       <div class="pill">
         <button id="emojiBtn" class="btn-ghost" title="إيموجي">😄</button>
-        <div id="adminActions" class="chips">
-          <button id="dropBtn"   class="btn-chip">تنزيل</button>
-          <button id="renameBtn" class="btn-chip">تغيير الاسم</button>
-          <button id="kickBtn"   class="btn-chip danger">طرد</button>
-        </div>
         <input id="msgInput" placeholder="اكتب رسالة..."/>
         <button id="sendBtn" class="btn-r">➤</button>
       </div>
@@ -165,11 +158,44 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
   </div>
 </section>
 
+<!-- Admin Control Panel (owner only) -->
+<section id="cp" class="screen">
+  <div class="admin-wrap">
+    <div class="card">
+      <button class="ib" id="backToChat">⬅ رجوع للدردشة</button>
+    </div>
+
+    <div class="card">
+      <h3>إنشاء حساب (للأدمن/الأونر)</h3>
+      <div class="grid2">
+        <input id="newUser" class="input" placeholder="اسم المستخدم">
+        <input id="newPass" class="input" placeholder="كلمة السر">
+      </div>
+      <div style="margin-top:8px" class="grid2">
+        <select id="newRole" class="input">
+          <option value="admin">أدمن</option>
+          <option value="owner">أونر</option>
+        </select>
+        <button id="applyUser" class="btn-primary">تطبيق</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>الحسابات المحفوظة</h3>
+      <table class="table" id="usersTable">
+        <thead><tr><th>المستخدم</th><th>الدور</th><th>حذف</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 <script>
 /* ====== CONFIG ====== */
 const OWNER_PASS='7770', ADMIN_PASS='7771';
 function genGuest(){ return 'ضيف-' + Math.floor(1000 + Math.random()*9000); }
 const CHAT_KEY='kw777_local_chat',STAGE_KEY='kw777_local_stage',INFO_KEY='kw777_login_info',AVA_KEY='kw777_avatar';
+const USERS_KEY='kw777_users', BAN_KEY='kw777_bans';
 
 /* Elems */
 const roleSel=document.getElementById('role'),credWrap=document.getElementById('credWrap'),enterBtn=document.getElementById('enterBtn');
@@ -177,20 +203,28 @@ const logoutBtn=document.getElementById('logoutBtn');
 const messages=document.getElementById('messages'),msgInput=document.getElementById('msgInput'),roleBadge=document.getElementById('roleBadge');
 const avatarImg=document.getElementById('avatarImg');
 const loginAvatar=document.getElementById('loginAvatar'),loginAvatarImg=document.getElementById('loginAvatarImg');
-const actionsBar=document.getElementById('adminActions');
-const MIC_SRC="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3a4.svg";
+const cpLink=document.getElementById('cpLink'), backToChat=document.getElementById('backToChat');
+
+/* emoji */
 const EMOJIS="😀😄😁😅😂🤣🙂😉😊😍😘😎🤩🥰🤗🙃🤔😴😤😭😡😇🤝👏👍👎🙏🔥✨💯🎉🎁🏆🎧🎤🎵".split("");
+const MIC_SRC="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3a4.svg";
 
 /* Helpers */
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function esc(s){return String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-function toggleCred(){const r=roleSel.value;credWrap.style.display=(r==='owner'||r==='admin')?'grid':'none';}
-roleSel&&roleSel.addEventListener('change',toggleCred);
+const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+const esc=s=>String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const saveInfo=o=>localStorage.setItem(INFO_KEY,JSON.stringify(o));
 const loadInfo=_=>{try{return JSON.parse(localStorage.getItem(INFO_KEY)||'{}')}catch{return{}}};
+const getUsers=_=>{try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]')}catch{return[]}};
+const setUsers=a=>localStorage.setItem(USERS_KEY,JSON.stringify(a));
+const getBans=_=>{try{return JSON.parse(localStorage.getItem(BAN_KEY)||'{}')}catch{return{}}};
+const setBans=m=>localStorage.setItem(BAN_KEY,JSON.stringify(m));
+const now=_=>Date.now();
 function myName(){ return (loadInfo().name || ''); }
 
-/* Stage helpers */
+function toggleCred(){const r=roleSel.value;credWrap.style.display=(r==='owner'||r==='admin')?'grid':'none';}
+roleSel&&roleSel.addEventListener('change',toggleCred);
+
+/* Stage */
 function removeMyFromStage(){
   const me=myName();
   document.querySelectorAll('#stage .slot.on .lab').forEach(l=>{
@@ -210,9 +244,22 @@ function saveStageSnapshot(){ const state=[...document.querySelectorAll('#stage 
 function restoreStage(){ try{ const state=JSON.parse(localStorage.getItem(STAGE_KEY)||'[]'); const slots=[...document.querySelectorAll('#stage .slot')]; state.forEach((s,i)=>{ if(!slots[i]) return; slots[i].classList.toggle('on',!!s.on); slots[i].querySelector('.lab').textContent=s.lab||''; }); }catch{} }
 function clearStage(){ document.querySelectorAll('#stage .slot').forEach(s=>{ s.classList.remove('on'); s.querySelector('.lab').textContent=''; }); localStorage.removeItem(STAGE_KEY); }
 
-/* Chat helpers */
-function addRow(from,text,scroll=true){ const row=document.createElement('div'); row.className='msg'; row.innerHTML=`<div class="meta">${esc(from.name)}</div><div class="text">${esc(text)}</div>`; messages.appendChild(row); if(scroll) messages.scrollTop=messages.scrollHeight; }
-function saveChat(m){ const arr=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]'); arr.push({name:m.name,text:m.text,ts:Date.now()}); localStorage.setItem(CHAT_KEY, JSON.stringify(arr.slice(-300))); }
+/* Chat */
+function addRow(from,text){ 
+  const row=document.createElement('div'); 
+  row.className='msg'; 
+  row.dataset.name=from.name;
+  row.innerHTML=`<div class="meta">${esc(from.name)}</div>
+                 <div class="text">${esc(text)}</div>
+                 <div class="ctx" dir="rtl">
+                   <button class="btn-chip act-kick">طرد</button>
+                   <button class="btn-chip act-admin">إعطاء أدمن</button>
+                   <button class="btn-chip danger act-ban2h">طرد ساعتين</button>
+                 </div>`;
+  messages.appendChild(row); 
+  messages.scrollTop=messages.scrollHeight; 
+}
+function saveChat(m){ const arr=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]'); arr.push({name:m.name,text:m.text,ts:now()}); localStorage.setItem(CHAT_KEY, JSON.stringify(arr.slice(-300))); }
 function clearChat(){ localStorage.removeItem(CHAT_KEY); messages.innerHTML=''; }
 
 /* Login avatar */
@@ -222,16 +269,38 @@ loginAvatar?.addEventListener('change',e=>{
 });
 document.querySelector('.avatar-lg')?.addEventListener('click',()=>loginAvatar.click());
 
+/* Auth helpers */
+function checkBanned(name){
+  const bans=getBans(); const ts=bans[name];
+  if(ts && ts>now()){ const mins=Math.ceil((ts-now())/60000); alert(`هذا المستخدم محظور مؤقتًا (${mins} دقيقة متبقية)`); return true; }
+  if(ts && ts<=now()){ delete bans[name]; setBans(bans); }
+  return false;
+}
+function validateRoleLogin(role, user, pass){
+  const list=getUsers();
+  const item=list.find(u=>u.username===user && u.role===role && u.password===pass);
+  if(item) return true;
+  if(role==='owner' && pass===OWNER_PASS) return true;
+  if(role==='admin' && pass===ADMIN_PASS) return true;
+  return false;
+}
+
 /* Enter */
 enterBtn&&enterBtn.addEventListener('click', ()=>{
   let name=(document.getElementById('displayName').value||'').trim();
   const role=roleSel.value;
+  const lu=(document.getElementById('loginUser')?.value||'').trim();
   const lp=(document.getElementById('loginPass')?.value||'').trim();
+
   if(role==='owner'||role==='admin'){
-    const ok=(role==='owner')?(lp===OWNER_PASS):(lp===ADMIN_PASS);
-    if(!ok){ alert('كلمة السر غير صحيحة'); return; }
-    if(!name) name=(role==='owner'?'أونر':'أدمن')+'-'+Math.floor(Math.random()*1000);
-  }else{ if(!name) name=genGuest(); }
+    if(!validateRoleLogin(role, lu || name, lp)){ alert('بيانات غير صحيحة'); return; }
+    if(!name) name = (lu || (role==='owner'?'أونر':'أدمن')+'-'+Math.floor(Math.random()*1000));
+  }else{
+    if(!name) name=genGuest();
+  }
+
+  if(checkBanned(name)) return; // محظور؟
+
   saveInfo({name,role});
   show('chat'); bootChat();
 });
@@ -240,11 +309,12 @@ enterBtn&&enterBtn.addEventListener('click', ()=>{
 function bootChat(){
   const info=loadInfo(),name=info.name||'مستخدم',role=info.role||'member';
 
-  // badge
-  document.getElementById('roleBadge').innerHTML=role==='owner'?'<span class="badge owner">owner</span>':role==='admin'?'<span class="badge admin">admin</span>':'';
-  actionsBar.style.display=(role==='owner'||role==='admin')?'flex':'none';
+  // badge + لوحة التحكم
+  roleBadge.innerHTML=role==='owner'?'<span class="badge owner">owner</span>':role==='admin'?'<span class="badge admin">admin</span>':'';
+  cpLink.style.display = (role==='owner') ? 'inline-flex' : 'none';
+  cpLink.onclick = ()=>{ renderUsers(); show('cp'); };
 
-  // avatar (عرض فقط)
+  // avatar
   const savedAva=localStorage.getItem(AVA_KEY);
   avatarImg.src=savedAva||"https://i.ibb.co/4St3gqK/user.png";
 
@@ -253,9 +323,10 @@ function bootChat(){
 
   // old messages
   messages.innerHTML='';
-  try{ JSON.parse(localStorage.getItem(CHAT_KEY)||'[]').forEach(m=>addRow({name:m.name},m.text,false)); messages.scrollTop=messages.scrollHeight; }catch{}
+  try{ JSON.parse(localStorage.getItem(CHAT_KEY)||'[]').forEach(m=>addRow({name:m.name},m.text)); }catch{}
+  messages.scrollTop=messages.scrollHeight;
 
-  // stage binding
+  // stage
   restoreStage();
   document.querySelectorAll('#stage .slot').forEach(slot=>{ slot.addEventListener('click',()=>occupy(slot)); });
 
@@ -263,45 +334,91 @@ function bootChat(){
   const stagePanel=document.getElementById('stagePanel'), stageToggle=document.getElementById('stageToggle'); let collapsed=false;
   stageToggle.onclick=()=>{ collapsed=!collapsed; stagePanel.classList.toggle('collapsed',collapsed); stageToggle.textContent=collapsed?'▸':'▾'; };
 
-  // ===== Emoji panel (معدّل) =====
-  const emojiBtn   = document.getElementById('emojiBtn');
-  const emojiPanel = document.getElementById('emojiPanel');
-  emojiPanel.innerHTML = EMOJIS.map(e => `<button type="button">${e}</button>`).join('');
-  emojiBtn.onclick = () => { emojiPanel.classList.toggle('show'); };
-  function onPick(e){
-    const btn = e.target.closest('button');
-    if(!btn) return;
-    e.preventDefault();
-    msgInput.value += btn.textContent;
-    msgInput.focus();
-    // emojiPanel.classList.remove('show'); // لو تبغى تقفل بعد الاختيار، افتح هذا السطر
-  }
+  // emoji
+  const emojiBtn=document.getElementById('emojiBtn'), emojiPanel=document.getElementById('emojiPanel');
+  emojiPanel.innerHTML=EMOJIS.map(e=>`<button type="button">${e}</button>`).join('');
+  emojiBtn.onclick=()=>{ emojiPanel.classList.toggle('show'); };
+  function onPick(e){ const btn=e.target.closest('button'); if(!btn) return; e.preventDefault(); msgInput.value+=btn.textContent; msgInput.focus(); }
   emojiPanel.addEventListener('pointerdown', onPick, {passive:false});
   emojiPanel.addEventListener('click', onPick);
-  document.addEventListener('pointerdown', (e)=>{
-    if (!e.target.closest('#emojiPanel') && e.target !== emojiBtn){
-      emojiPanel.classList.remove('show');
-    }
-  });
+  document.addEventListener('pointerdown', (e)=>{ if(!e.target.closest('#emojiPanel') && e.target!==emojiBtn){ emojiPanel.classList.remove('show'); } });
 
   // send
-  const send=()=>{ const t=(msgInput.value||'').trim(); if(!t) return; saveChat({name,role,text:t}); addRow({name},t,true); msgInput.value=''; };
+  const send=()=>{ const t=(msgInput.value||'').trim(); if(!t) return; saveChat({name,role,text:t}); addRow({name},t); msgInput.value=''; };
   document.getElementById('sendBtn').onclick=send; msgInput.addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
 
-  // admin chips
-  document.getElementById('dropBtn')?.addEventListener('click', ()=>{ removeMyFromStage(); saveStageSnapshot(); });
-  document.getElementById('renameBtn')?.addEventListener('click', ()=>{ const old=loadInfo().name||''; const nn=prompt('الاسم الجديد:', old); if(!nn) return; saveInfo({...loadInfo(), name:nn}); document.querySelectorAll('#stage .slot.on .lab').forEach(l=>{ if(l.textContent===old) l.textContent=nn; }); addRow({name:'النظام'},`تم تغيير الاسم إلى ${nn}`,true); });
-  document.getElementById('kickBtn')?.addEventListener('click', ()=>{ clearStage(); clearChat(); show('login'); alert('طرد (محلي). للتزامن نحتاج Socket.IO'); });
+  // context actions per message (تظهر فقط للأدمن/الأونر)
+  messages.addEventListener('click', (e)=>{
+    const box=e.target.closest('.msg'); if(!box) return;
+    const panel=box.querySelector('.ctx');
+    if(role!=='admin' && role!=='owner') return; // غير مخول
+    // اغلق الباقي
+    document.querySelectorAll('.ctx.show').forEach(p=>p.classList.remove('show'));
+    panel.classList.toggle('show');
+
+    const targetName = box.dataset.name;
+
+    panel.querySelector('.act-kick').onclick = ()=>{
+      addRow({name:'النظام'}, `تم طرد ${targetName} (محلي)`);
+      panel.classList.remove('show');
+    };
+    panel.querySelector('.act-admin').onclick = ()=>{
+      // أضف/حدّث حساب أدمن بنفس الاسم مع كلمة سر افتراضية
+      const users=getUsers(); 
+      const idx=users.findIndex(u=>u.username===targetName);
+      if(idx>=0) users[idx]={...users[idx], role:'admin'};
+      else users.push({username:targetName,password:'7771',role:'admin'});
+      setUsers(users);
+      addRow({name:'النظام'}, `أُعطي ${targetName} رتبة أدمن (كلمة السر: 7771)`);
+      panel.classList.remove('show');
+    };
+    panel.querySelector('.act-ban2h').onclick = ()=>{
+      const bans=getBans(); bans[targetName]= Date.now() + 2*60*60*1000; setBans(bans);
+      addRow({name:'النظام'}, `${targetName} محظور ساعتين`);
+      panel.classList.remove('show');
+    };
+  });
 
   // logout
-  logoutBtn&&(logoutBtn.onclick=()=>{ clearChat(); clearStage(); localStorage.removeItem(INFO_KEY); show('login'); });
+  logoutBtn.onclick=()=>{ clearChat(); clearStage(); localStorage.removeItem(INFO_KEY); show('login'); };
 }
+
+/* Admin Control Panel (owner) */
+function renderUsers(){
+  const tbody=document.querySelector('#usersTable tbody'); tbody.innerHTML='';
+  const users=getUsers();
+  users.forEach((u,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(u.username)}</td><td>${u.role}</td>
+      <td><button class="btn-chip danger" data-i="${i}">حذف</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.onclick=(e)=>{
+    const btn=e.target.closest('button[data-i]'); if(!btn) return;
+    const idx=+btn.dataset.i; const list=getUsers(); list.splice(idx,1); setUsers(list); renderUsers();
+  };
+}
+document.getElementById('applyUser')?.addEventListener('click', ()=>{
+  const u=document.getElementById('newUser').value.trim();
+  const p=document.getElementById('newPass').value.trim();
+  const r=document.getElementById('newRole').value;
+  if(!u || !p) return alert('أدخل اسم مستخدم وكلمة سر');
+  const list=getUsers();
+  if(list.some(x=>x.username===u)) return alert('الاسم مستخدم');
+  list.push({username:u,password:p,role:r});
+  setUsers(list); renderUsers();
+  alert('تم إنشاء الحساب');
+});
+backToChat?.addEventListener('click', ()=>show('chat'));
 
 /* on close */
 window.addEventListener('beforeunload', ()=>{ clearChat(); removeMyFromStage(); saveStageSnapshot(); });
 
 /* init */
-toggleCred(); (function(){ const a=localStorage.getItem(AVA_KEY); if(a) loginAvatarImg.src=a; })();
+(function init(){
+  const a=localStorage.getItem(AVA_KEY); if(a) loginAvatarImg.src=a;
+  toggleCred();
+})();
 </script>
 </body>
 </html>
