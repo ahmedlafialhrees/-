@@ -1,193 +1,62 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>دردشة صوتية — Kuwait 777</title>
-<style>
-:root{
-  --w: 920px; --bg:#0f1322; --panel:#141a2c; --muted:#1b2236; --stroke:#2b3550; --ink:#eaf0ff;
-  --lav:#b79cff; --lav2:#a487ff; --gold1:#ffd76b; --gold2:#ffb224; --red1:#ff6b6b; --red2:#ff1f1f;
-}
-*{box-sizing:border-box} html,body{height:100%} body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a);font-family:-apple-system,system-ui,"Segoe UI",Tahoma,Arial}
-.screen{display:none} .screen.active{display:block}
-.canvas{max-width:var(--w);margin:0 auto;padding:10px}
-
-/* Login */
-.login-card{width:420px;max-width:92vw;margin:40px auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));backdrop-filter:blur(10px);
-  border:1px solid var(--stroke);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.55);padding:18px 16px 24px;text-align:center}
-.label{display:block;text-align:right;font-size:13px;color:#cfd6ea;margin:10px 2px 6px}
-.input{width:100%;background:var(--muted);border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;font-size:16px;color:#fff;outline:none}
-.btn{width:100%;margin-top:12px;padding:12px 16px;border:none;border-radius:12px;background:linear-gradient(90deg,var(--lav),var(--lav2));color:#140a2b;font-weight:800;cursor:pointer}
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* Header */
-.hdr{height:60px;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;margin:6px 0}
-.ib{background:#1a2236;border:1px solid var(--stroke);border-radius:12px;color:#cfd6ea;padding:8px 10px;margin-inline-end:6px}
-.badge{font-size:10px;padding:2px 8px;border-radius:999px;margin-right:6px;vertical-align:middle}
-.badge.owner{background:linear-gradient(90deg,var(--gold1),var(--gold2));color:#1a1200;box-shadow:0 0 12px rgba(255,197,61,.85)}
-.badge.admin{background:linear-gradient(90deg,var(--red1),var(--red2));color:#fff;box-shadow:0 0 12px rgba(255,65,65,.85)}
-
-/* Stage */
-.stage-strip{position:sticky;top:8px;z-index:10;margin:8px 0;background:linear-gradient(180deg,#171d30,#141a2b);border:1px solid var(--stroke);border-radius:14px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:end;max-width:calc(var(--w) - 40px);margin:0 auto}
-.slot{position:relative;text-align:center;padding:10px 6px}
-.ped{height:18px;border-radius:9px;background:linear-gradient(90deg,#9a7b2f,#cfa63b,#9a7b2f);box-shadow:0 6px 20px rgba(255,182,70,.35)}
-.bub{width:58px;height:58px;border-radius:50%;margin:6px auto;background:#0c101a;display:flex;align-items:center;justify-content:center;font-size:24px;border:3px solid #000;box-shadow:inset 0 0 0 2px #313a5a,0 8px 22px rgba(0,0,0,.45)}
-.slot.on .bub{border-color:#d9b356;box-shadow:inset 0 0 0 2px #59461f,0 0 22px rgba(255,220,120,.7)}
-.lab{font-size:12px;margin-top:2px;color:#dde4ff}
-
-/* Chat */
-.list{padding:12px;display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow:auto;background:linear-gradient(180deg,#1a2134,#171d2d);border:1px solid var(--stroke);border-radius:14px}
-.row{display:flex;gap:10px}
-.av{width:40px;height:40px;border-radius:50%;background:#1b2236;border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center}
-.emo{font-size:22px}
-.bubble{flex:1}
-.meta{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px}
-.nick{font-weight:800}
-.sys{text-align:center;opacity:.85;font-style:italic}
-
-/* Composer */
-.composer{position:sticky;bottom:8px;padding:10px 6px;display:flex;justify-content:center}
-.pill{width:calc(var(--w) - 80px);max-width:820px;display:flex;align-items:center;gap:8px;background:#1b2236;border:1px solid var(--stroke);border-radius:999px;padding:8px 10px;box-shadow:0 10px 28px rgba(0,0,0,.4)}
-.pill input{flex:1;background:transparent;border:none;outline:none;color:#fff}
-.btn-l,.btn-r{background:linear-gradient(180deg,#232c45,#1b2338);border:1px solid var(--stroke);color:#e7ecff;border-radius:12px;padding:8px 10px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>دردشة صوتية</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ===== شاشة الدخول ===== -->
 <section id="login" class="screen active">
-  <div class="canvas">
-    <div class="login-card">
-      <div style="font-size:28px">🎧</div>
-      <h2 style="margin:6px 0 10px">تسجيل الدخول</h2>
+  <div class="login-card">
+    <div class="login-icon">🎧</div>
+    <h1 class="login-title">تسجيل الدخول</h1>
 
-      <label class="label">اسمك</label>
-      <input id="displayName" class="input" placeholder="اكتب اسمك">
+    <label class="label">اسمك</label>
+    <input id="displayName" class="input" placeholder="اكتب اسمك">
 
-      <label class="label">الدور</label>
-      <select id="role" class="input">
-        <option value="member">عضو</option>
-        <option value="admin">أدمن</option>
-        <option value="owner">أونر</option>
-      </select>
+    <label class="label">الدور</label>
+    <select id="role" class="input">
+      <option value="member">عضو</option>
+      <option value="admin">أدمن</option>
+      <option value="owner">أونر</option>
+    </select>
 
-      <div id="accFields" class="row-2" style="margin-top:10px">
-        <input id="loginUser" class="input" placeholder="Username (للأدمن/الأونر)">
-        <input id="loginPass" class="input" type="password" placeholder="Password">
-      </div>
-
-      <button id="enterBtn" class="btn">دخول الشات</button>
-    </div>
+    <button id="enterBtn" class="btn-primary">دخول</button>
   </div>
 </section>
 
-<!-- ===== شاشة الشات ===== -->
 <section id="chat" class="screen">
-  <div class="canvas">
-    <header class="hdr">
-      <div>
-        <button id="reqStage" class="ib">⤴️</button>
-        <button id="leaveStage" class="ib">⤵️</button>
-      </div>
-      <div><b>المطانيخ</b></div>
-      <div id="roleBadge"></div>
-    </header>
-
-    <div class="stage-strip">
-      <div class="slots" id="stage">
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-        <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
-      </div>
+  <header class="hdr">
+    <div>
+      <button id="reqStage" class="ib">⤴️</button>
+      <button id="leaveStage" class="ib">⤵️</button>
     </div>
+    <div></div> <!-- فاضي -->
+    <div id="roleBadge"></div>
+  </header>
 
-    <div class="list" id="messages"></div>
-
-    <div class="composer">
-      <div class="pill">
-        <button id="emojiBtn" class="btn-l">🙂</button>
-        <input id="msgInput" placeholder="اكتب رسالة..."/>
-        <button id="sendBtn" class="btn-r">➤</button>
-      </div>
+  <div class="stage-strip">
+    <div class="slots" id="stage">
+      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
+      <div class="slot"><div class="ped"></div><div class="bub">🎤</div><div class="lab"></div></div>
     </div>
   </div>
+
+  <main class="list" id="messages"></main>
+
+  <footer class="composer">
+    <div class="pill">
+      <input id="msgInput" placeholder="اكتب رسالة..."/>
+      <button id="sendBtn" class="btn-r">➤</button>
+    </div>
+  </footer>
 </section>
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-// تبديل الشاشات
-function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-const roleEl = document.getElementById('role'), accFields = document.getElementById('accFields');
-function toggleFields(){ accFields.style.display = (roleEl.value==='member') ? 'none' : 'grid'; }
-roleEl.addEventListener('change', toggleFields); toggleFields();
-
-document.getElementById('enterBtn').addEventListener('click', ()=>{
-  const displayName = (document.getElementById('displayName').value||'مستخدم').trim();
-  const role = roleEl.value;
-  const loginUser = (document.getElementById('loginUser').value||'').trim();
-  const loginPass = (document.getElementById('loginPass').value||'').trim();
-  localStorage.setItem('displayName',displayName);
-  localStorage.setItem('role',role);
-  localStorage.setItem('loginUser',loginUser);
-  localStorage.setItem('loginPass',loginPass);
-  show('chat'); bootChat();
-});
-
-// الشات + الاستيج
-let booted=false;
-function bootChat(){ if(booted) return; booted=true;
-  const displayName = localStorage.getItem('displayName')||'مستخدم';
-  const role = localStorage.getItem('role')||'member';
-  const loginUser = localStorage.getItem('loginUser')||'';
-  const loginPass = localStorage.getItem('loginPass')||'';
-
-  const badgeBox = document.getElementById('roleBadge');
-  if(role==='owner') badgeBox.innerHTML = '<span class="badge owner">owner</span>';
-  else if(role==='admin') badgeBox.innerHTML = '<span class="badge admin">admin</span>';
-
-  const socket = io();
-  socket.emit('join',{ displayName, role, loginUser, loginPass, avatar:'🙂' });
-
-  const messages = document.getElementById('messages');
-  const msgInput = document.getElementById('msgInput');
-
-  socket.on('welcome', ({ text })=> addSys(text));
-  socket.on('auth:fail', ()=>{ alert('بيانات الدور غير صحيحة'); show('login'); });
-
-  document.getElementById('sendBtn').addEventListener('click', send);
-  msgInput.addEventListener('keydown', e=>{ if(e.key==='Enter') send(); });
-  function send(){ const t=msgInput.value.trim(); if(!t) return; socket.emit('chat:msg',{text:t}); msgInput.value=''; }
-
-  socket.on('chat:msg', ({ from, text })=>{
-    const row = document.createElement('div'); row.className='row';
-    const badge = (from.role==='owner')?'<span class="badge owner">owner</span>':(from.role==='admin')?'<span class="badge admin">admin</span>':'';
-    row.innerHTML = `<div class="av"><span class="emo">🙂</span></div>
-      <div class="bubble"><div class="meta"><span class="nick">${from.name} ${badge}</span><span style="opacity:.6">#${from.uid}</span></div><div>${esc(text)}</div></div>`;
-    messages.appendChild(row); messages.scrollTop=messages.scrollHeight;
-  });
-  socket.on('system:msg', ({ text })=> addSys(text));
-
-  // الاستيج
-  const slots = Array.from(document.querySelectorAll('#stage .slot')).map(el=>({el,lab:el.querySelector('.lab'),bub:el.querySelector('.bub')}));
-  socket.on('stage:update', speakers=>{
-    slots.forEach(s=>{ s.lab.textContent=''; s.el.classList.remove('on'); s.bub.textContent='🎤'; });
-    speakers.slice(0,5).forEach((sp,i)=>{
-      const badge = (sp.role==='owner')? ' owner' : (sp.role==='admin')? ' admin' : '';
-      slots[i].lab.innerHTML = `${sp.name} ${badge?`<span class="badge${badge}">${badge.trim()}</span>`:''}`;
-      slots[i].el.classList.add('on');
-    });
-  });
-
-  document.getElementById('reqStage').addEventListener('click', ()=> socket.emit('stage:request'));
-  document.getElementById('leaveStage').addEventListener('click', ()=> socket.emit('stage:leave'));
-
-  function addSys(t){ const d=document.createElement('div'); d.className='sys'; d.textContent=t; messages.appendChild(d); messages.scrollTop=messages.scrollHeight; }
-  function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
-}
-</script>
+<script src="script.js"></script>
 </body>
 </html>
