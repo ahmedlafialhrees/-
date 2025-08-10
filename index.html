@@ -32,7 +32,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .badge{font-size:10px;padding:2px 8px;border-radius:999px;margin-right:6px;vertical-align:middle}
 .badge.owner{background:linear-gradient(90deg,var(--gold1),var(--gold2));color:#1a1200;box-shadow:0 0 12px rgba(255,197,61,.85)}
 .badge.admin{background:linear-gradient(90deg,var(--red1),var(--red2));color:#fff;box-shadow:0 0 12px rgba(255,65,65,.85)}
-.avatar{width:42px;height:42px;border-radius:50%;border:1px solid var(--stroke);overflow:hidden;display:inline-flex;background:#0e1425;cursor:pointer}
+.avatar{width:42px;height:42px;border-radius:50%;border:1px solid var(--stroke);overflow:hidden;display:inline-flex;background:#0e1425}
 .avatar img{width:100%;height:100%;object-fit:cover}
 
 /* Messages */
@@ -111,14 +111,10 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
     <header class="hdr">
       <div class="left">
         <button id="stageToggle" class="ib" title="طي/فتح الاستيج">▾</button>
-        <button id="reqStage"   class="ib">⤴️</button>
-        <button id="leaveStage" class="ib">⤵️</button>
       </div>
       <div class="mid">
-        <label class="avatar" title="غيّر صورتك">
-          <input id="avatarInput" type="file" accept="image/*" hidden>
-          <img id="avatarImg" src="" alt="avatar">
-        </label>
+        <!-- صورة فقط بدون اختيار من الشات -->
+        <span class="avatar"><img id="avatarImg" src="" alt="avatar"></span>
       </div>
       <div class="right">
         <span id="roleBadge"></span>
@@ -126,10 +122,10 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
       </div>
     </header>
 
-    <!-- Messages (top) -->
+    <!-- Messages -->
     <main class="list" id="messages"></main>
 
-    <!-- Stage (under messages) -->
+    <!-- Stage -->
     <div class="stage-strip" id="stagePanel">
       <div class="slots" id="stage">
         <div class="slot"><div class="lab"></div><div class="ped"></div><div class="bub"><img class="mic-img" alt="mic"></div></div>
@@ -165,9 +161,9 @@ const CHAT_KEY='kw777_local_chat',STAGE_KEY='kw777_local_stage',INFO_KEY='kw777_
 
 /* Elems */
 const roleSel=document.getElementById('role'),credWrap=document.getElementById('credWrap'),enterBtn=document.getElementById('enterBtn');
-const logoutBtn=document.getElementById('logoutBtn'),reqBtn=document.getElementById('reqStage'),leaveBtn=document.getElementById('leaveStage');
+const logoutBtn=document.getElementById('logoutBtn');
 const messages=document.getElementById('messages'),msgInput=document.getElementById('msgInput'),roleBadge=document.getElementById('roleBadge');
-const avatarInput=document.getElementById('avatarInput'),avatarImg=document.getElementById('avatarImg');
+const avatarImg=document.getElementById('avatarImg');
 const loginAvatar=document.getElementById('loginAvatar'),loginAvatarImg=document.getElementById('loginAvatarImg');
 const actionsBar=document.getElementById('adminActions');
 const MIC_SRC="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3a4.svg";
@@ -208,7 +204,7 @@ function addRow(from,text,scroll=true){ const row=document.createElement('div');
 function saveChat(m){ const arr=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]'); arr.push({name:m.name,text:m.text,ts:Date.now()}); localStorage.setItem(CHAT_KEY, JSON.stringify(arr.slice(-300))); }
 function clearChat(){ localStorage.removeItem(CHAT_KEY); messages.innerHTML=''; }
 
-/* Login avatar */
+/* Login avatar (فقط في الدخول) */
 loginAvatar?.addEventListener('change',e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const r=new FileReader(); r.onload=()=>{ loginAvatarImg.src=r.result; localStorage.setItem(AVA_KEY,r.result); }; r.readAsDataURL(f);
@@ -232,31 +228,27 @@ enterBtn&&enterBtn.addEventListener('click', ()=>{
 /* Boot chat */
 function bootChat(){
   const info=loadInfo(),name=info.name||'مستخدم',role=info.role||'member';
-  // header role badge
+
+  // badge
   document.getElementById('roleBadge').innerHTML=role==='owner'?'<span class="badge owner">owner</span>':role==='admin'?'<span class="badge admin">admin</span>':'';
   actionsBar.style.display=(role==='owner'||role==='admin')?'flex':'none';
 
-  // avatar
+  // avatar فقط عرض
   const savedAva=localStorage.getItem(AVA_KEY);
   avatarImg.src=savedAva||"https://i.ibb.co/4St3gqK/user.png";
+
+  // mics
   document.querySelectorAll('.mic-img').forEach(img=>img.src=MIC_SRC);
-  document.querySelector('.avatar')?.addEventListener('click',()=>avatarInput.click());
-  avatarInput?.addEventListener('change',e=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    const r=new FileReader(); r.onload=()=>{localStorage.setItem(AVA_KEY,r.result); avatarImg.src=r.result}; r.readAsDataURL(f);
-  });
 
   // old messages
   messages.innerHTML='';
   try{ JSON.parse(localStorage.getItem(CHAT_KEY)||'[]').forEach(m=>addRow({name:m.name},m.text,false)); messages.scrollTop=messages.scrollHeight; }catch{}
 
-  // restore stage & bind
+  // stage
   restoreStage();
   document.querySelectorAll('#stage .slot').forEach(slot=>{ slot.addEventListener('click',()=>occupy(slot)); });
-  reqBtn&&(reqBtn.onclick=()=>{ const empty=[...document.querySelectorAll('#stage .slot')].find(s=>!s.classList.contains('on')); if(empty) occupy(empty); });
-  leaveBtn&&(leaveBtn.onclick=()=>{ removeMyFromStage(); saveStageSnapshot(); clearChat(); });
 
-  // toggle stage
+  // collapse stage
   const stagePanel=document.getElementById('stagePanel'), stageToggle=document.getElementById('stageToggle'); let collapsed=false;
   stageToggle.onclick=()=>{ collapsed=!collapsed; stagePanel.classList.toggle('collapsed',collapsed); stageToggle.textContent=collapsed?'▸':'▾'; };
 
