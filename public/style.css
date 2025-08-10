@@ -1,0 +1,74 @@
+/* Kuwait 777 style - simple modern */
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
+  background: #0e1217; color: #e7ecf3;
+}
+.container { display: grid; grid-template-columns: 280px 1fr 300px; gap: 12px; padding: 12px; }
+.sidebar, .rightbar { background: #121825; border: 1px solid #1b2336; border-radius: 12px; padding: 12px; }
+.main { display: flex; flex-direction: column; gap: 12px; }
+
+.brand { font-weight: 800; font-size: 20px; margin-bottom: 8px; }
+
+.profile { border: 1px dashed #26314d; padding: 10px; border-radius: 10px; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: #1a2032; display:flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:4px; }
+.uid { font-size: 12px; opacity: .7; margin-bottom: 6px; }
+.field { display:flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.field input, .field select { background: #0f1422; border: 1px solid #1f2b47; color: #e7ecf3; border-radius: 8px; padding: 10px; }
+.avatar-picker { display:flex; gap: 6px; flex-wrap: wrap; }
+.avatar-picker button { background:#17203a; color:#fff; border:1px solid #24335a; border-radius:8px; padding:6px 8px; cursor:pointer; }
+.primary { width: 100%; padding: 10px; border-radius: 10px; background: linear-gradient(90deg,#4f7cff,#7a5cff); border:none; color:#fff; font-weight:700; cursor:pointer; }
+
+.rooms { margin-top: 10px; }
+.rooms-header { font-weight:700; margin-bottom: 8px; }
+#roomsList { list-style:none; padding:0; margin:0; max-height:180px; overflow:auto; }
+#roomsList li { padding:6px 8px; background:#0f1422; border:1px solid #1f2b47; border-radius:8px; margin-bottom:6px; cursor:pointer; }
+
+.stage-bar { display:flex; align-items:center; justify-content:space-between; background:#121825; border:1px solid #1b2336; border-radius:12px; padding:10px; }
+.stage-title { font-weight:700; }
+.stage-actions button { background:#17203a; color:#fff; border:1px solid #24335a; border-radius:8px; padding:8px 10px; margin-right:6px; cursor:pointer; }
+
+.stage { display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.speaker { background:#121825; border:1px solid #1b2336; border-radius:12px; padding:8px; position:relative; height:120px; display:flex; align-items:center; justify-content:center; }
+.speaker video { width:0; height:0; display:none; } /* Audio only: hide video */
+.speaker::after { content:"🎙️"; font-size:28px; opacity:.4; position:absolute; }
+.speaker .label { position:absolute; bottom:6px; font-size:12px; opacity:.9; background:#0f1422; padding:3px 6px; border-radius:6px; }
+
+.chat { background:#121825; border:1px solid #1b2336; border-radius:12px; flex: 1; display:flex; flex-direction:column; }
+.chat-messages { flex:1; overflow:auto; padding:10px; }
+.message { margin-bottom:10px; }
+.message .name { font-weight:700; margin-left:6px; }
+.message .text { display:inline-block; background:#0f1422; border:1px solid #1f2b47; border-radius:10px; padding:8px 10px; }
+.system { opacity:.7; font-style:italic; }
+
+.chat-input { display:flex; gap:6px; padding:10px; border-top:1px solid #1b2336; }
+.chat-input input { flex:1; background:#0f1422; border:1px solid #1f2b47; border-radius:10px; color:#e7ecf3; padding:10px; }
+.chat-input button { background:#4f7cff; color:#fff; border:none; border-radius:10px; padding:10px 16px; }
+
+.users-header { font-weight:700; margin-bottom:8px; }
+#usersList { list-style:none; padding:0; margin:0; max-height: 60vh; overflow:auto; }
+#usersList li { display:flex; align-items:center; gap:8px; padding:6px; background:#0f1422; border:1px solid #1f2b47; border-radius:10px; margin-bottom:6px; }
+.badge { font-size:10px; padding:2px 6px; border-radius:6px; background:#274a9d; }
+
+.owner-badge { margin-top:10px; padding:8px 10px; text-align:center; border-radius:10px; background: radial-gradient( circle at top, #ffd76b, #ff9f0a); color:#121212; font-weight:800; animation: glow 1.6s infinite alternate; }
+.owner-badge.hidden { display:none; }
+@keyframes glow { from { box-shadow: 0 0 10px #ff9f0a; } to { box-shadow: 0 0 20px #ffd76b; } }
+
+.admin-panel { margin-top:12px; border:1px dashed #26314d; border-radius:10px; padding:10px; }
+.hidden { display:none; }
+
+/* Top Ticker */
+#ticker {
+  position: fixed;
+  top: 8px; left: 50%; transform: translateX(-50%);
+  background:#10192e; border:1px solid #22325c; border-radius:999px;
+  padding:6px 16px; z-index:1000; min-width: 240px; max-width: 60vw; overflow: hidden;
+}
+#tickerText { display:inline-block; white-space:nowrap; animation: marquee 16s linear infinite; }
+@keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+/* Responsive */
+@media (max-width: 980px) {
+  .container { grid-template-columns: 1fr; }
+  .rightbar { order: 2; }
+}
