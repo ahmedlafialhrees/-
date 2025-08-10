@@ -11,13 +11,16 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .screen{display:none}.screen.active{display:block}
 
 /* Login */
-.login-card{width:420px;max-width:92vw;margin:40px auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:18px;padding:18px 16px 24px;text-align:center;backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.login-card{width:480px;max-width:94vw;margin:40px auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:18px;padding:18px 16px 24px;text-align:center;backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.55)}
 .login-icon{width:64px;height:64px;border-radius:16px;background:#222a3e;display:flex;align-items:center;justify-content:center;margin:6px auto 10px;font-size:28px}
 .login-title{margin:0 0 12px;font-size:22px}
 .label{display:block;text-align:right;font-size:13px;color:#cfd6ea;margin:10px 2px 6px}
 .input{width:100%;background:var(--muted);border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;font-size:16px;color:#fff;outline:none}
 .btn-primary{width:100%;margin-top:14px;padding:12px 16px;border:none;border-radius:12px;background:linear-gradient(90deg,var(--lav),var(--lav2));color:#140a2b;font-weight:800;font-size:16px;cursor:pointer}
 .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.name-row{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.avatar-lg{width:56px;height:56px;border-radius:50%;overflow:hidden;border:1px solid var(--stroke);background:#0e1425;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.avatar-lg img{width:100%;height:100%;object-fit:cover}
 
 /* Grid */
 .canvas{max-width:920px;margin:0 auto;padding:8px;display:grid;gap:8px;height:100dvh;grid-template-rows:auto 1fr minmax(160px,38vh) auto}
@@ -30,11 +33,11 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .badge.owner{background:linear-gradient(90deg,var(--gold1),var(--gold2));color:#1a1200;box-shadow:0 0 12px rgba(255,197,61,.85)}
 .badge.admin{background:linear-gradient(90deg,var(--red1),var(--red2));color:#fff;box-shadow:0 0 12px rgba(255,65,65,.85)}
 
-/* Avatar */
+/* Avatar (header) */
 .avatar{width:42px;height:42px;border-radius:50%;border:1px solid var(--stroke);overflow:hidden;display:inline-flex;background:#0e1425;cursor:pointer}
 .avatar img{width:100%;height:100%;object-fit:cover}
 
-/* Stage (row) */
+/* Stage row */
 .stage-strip{overflow:auto;padding:10px;margin:0;background:linear-gradient(180deg,#171d30,#141a2b);border:1px solid var(--stroke);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 #stagePanel.collapsed{height:0;padding:0;border:none;overflow:hidden}
 #stageToggle{font-weight:700}
@@ -46,15 +49,11 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 .slot.on .bub{border-color:#d9b356;box-shadow:inset 0 0 0 2px #59461f,0 0 18px rgba(255,220,120,.65)}
 .mic-img{width:68%;height:68%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
 
-/* Messages – transparent */
+/* Messages – transparent (no avatar/badges per message) */
 .list{overflow:auto;margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;background:transparent;border:none;border-radius:14px;box-shadow:none}
-.row{display:flex;gap:10px}
-.av{width:40px;height:40px;border-radius:50%;background:#1b2236;border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center}
-.emo{font-size:22px}
-.bubble{flex:1}
-.meta{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px}
-.nick{font-weight:800}
-.sys{text-align:center;opacity:.85;font-style:italic}
+.msg{background:rgba(27,34,54,.35);border:1px solid rgba(43,53,80,.45);border-radius:12px;padding:8px 12px}
+.msg .meta{font-size:12px;color:#cfd6ea;margin-bottom:4px}
+.msg .text{font-size:15px}
 
 /* Composer + admin chips */
 .composer{position:static}
@@ -81,14 +80,20 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 </head>
 <body>
 
-<!-- Login -->
+<!-- شاشة الدخول -->
 <section id="login" class="screen active">
   <div class="login-card">
     <div class="login-icon">🎧</div>
     <h1 class="login-title">تسجيل الدخول</h1>
 
-    <label class="label">اسمك</label>
-    <input id="displayName" class="input" placeholder="اكتب اسمك">
+    <label class="label">اسمك وصورتك</label>
+    <div class="name-row">
+      <label class="avatar-lg" title="اختر صورة">
+        <input id="loginAvatar" type="file" accept="image/*" hidden>
+        <img id="loginAvatarImg" src="https://i.ibb.co/4St3gqK/user.png" alt="avatar">
+      </label>
+      <input id="displayName" class="input" placeholder="اكتب اسمك (للعضو ممكن تتركه فاضي)">
+    </div>
 
     <label class="label">الدور</label>
     <select id="role" class="input">
@@ -97,6 +102,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
       <option value="owner">أونر</option>
     </select>
 
+    <!-- تظهر للأدمن/الأونر فقط -->
     <div id="credWrap" class="row-2" style="display:none; margin-top:10px">
       <input id="loginUser" class="input" placeholder="Username">
       <input id="loginPass" class="input" type="password" placeholder="Password">
@@ -106,7 +112,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
   </div>
 </section>
 
-<!-- Chat -->
+<!-- شاشة الشات -->
 <section id="chat" class="screen">
   <div class="canvas">
     <header class="hdr">
@@ -143,6 +149,7 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
       <div class="pill">
         <button id="emojiBtn" class="btn-ghost" title="إيموجي">😄</button>
 
+        <!-- أوامر للأونر/الأدمن فقط -->
         <div id="adminActions" class="chips">
           <button id="dropBtn"   class="btn-chip">تنزيل</button>
           <button id="renameBtn" class="btn-chip">تغيير الاسم</button>
@@ -159,39 +166,67 @@ body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a
 </section>
 
 <script>
-/* مفاتيح */
+/* ====== LOGIN SECURITY (client-side) ====== */
+const OWNER_PASS = '7770';     // غيّرها
+const ADMIN_PASS = '7771';     // غيّرها
+function genGuest(){ return 'ضيف-' + Math.floor(1000 + Math.random()*9000); }
+
+/* مفاتيح التخزين */
 const CHAT_KEY='kw777_local_chat',STAGE_KEY='kw777_local_stage',INFO_KEY='kw777_login_info',AVA_KEY='kw777_avatar';
-/* عناصر أساسية */
+
+/* عناصر */
 const roleSel=document.getElementById('role'),credWrap=document.getElementById('credWrap'),enterBtn=document.getElementById('enterBtn');
 const logoutBtn=document.getElementById('logoutBtn'),reqBtn=document.getElementById('reqStage'),leaveBtn=document.getElementById('leaveStage');
 const messages=document.getElementById('messages'),msgInput=document.getElementById('msgInput'),roleBadge=document.getElementById('roleBadge');
 const avatarInput=document.getElementById('avatarInput'),avatarImg=document.getElementById('avatarImg');
+const loginAvatar=document.getElementById('loginAvatar'),loginAvatarImg=document.getElementById('loginAvatarImg');
 const actionsBar=document.getElementById('adminActions');
+
 /* إعدادات */
 const EMOJIS="😀😄😁😅😂🤣🙂😉😊😍😘😎🤩🥰🤗🙃🤔😴😤😭😡😇🤝👏👍👎🙏🔥✨💯🎉🎁🏆🎧🎤🎵".split("");
 const MIC_SRC="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3a4.svg";
+
 /* شاشات + صلاحيات */
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function toggleCred(){credWrap.style.display=(roleSel.value==='member')?'none':'grid'}
+function toggleCred(){ const r=roleSel.value; credWrap.style.display=(r==='owner'||r==='admin')?'grid':'none'; }
 roleSel&&roleSel.addEventListener('change',toggleCred);
+
 /* تخزين */
 const saveInfo=o=>localStorage.setItem(INFO_KEY,JSON.stringify(o));
 const loadInfo=_=>{try{return JSON.parse(localStorage.getItem(INFO_KEY)||'{}')}catch{return{}}};
-/* دخول */
-enterBtn&&enterBtn.addEventListener('click',()=>{
-  const name=(document.getElementById('displayName').value||'مستخدم').trim();
-  const role=roleSel.value;
-  const lu=(document.getElementById('loginUser')?.value||'').trim();
-  const lp=(document.getElementById('loginPass')?.value||'').trim();
-  saveInfo({name,role,lu,lp}); show('chat'); bootChat();
+
+/* تحميل صورة باللوق إن */
+loginAvatar?.addEventListener('change',e=>{
+  const f=e.target.files?.[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>{ loginAvatarImg.src=r.result; localStorage.setItem(AVA_KEY,r.result); }; r.readAsDataURL(f);
 });
+document.querySelector('.avatar-lg')?.addEventListener('click',()=>loginAvatar.click());
+
+/* دخول */
+enterBtn&&enterBtn.addEventListener('click', ()=>{
+  let name=(document.getElementById('displayName').value||'').trim();
+  const role=roleSel.value;
+  const lp=(document.getElementById('loginPass')?.value||'').trim();
+
+  if(role==='owner' || role==='admin'){
+    const ok = (role==='owner') ? (lp===OWNER_PASS) : (lp===ADMIN_PASS);
+    if(!ok){ alert('كلمة السر غير صحيحة'); return; }
+    if(!name) name = (role==='owner'?'أونر':'أدمن') + '-' + Math.floor(Math.random()*1000);
+  }else{
+    if(!name) name = genGuest();  // عضو: يدخل حتى بدون اسم
+  }
+
+  saveInfo({name, role});
+  show('chat'); bootChat();
+});
+
 /* تشغيل */
 function bootChat(){
   const info=loadInfo(),name=info.name||'مستخدم',role=info.role||'member';
   roleBadge.innerHTML=role==='owner'?'<span class="badge owner">owner</span>':role==='admin'?'<span class="badge admin">admin</span>':'';
   actionsBar.style.display=(role==='owner'||role==='admin')?'flex':'none';
 
-  // آفاتار
+  // آفاتار (من اللوق إن أو سابق)
   const savedAva=localStorage.getItem(AVA_KEY);
   avatarImg.src=savedAva||"https://i.ibb.co/4St3gqK/user.png";
   document.querySelector('.avatar')?.addEventListener('click',()=>avatarInput.click());
@@ -199,19 +234,23 @@ function bootChat(){
     const f=e.target.files?.[0]; if(!f) return;
     const r=new FileReader(); r.onload=()=>{localStorage.setItem(AVA_KEY,r.result); avatarImg.src=r.result}; r.readAsDataURL(f);
   });
+
   // مايكات
   document.querySelectorAll('.mic-img').forEach(img=>img.src=MIC_SRC);
 
   // رسائل قديمة
   messages.innerHTML='';
-  try{ JSON.parse(localStorage.getItem(CHAT_KEY)||'[]').forEach(m=>addRow({name:m.name,role:m.role},m.text,false)); messages.scrollTop=messages.scrollHeight; }catch{}
+  try{
+    JSON.parse(localStorage.getItem(CHAT_KEY)||'[]').forEach(m=>addRow({name:m.name},m.text,false));
+    messages.scrollTop=messages.scrollHeight;
+  }catch{}
 
   // استرجاع الاستيج
   restoreStage();
 
   // إرسال
   const send=()=>{ const t=(msgInput.value||'').trim(); if(!t) return;
-    saveChat({name,role,text:t}); addRow({name,role},t,true); msgInput.value=''; };
+    saveChat({name,role,text:t}); addRow({name},t,true); msgInput.value=''; };
   document.getElementById('sendBtn').onclick=send;
   msgInput.addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
 
@@ -246,22 +285,20 @@ function bootChat(){
     const old=loadInfo().name||''; const nn=prompt('الاسم الجديد:', old); if(!nn) return;
     saveInfo({...loadInfo(), name:nn});
     document.querySelectorAll('#stage .slot.on .lab').forEach(l=>{ if(l.textContent===old) l.textContent=nn; });
-    addRow({name:'النظام',role:'member'},`تم تغيير الاسم إلى ${nn}`,true);
+    addRow({name:'النظام'},`تم تغيير الاسم إلى ${nn}`,true);
   });
   document.getElementById('kickBtn')?.addEventListener('click', ()=>{
     clearStage(); clearChat(); show('login'); alert('تم الطرد (عرض محلي). للتأثير على الجميع نحتاج Socket.IO');
   });
 }
 
-/* رسائل */
+/* رسائل (بدون صورة وبدون وسم دور) */
 function addRow(from,text,scroll=true){
-  const badge=from.role==='owner'?'<span class="badge owner">owner</span>':from.role==='admin'?'<span class="badge admin">admin</span>':'';
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML=`<div class="av"><span class="emo">🙂</span></div>
-    <div class="bubble"><div class="meta"><span class="nick">${esc(from.name)} ${badge}</span></div><div>${esc(text)}</div></div>`;
+  const row=document.createElement('div'); row.className='msg';
+  row.innerHTML=`<div class="meta">${esc(from.name)}</div><div class="text">${esc(text)}</div>`;
   messages.appendChild(row); if(scroll) messages.scrollTop=messages.scrollHeight;
 }
-function saveChat(m){ const arr=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]'); arr.push({name:m.name,role:m.role,text:m.text,ts:Date.now()});
+function saveChat(m){ const arr=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]'); arr.push({name:m.name,text:m.text,ts:Date.now()});
   localStorage.setItem(CHAT_KEY, JSON.stringify(arr.slice(-300))); }
 function clearChat(){ localStorage.removeItem(CHAT_KEY); messages.innerHTML=''; }
 
@@ -275,6 +312,9 @@ function clearStage(){ document.querySelectorAll('#stage .slot').forEach(s=>{ s.
 /* Helpers */
 function esc(s){return String(s).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
 toggleCred();
+
+// حمّل الصورة المختارة في شاشة الدخول لو كانت محفوظة سابقًا
+(() => { const a=localStorage.getItem(AVA_KEY); if(a) loginAvatarImg.src=a; })();
 </script>
 </body>
 </html>
