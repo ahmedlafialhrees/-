@@ -1,98 +1,45 @@
-/* خط عام */
-:root { --bg:#1f2233; --card:#2b2f45; --slot:#3a3f5c; --ink:#eaf0ff; }
-* { box-sizing: border-box; }
-html, body { height: 100%; }
+:root{--bg:#0f1322;--panel:#141a2c;--muted:#1b2236;--stroke:#2b3550;--ink:#eaf0ff;--lav:#b79cff;--lav2:#a487ff;--gold1:#ffd76b;--gold2:#ffb224;--red1:#ff6b6b;--red2:#ff1f1f}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;color:var(--ink);background:linear-gradient(180deg,#0e1220,#0b0f1a);font-family:-apple-system,system-ui,"Segoe UI",Tahoma,Arial}
+.screen{display:none}.screen.active{display:block}
 
-/* صفحة الشات كعمود: استيج (ثابت) + رسائل (مرنة) + إدخال (ثابت) */
-.chat-bg{
-  margin:0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: -apple-system, system-ui, "Segoe UI", Tahoma, Arial;
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh; /* أفضل للهواتف */
-}
+/* Login */
+.login-card{width:420px;max-width:92vw;margin:40px auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:18px;padding:18px 16px 24px;text-align:center;backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.login-icon{width:64px;height:64px;border-radius:16px;background:#222a3e;display:flex;align-items:center;justify-content:center;margin:6px auto 10px;font-size:28px}
+.login-title{margin:0 0 12px;font-size:22px}
+.label{display:block;text-align:right;font-size:13px;color:#cfd6ea;margin:10px 2px 6px}
+.input{width:100%;background:var(--muted);border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;font-size:16px;color:#fff;outline:none}
+.btn-primary{width:100%;margin-top:14px;padding:12px 16px;border:none;border-radius:12px;background:linear-gradient(90deg,var(--lav),var(--lav2));color:#140a2b;font-weight:800;font-size:16px;cursor:pointer}
 
-/* الاستيج ثابت أعلى الصفحة */
-.stage{
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 12px;
-  padding: 12px;
-  background: var(--card);
-  border-bottom: 1px solid #22283a;
-  box-shadow: 0 6px 18px rgba(0,0,0,.25);
-}
-.mic-slot{
-  width: 64px;
-  height: 64px;
-  border-radius: 14px;
-  background: var(--slot);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px;
-  border: 3px solid #000;
-  box-shadow: inset 0 0 0 2px #313a5a, 0 8px 22px rgba(0,0,0,.35);
-}
-/* لو تبي تميّز مايك شغال، ضف class="mic-slot active" من JS */
-.mic-slot.active{
-  border-color: #d9b356;
-  box-shadow: inset 0 0 0 2px #59461f, 0 0 18px rgba(255,220,120,.85);
-}
+/* Header */
+.hdr{height:60px;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;margin:8px}
+.ib{background:#1a2236;border:1px solid var(--stroke);border-radius:12px;color:#cfd6ea;padding:8px 10px}
+.badge{font-size:10px;padding:2px 8px;border-radius:999px;margin-right:6px;vertical-align:middle}
+.badge.owner{background:linear-gradient(90deg,var(--gold1),var(--gold2));color:#1a1200;box-shadow:0 0 12px rgba(255,197,61,.85)}
+.badge.admin{background:linear-gradient(90deg,var(--red1),var(--red2));color:#fff;box-shadow:0 0 12px rgba(255,65,65,.85)}
 
-/* الرسائل (تتمدّد وتأخذ كل الفراغ، مع تمرير) */
-.chat-box{
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  background: #23273a;
-}
+/* Stage */
+.stage-strip{position:sticky;top:8px;z-index:10;margin:8px;background:linear-gradient(180deg,#171d30,#141a2b);border:1px solid var(--stroke);border-radius:14px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:end;margin:0 10px}
+.slot{position:relative;text-align:center;padding:10px 6px}
+.ped{height:18px;border-radius:9px;background:linear-gradient(90deg,#9a7b2f,#cfa63b,#9a7b2f);box-shadow:0 6px 20px rgba(255,182,70,.35)}
+.bub{width:58px;height:58px;border-radius:50%;margin:6px auto;background:#0c101a;display:flex;align-items:center;justify-content:center;font-size:24px;border:3px solid #000;box-shadow:inset 0 0 0 2px #313a5a,0 8px 22px rgba(0,0,0,.45)}
+.slot.on .bub{border-color:#d9b356;box-shadow:inset 0 0 0 2px #59461f,0 0 22px rgba(255,220,120,.7)}
+.lab{font-size:12px;margin-top:2px;color:#dde4ff}
 
-/* الإدخال ثابت أسفل الصفحة */
-.message-input{
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  display: flex;
-  gap: 8px;
-  padding: 10px;
-  background: var(--card);
-  border-top: 1px solid #22283a;
-}
-.message-input input{
-  flex: 1;
-  padding: 12px 14px;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px; /* يمنع تكبير المتصفح على iOS */
-  background: #1b2236;
-  color: #fff;
-  outline: none;
-}
-.message-input button{
-  padding: 12px 16px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(90deg,#b79cff,#a487ff);
-  color: #140a2b;
-  font-weight: 800;
-  cursor: pointer;
-}
+/* Messages bottom */
+.list{margin:8px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:35vh;background:linear-gradient(180deg,#1a2134,#171d2d);border:1px solid var(--stroke);border-radius:14px}
+.row{display:flex;gap:10px}
+.av{width:40px;height:40px;border-radius:50%;background:#1b2236;border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center}
+.emo{font-size:22px}
+.bubble{flex:1}
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px}
+.nick{font-weight:800}
+.sys{text-align:center;opacity:.85;font-style:italic}
 
-/* بادجات الرُتب (لو استعملتها بالرسائل) */
-.owner{
-  background: linear-gradient(90deg,#ffd76b,#ffb224);
-  color:#1a1200; padding:2px 8px; border-radius:999px; margin-left:6px;
-  box-shadow:0 0 12px rgba(255,197,61,.85); animation: glowGold 1.6s infinite alternate; font-size:11px
-}
-.admin{
-  background: linear-gradient(90deg,#ff6b6b,#ff1f1f);
-  color:#fff; padding:2px 8px; border-radius:999px; margin-left:6px;
-  box-shadow:0 0 12px rgba(255,65,65,.85); animation: glowRed 1.6s infinite alternate; font-size:11px
-}
-@keyframes glowGold{from{box-shadow:0 0 6px rgba(255,197,61,.6)}to{box-shadow:0 0 18px rgba(255,197,61,1)}}
-@keyframes glowRed{from{box-shadow:0 0 6px rgba(255,65,65,.6)}to{box-shadow:0 0 18px rgba(255,65,65,1)}}
+/* Composer */
+.composer{position:sticky;bottom:8px;padding:10px 6px;display:flex;justify-content:center}
+.pill{width:calc(100% - 32px);max-width:880px;display:flex;align-items:center;gap:8px;background:#1b2236;border:1px solid var(--stroke);border-radius:999px;padding:8px 10px}
+.pill input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:16px}
+.btn-r{background:linear-gradient(90deg,var(--lav),var(--lav2));border:none;color:#140a2b;font-weight:800;border-radius:12px;padding:8px 12px}
+
+@media(max-width:980px){.slots{grid-template-columns:repeat(3,1fr)}}
