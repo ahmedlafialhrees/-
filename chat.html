@@ -1,26 +1,30 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الشات الصوتي</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الشات الصوتي</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="stage">
-        <div class="mic-slot">🎤</div>
-        <div class="mic-slot">🎤</div>
-        <div class="mic-slot">🎤</div>
-        <div class="mic-slot">🎤</div>
-    </div>
+<body class="chat-bg">
 
-    <div class="chat-box" id="chatBox"></div>
+  <!-- الاستيج ثابت أعلى الصفحة -->
+  <header class="stage">
+    <div class="mic-slot">🎤</div>
+    <div class="mic-slot">🎤</div>
+    <div class="mic-slot">🎤</div>
+    <div class="mic-slot">🎤</div>
+  </header>
 
-    <div class="message-input">
-        <input type="text" id="message" placeholder="اكتب رسالة...">
-        <button onclick="sendMessage()">إرسال</button>
-    </div>
+  <!-- الرسائل (تسكرول) -->
+  <main class="chat-box" id="chatBox"></main>
 
-    <script src="script.js"></script>
+  <!-- شريط الإرسال ثابت بالأسفل -->
+  <footer class="message-input">
+    <input type="text" id="message" placeholder="اكتب رسالتك..." />
+    <button onclick="sendMessage()">إرسال</button>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
