@@ -1,115 +1,113 @@
-// script.js — client (مربوط على سيرفرك)
-const $ = s => document.querySelector(s);
+// ========== إعدادات اتصال ==========
+const SERVER_FALLBACK = "https://kwpooop.onrender.com"; // دومين Render حقك
 
-// ✅ رابط السيرفر على Render (مثل ما عطيتني)
-const SERVER_FALLBACK = "https://kwpooop.onrender.com";
-
-// لو كنت فاتح من نفس سيرفر Render ما تحتاج الرابط، غير كذا بنستخدم SERVER_FALLBACK
-const USE_SAME_ORIGIN =
-  location.hostname.endsWith("onrender.com") || location.hostname === "localhost";
+function getServerURL() {
+  // لو أنت على نفس الدومين (Render) نستخدم "/"
+  const sameOrigin =
+    location.hostname.endsWith("onrender.com") ||
+    location.hostname === "localhost";
+  return sameOrigin ? "/" : SERVER_FALLBACK;
+}
 
 let socket = null;
 let me = { name: "", role: "member" };
-let lastTyping = 0;
-const typingHints = new Map();
 
-const login = document.querySelector(".login");
-const app = document.querySelector(".app");
-const nameI = document.querySelector("#name");
-const roleI = document.querySelector("#role");
-const passI = document.querySelector("#pass");
-const joinB = document.querySelector("#join");
-const msgs  = document.querySelector("#msgs");
-const text  = document.querySelector("#text");
-const sendB = document.querySelector("#send");
-const stage = document.querySelector("#stage");
+// ========== عناصر الواجهة ==========
+const $ = (s) => document.querySelector(s);
 
-// الغرفة (تقدر تغيّرها من الكويري ?room=اسم-الغرفة)
-const room = new URLSearchParams(location.search).get("room") || "مجلس-١";
+const login = $(".login") || $("#login");
+const app   = $(".app")   || $("#app");
 
-// ـــــــــــــــ UI مساعدات ـــــــــــــــ
-function drawStage(data) {
-  stage.innerHTML = "";
-  (data || []).forEach((s, i) => {
-    const el = document.createElement("button");
-    el.className = "slot" + (s ? " on" : "");
-    el.innerHTML = `
-      <div class="ped"></div>
-      <div class="mic">🎤</div>
-      <div class="nm">${s ? s.name : ""}</div>`;
-    // اضغط على الخانة: يصعد/ينزل
-    el.onclick = () => socket.emit("stage:occupy", i);
-    stage.appendChild(el);
-  });
+const nameI = $("#name");
+const roleI = $("#role");
+const passI = $("#pass");
+
+const joinB = $("#join");
+const msgs  = $("#msgs") || $(".messages") || document.body;
+const text  = $("#text") || $('input[placeholder*="اكتب"]');
+const sendB = $("#send");
+const stage = $("#stage");
+
+// ========== أدوات عرض ==========
+function addLine(html) {
+  const box = msgs || document.body;
+  const div = document.createElement("div");
+  div.className = "msg";
+  div.innerHTML = html;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 
-function addMsg(name, body) {
-  const row = document.createElement("div");
-  row.className = "msg";
-  row.dataset.name = name;
-  row.innerHTML = `<div class="meta">${name}</div><div>${body}</div>`;
-  msgs.appendChild(row);
-  msgs.scrollTop = msgs.scrollHeight;
+function renderIncoming(m) {
+  const who = m.user || "ضيف";
+  const t = new Date(m.ts || Date.now()).toLocaleTimeString();
+  addLine(`<b>${who}</b> • ${t}<br>${m.text}`);
 }
 
-// ـــــــــــــــ اتصال وانضمام ـــــــــــــــ
-joinB.onclick = () => {
-  const name = (nameI.value || "").trim();
-  const role = roleI.value;
-  const pass = passI.value;
+function renderMine(txt) {
+  addLine(`<b>أنا</b> • الآن<br>${txt}`);
+}
 
-  // اتصال
-  socket = USE_SAME_ORIGIN
-    ? io()
-    : io(SERVER_FALLBACK, { transports: ["websocket", "polling"] });
+// ========== اتصال Socket.io ==========
+function connectSocket() {
+  if (socket && socket.connected) return socket;
 
-  socket.on("join-denied", (m) => alert(m || "رفض الدخول"));
-
-  socket.on("joined", (u) => {
-    me = u;
-    login.style.display = "none";
-    app.style.display = "block";
+  socket = io(getServerURL(), {
+    path: "/socket.io",
+    transports: ["websocket", "polling"],
+    withCredentials: false
   });
 
-  socket.on("state", (st) => {
-    msgs.innerHTML = "";
-    (st.messages || []).forEach(m => addMsg(m.name, m.text));
-    drawStage(st.stage);
+  socket.on("connect", () => {
+    console.log("🟢 connected", socket.id);
+    login?.classList?.add?.("hidden");
+    app?.classList?.remove?.("hidden");
   });
 
-  socket.on("msg",   (m)  => addMsg(m.name, m.text));
-  socket.on("stage", (st) => drawStage(st));
-
-  socket.on("typing", ({ name }) => {
-    if (typingHints.get(name)) clearTimeout(typingHints.get(name));
-    let hint = msgs.querySelector(`.msg.typing[data-name="${name}"]`);
-    if (!hint) {
-      hint = document.createElement("div");
-      hint.className = "msg typing";
-      hint.dataset.name = name;
-      hint.innerHTML = `<div class="meta">${name}</div><div>…يكتب</div>`;
-      msgs.appendChild(hint);
-    }
-    msgs.scrollTop = msgs.scrollHeight;
-    const t = setTimeout(() => { hint.remove(); typingHints.delete(name); }, 3000);
-    typingHints.set(name, t);
+  socket.on("disconnect", () => {
+    console.log("🔴 disconnected");
   });
 
-  socket.emit("join", { name, role, pass, room });
-};
+  // السيرفر يبث بهذا الحدث
+  socket.on("chat:new", (m) => {
+    renderIncoming(m);
+  });
 
-// إرسال رسالة
-sendB.onclick = () => {
-  const t = text.value.trim();
-  if (!t) return;
-  socket.emit("msg", t);
+  // اختياري: رسائل نظام
+  socket.on("system", (t) => addLine(`🛈 ${t}`));
+
+  return socket;
+}
+
+// ========== تصرفات الدخول والإرسال ==========
+joinB?.addEventListener("click", (e) => {
+  e.preventDefault();
+  me.name = (nameI?.value || "ضيف").trim() || "ضيف";
+  connectSocket();
+  addLine(`✅ دخلت باسم <b>${me.name}</b>`);
+});
+
+sendB?.addEventListener("click", (e) => {
+  e.preventDefault();
+  const txt = (text?.value || "").trim();
+  if (!txt) return;
+  connectSocket();
+  socket.emit("chat:send", { text: txt, user: me.name || "ضيف" }); // <-- مهم: chat:send
+  renderMine(txt);
   text.value = "";
-};
+  text.focus();
+});
 
-// إشارة "يكتب..."
-text.addEventListener("input", () => {
-  const now = Date.now();
-  if (!socket || now - lastTyping < 800) return;
-  lastTyping = now;
-  socket.emit("typing");
+// احتياط: إرسال بالفورم إن وجد
+document.querySelector("form")?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  sendB?.click();
+});
+
+// لو ما عندك شاشة دخول، اتصل تلقائي
+window.addEventListener("load", () => {
+  if (!joinB) {
+    me.name = (nameI?.value || "ضيف").trim() || "ضيف";
+    connectSocket();
+  }
 });
