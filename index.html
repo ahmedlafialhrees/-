@@ -435,3 +435,37 @@ window.addEventListener('beforeunload', ()=>{ clearChat(); removeMyFromStage(); 
 </script>
 </body>
 </html>
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>StageChat</title>
+<link rel="stylesheet" href="style.css" />
+
+<body>
+  <div class="login">
+    <input id="name" placeholder="اسمك (اختياري)" />
+    <select id="role">
+      <option value="member">عضو</option>
+      <option value="admin">أدمن</option>
+      <option value="owner">أونر</option>
+    </select>
+    <input id="pass" type="password" placeholder="كلمة السر (للأدمن/الأونر فقط)" />
+    <button id="join">دخول</button>
+  </div>
+
+  <div class="app" style="display:none">
+    <div id="stage" class="stage"></div>
+    <div id="msgs" class="msgs"></div>
+    <div class="composer">
+      <input id="text" placeholder="اكتب رسالة..." />
+      <button id="send">إرسال</button>
+    </div>
+  </div>
+
+  <!-- Socket.IO client -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <script src="script.js"></script>
+</body>
+</html>
