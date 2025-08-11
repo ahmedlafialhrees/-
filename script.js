@@ -1,172 +1,91 @@
-/* =========================
-   KW777 — script.js (Static)
-   يعمل على GitHub Pages (تخزين محلي)
-   ========================= */
+// script.js — client
+const $ = s => document.querySelector(s);
 
-/* مفاتيح التخزين */
-const CHAT_KEY  = 'kw777_local_chat';
-const STAGE_KEY = 'kw777_local_stage';
-const INFO_KEY  = 'kw777_login_info';
+// غيّر هذا الرابط لو بتفتح من GitHub Pages أو أي دومين خارجي:
+const SERVER_FALLBACK = "https://YOUR-APP.onrender.com"; // ← حط رابط Render هنا
+const USE_SAME_ORIGIN = location.hostname.endsWith("onrender.com") || location.hostname === "localhost";
 
-/* عناصر عامة */
-const roleSel   = document.getElementById('role');
-const credWrap  = document.getElementById('credWrap');
-const enterBtn  = document.getElementById('enterBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const reqBtn    = document.getElementById('reqStage');
-const leaveBtn  = document.getElementById('leaveStage');
-const messages  = document.getElementById('messages');
-const msgInput  = document.getElementById('msgInput');
-const roleBadge = document.getElementById('roleBadge');
+let socket = null;
+let me = { name: "", role: "member" };
+let lastTyping = 0;
+const typingHints = new Map();
 
-/* تبديل الشاشات */
-function show(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+const login = document.querySelector(".login");
+const app = document.querySelector(".app");
+const nameI = $("#name"), roleI = $("#role"), passI = $("#pass");
+const joinB = $("#join"), msgs = $("#msgs"), text = $("#text"), sendB = $("#send");
+const stage = $("#stage");
+
+const room = new URLSearchParams(location.search).get("room") || "مجلس-١";
+
+// رسم الاستيج (5 خانات أفقية)
+function drawStage(data) {
+  stage.innerHTML = "";
+  (data || []).forEach((s, i) => {
+    const el = document.createElement("button");
+    el.className = "slot" + (s ? " on" : "");
+    el.innerHTML = `<div class="ped"></div><div class="mic">🎤</div><div class="nm">${s ? s.name : ""}</div>`;
+    el.onclick = () => socket.emit("stage:occupy", i);
+    stage.appendChild(el);
+  });
 }
 
-/* إظهار/إخفاء حقول اليوزر/الباس حسب الدور */
-function toggleCred(){ credWrap.style.display = (roleSel.value === 'member') ? 'none' : 'grid'; }
-roleSel && roleSel.addEventListener('change', toggleCred); toggleCred();
+// إضافة رسالة
+function addMsg(name, body) {
+  const row = document.createElement("div");
+  row.className = "msg";
+  row.dataset.name = name;
+  row.innerHTML = `<div class="meta">${name}</div><div>${body}</div>`;
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+}
 
-/* حفظ/قراءة معلومات الدخول */
-function saveLoginInfo(obj){ localStorage.setItem(INFO_KEY, JSON.stringify(obj)); }
-function loadLoginInfo(){ try{ return JSON.parse(localStorage.getItem(INFO_KEY)||'{}'); }catch{ return {}; } }
+// اتصال وانضمام
+joinB.onclick = () => {
+  const name = nameI.value.trim();
+  const role = roleI.value;
+  const pass = passI.value;
 
-/* دخول */
-enterBtn && enterBtn.addEventListener('click', ()=>{
-  const name = (document.getElementById('displayName').value || 'مستخدم').trim();
-  const role = roleSel.value;
-  const lu   = (document.getElementById('loginUser')?.value || '').trim();
-  const lp   = (document.getElementById('loginPass')?.value || '').trim();
+  socket = USE_SAME_ORIGIN ? io() : io(SERVER_FALLBACK, { transports: ["websocket", "polling"] });
 
-  saveLoginInfo({ name, role, lu, lp });
-  show('chat');
-  bootChat();
+  socket.on("join-denied", (m) => alert(m || "رفض الدخول"));
+  socket.on("joined", (u) => { me = u; login.style.display = "none"; app.style.display = "block"; });
+  socket.on("state", (st) => {
+    msgs.innerHTML = "";
+    (st.messages || []).forEach(m => addMsg(m.name, m.text));
+    drawStage(st.stage);
+  });
+  socket.on("msg", (m) => addMsg(m.name, m.text));
+  socket.on("stage", (st) => drawStage(st));
+  socket.on("typing", ({ name }) => {
+    // لمحة "…يكتب"
+    if (typingHints.get(name)) clearTimeout(typingHints.get(name));
+    let hint = msgs.querySelector(`.msg.typing[data-name="${name}"]`);
+    if (!hint) {
+      hint = document.createElement("div");
+      hint.className = "msg typing";
+      hint.dataset.name = name;
+      hint.innerHTML = `<div class="meta">${name}</div><div>…يكتب</div>`;
+      msgs.appendChild(hint);
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+    const t = setTimeout(() => { hint.remove(); typingHints.delete(name); }, 3000);
+    typingHints.set(name, t);
+  });
+
+  socket.emit("join", { name, role, pass, room });
+};
+
+sendB.onclick = () => {
+  const t = text.value.trim();
+  if (!t) return;
+  socket.emit("msg", t);
+  text.value = "";
+};
+
+text.addEventListener("input", () => {
+  const now = Date.now();
+  if (!socket || now - lastTyping < 800) return;
+  lastTyping = now;
+  socket.emit("typing");
 });
-
-/* تهيئة شاشة الشات */
-function bootChat(){
-  const info = loadLoginInfo();
-  const name = info.name || 'مستخدم';
-  const role = info.role || 'member';
-
-  // شارة الرتبة
-  roleBadge.innerHTML = role==='owner' ? '<span class="badge owner">owner</span>'
-                     : role==='admin' ? '<span class="badge admin">admin</span>' : '';
-
-  // حمّل الرسائل السابقة إلى الصندوق
-  messages.innerHTML = '';
-  try {
-    JSON.parse(localStorage.getItem(CHAT_KEY)||'[]')
-      .forEach(m => addRow({name:m.name, role:m.role}, m.text, false));
-    // نزّل لأسفل بعد التحميل
-    messages.scrollTop = messages.scrollHeight;
-  } catch {}
-
-  // استرجاع حالة الاستيج
-  restoreStage();
-
-  // إرسال رسالة
-  function send(){
-    const t = (msgInput.value || '').trim(); if(!t) return;
-    saveChat({name, role, text:t});
-    addRow({name, role}, t, true);
-    msgInput.value = '';
-  }
-  document.getElementById('sendBtn').onclick = send;
-  msgInput.addEventListener('keydown', e=>{ if(e.key==='Enter') send(); });
-
-  // تفعيل الاستيج: الضغط على المايك يطلّع/ينزل اسمك
-  document.querySelectorAll('#stage .slot').forEach((slot)=>{
-    slot.addEventListener('click', ()=>{
-      const isOn = slot.classList.toggle('on');
-      slot.querySelector('.lab').textContent = isOn ? name : '';
-      saveStageSnapshot();
-    });
-  });
-
-  // زر صعود/نزول رمزي (معاينة)
-  reqBtn && (reqBtn.onclick = ()=>{
-    // أول خانة فاضية يصير عليها اسمك
-    const empty = [...document.querySelectorAll('#stage .slot')].find(s=>!s.classList.contains('on'));
-    if(empty){ empty.classList.add('on'); empty.querySelector('.lab').textContent = name; saveStageSnapshot(); }
-  });
-
-  // عند النزول من الاستيج: امسح الاستيج + امسح الشات (حسب طلبك)
-  leaveBtn && (leaveBtn.onclick = ()=>{
-    clearStage();
-    clearChat();
-  });
-
-  // خروج تام: امسح كل شيء وارجع للدخول
-  logoutBtn && (logoutBtn.onclick = ()=>{
-    clearStage();
-    clearChat();
-    show('login');
-  });
-}
-
-/* إضافة رسالة للصندوق */
-function addRow(from, text, scroll=true){
-  const badge = from.role==='owner' ? '<span class="badge owner">owner</span>'
-              : from.role==='admin' ? '<span class="badge admin">admin</span>' : '';
-  const row = document.createElement('div');
-  row.className = 'row';
-  row.innerHTML = `
-    <div class="av"><span class="emo">🙂</span></div>
-    <div class="bubble">
-      <div class="meta"><span class="nick">${esc(from.name)} ${badge}</span></div>
-      <div>${esc(text)}</div>
-    </div>`;
-  messages.appendChild(row);
-  if(scroll) messages.scrollTop = messages.scrollHeight; // يبقى تحت
-}
-
-/* حفظ/مسح شات */
-function saveChat(m){
-  const arr = JSON.parse(localStorage.getItem(CHAT_KEY) || '[]');
-  arr.push({ name:m.name, role:m.role, text:m.text, ts:Date.now() });
-  localStorage.setItem(CHAT_KEY, JSON.stringify(arr.slice(-300)));
-}
-function clearChat(){
-  localStorage.removeItem(CHAT_KEY);
-  messages.innerHTML = '';
-}
-
-/* حفظ/استرجاع/مسح حالة الاستيج */
-function saveStageSnapshot(){
-  const state = [...document.querySelectorAll('#stage .slot')].map(s=>({
-    on:  s.classList.contains('on'),
-    lab: s.querySelector('.lab').textContent || ''
-  }));
-  localStorage.setItem(STAGE_KEY, JSON.stringify(state));
-}
-function restoreStage(){
-  try{
-    const state = JSON.parse(localStorage.getItem(STAGE_KEY) || '[]');
-    const slots = [...document.querySelectorAll('#stage .slot')];
-    state.forEach((s,i)=>{
-      if(!slots[i]) return;
-      slots[i].classList.toggle('on', !!s.on);
-      slots[i].querySelector('.lab').textContent = s.lab || '';
-    });
-  }catch{}
-}
-function clearStage(){
-  document.querySelectorAll('#stage .slot').forEach(s=>{
-    s.classList.remove('on');
-    s.querySelector('.lab').textContent = '';
-  });
-  localStorage.removeItem(STAGE_KEY);
-}
-
-/* أدوات */
-function esc(s){ return String(s).replace(/[&<>\"']/g, c=>({"&":"&amp;","<":"&lt;","&gt;":">","\"":"&quot;","'":"&#39;"}[c])); }
-
-/* لو رجّعك مباشرة على شاشة الشات بالريلود */
-(() => {
-  if (document.getElementById('chat') && document.getElementById('chat').classList.contains('active')) {
-    bootChat();
-  }
-})();
