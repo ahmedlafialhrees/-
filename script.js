@@ -1,26 +1,33 @@
-// اتصال
-const socket = io("/", { path: "/socket.io", transports: ["websocket","polling"] });
+/* ========= إعداد الاتصال =========
+   إذا أنت فاتح من Render نفسه خله "/"
+   وإذا فاتح من GitHub Pages غيّر SERVER_URL إلى رابط سيرفرك على Render
+*/
+const SERVER_URL = "https://kwpooop-ycxq.onrender.com"; // عدّله إذا لزم
+const sameOrigin = location.hostname.endsWith("onrender.com") || location.hostname === "localhost";
+const ioURL = sameOrigin ? "/" : SERVER_URL;
 
-// عناصر عامة
-const statusEl = document.getElementById("status");
-const vLogin = document.getElementById("view-login");
-const vRooms = document.getElementById("view-rooms");
-const vChat  = document.getElementById("view-chat");
+const socket = io(ioURL, {
+  path: "/socket.io",
+  transports: ["websocket","polling"],
+  withCredentials: false
+});
 
-// عناصر الدخول
+/* ========= عناصر الواجهة ========= */
+const viewLogin = document.getElementById("view-login");
+const viewRooms = document.getElementById("view-rooms");
+const viewChat  = document.getElementById("view-chat");
+
 const nameI = document.getElementById("name");
 const roleI = document.getElementById("role");
 const passI = document.getElementById("pass");
 const goLogin = document.getElementById("go-login");
 
-// عناصر الرومات
 const roomsBox = document.getElementById("rooms");
 const ownerTools = document.getElementById("owner-tools");
 const newRoomI = document.getElementById("newRoom");
 const addRoomB = document.getElementById("addRoom");
 const backToLogin = document.getElementById("backToLogin");
 
-// عناصر الشات
 const roomTitle = document.getElementById("roomTitle");
 const usersBox  = document.getElementById("users");
 const msgs      = document.getElementById("msgs");
@@ -29,13 +36,12 @@ const text      = document.getElementById("text");
 const sendB     = document.getElementById("send");
 const leaveB    = document.getElementById("leave");
 
-// حالة
 let me = { name:"", role:"member", pass:"" };
 let currentRoom = null;
 
-// helpers
-const show = (v)=>[vLogin,vRooms,vChat].forEach(x=>x.classList.toggle("hidden",x!==v));
-const addMsg = (html, cls="") => {
+/* ========= Helpers ========= */
+const show = (v)=>[viewLogin,viewRooms,viewChat].forEach(x=>x.classList.toggle("hidden",x!==v));
+const addMsg = (html, cls="")=>{
   const d = document.createElement("div");
   d.className = "msg " + cls;
   d.innerHTML = html;
@@ -45,18 +51,18 @@ const addMsg = (html, cls="") => {
 const renderUsers = (list=[])=>{
   usersBox.innerHTML = "";
   list.forEach(u=>{
-    const p = document.createElement("div");
+    const p = document.createElement("span");
     p.className = "pill";
     p.textContent = `${u.name} • ${u.role}`;
     usersBox.appendChild(p);
   });
 };
 
-// حالة الاتصال
-socket.on("connect", ()=> statusEl.textContent = "🟢 متصل");
-socket.on("disconnect", ()=> statusEl.textContent = "🔴 غير متصل");
+/* ========= اتصال ========= */
+socket.on("connect", ()=> console.log("connected:", socket.id));
+socket.on("disconnect", ()=> console.log("disconnected"));
 
-// ــــــــــــــــــــــ 1) دخول → الرومات ــــــــــــــــــــــ
+/* ========= 1) دخول → صفحة الرومات ========= */
 goLogin.addEventListener("click", ()=>{
   me = {
     name: (nameI.value||"").trim() || "ضيف",
@@ -65,17 +71,17 @@ goLogin.addEventListener("click", ()=>{
   };
   ownerTools.classList.toggle("hidden", me.role !== "owner");
   socket.emit("rooms:list", renderRooms);
-  show(vRooms);
+  show(viewRooms);
 });
 
 function renderRooms(list){
   roomsBox.innerHTML = "";
   list.forEach(r=>{
-    const btn = document.createElement("button");
-    btn.className = "room-btn";
-    btn.textContent = r;
-    btn.onclick = ()=> joinRoom(r);
-    roomsBox.appendChild(btn);
+    const b = document.createElement("button");
+    b.className = "room-card";
+    b.textContent = r;
+    b.onclick = ()=> joinRoom(r);
+    roomsBox.appendChild(b);
   });
 }
 socket.on("rooms:update", renderRooms);
@@ -89,18 +95,18 @@ addRoomB.addEventListener("click", ()=>{
   });
 });
 
-backToLogin.addEventListener("click", ()=> show(vLogin));
+backToLogin.addEventListener("click", ()=> show(viewLogin));
 
-// ــــــــــــــــــــــ 2) الانضمام للروم ــــــــــــــــــــــ
-function joinRoom(roomName){
-  socket.emit("join", { ...me, room: roomName }, (res)=>{
+/* ========= 2) الانضمام للروم ========= */
+function joinRoom(room){
+  socket.emit("join", { ...me, room }, (res)=>{
     if(res?.ok){
-      currentRoom = roomName;
-      roomTitle.textContent = `الروم: ${roomName} — أنا: ${res.me.name} (${res.me.role})`;
+      currentRoom = room;
+      roomTitle.textContent = `الروم: ${room} — أنا: ${res.me.name} (${res.me.role})`;
       msgs.innerHTML = "";
       (res.messages||[]).forEach(m=> addMsg(`<b>${m.name}</b>: ${m.text}`, m.name==="النظام"?"sys":""));
       renderUsers(res.users);
-      show(vChat);
+      show(viewChat);
     }
   });
 }
@@ -110,29 +116,25 @@ socket.on("joined",(info)=>{
   roomTitle.textContent = `الروم: ${info.room} — أنا: ${info.me.name} (${info.me.role})`;
   msgs.innerHTML = "";
   (info.messages||[]).forEach(m=> addMsg(`<b>${m.name}</b>: ${m.text}`, m.name==="النظام"?"sys":""));
-  show(vChat);
+  show(viewChat);
 });
-
-// تحديث قائمة المستخدمين
 socket.on("users", renderUsers);
 
-// ــــــــــــــــــــــ 3) الشات داخل الروم ــــــــــــــــــــــ
+/* ========= 3) الشات داخل الروم ========= */
 sendB.addEventListener("click", ()=>{
   const t = (text.value||"").trim();
   if(!t) return;
   socket.emit("msg", t);
-  addMsg(`<b>أنا</b>: ${t}`, "me");
-  text.value = ""; text.focus();
+  addMsg(`<b>أنا</b>: ${t}`,"me");
+  text.value=""; text.focus();
 });
-text.addEventListener("keydown", (e)=>{
-  if(e.key === "Enter"){ e.preventDefault(); sendB.click(); }
-});
+text.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); sendB.click(); } });
 
 socket.on("msg", ({name, text})=>{
   addMsg(`<b>${name}</b>: ${text}`, name==="النظام"?"sys":"");
 });
 
-// typing
+/* مؤشر "قاعد يكتب…" */
 text.addEventListener("input", ()=>{
   socket.emit("typing", true);
   clearTimeout(window.__tt);
@@ -142,5 +144,5 @@ socket.on("typing", ({name, typing})=>{
   typingBar.textContent = typing ? `${name} قاعد يكتب…` : "";
 });
 
-// خروج
+/* خروج */
 leaveB.addEventListener("click", ()=> location.reload());
