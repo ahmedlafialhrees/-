@@ -3,95 +3,86 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>StageChat • Rooms</title>
-  <style>
-    :root{--bg:#0c1020;--card:#0f1526;--line:#1f2a44;--muted:#9ba3b4;--txt:#e9edf3}
-    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#0b1120,#0a0f1e);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto}
-    header{position:sticky;top:0;background:#0b1120cc;backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 14px;z-index:2}
-    .nav{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
-    .brand{font-weight:700;letter-spacing:.3px}
-    .status{font-size:12px;opacity:.8}
-    .wrap{max-width:980px;margin:18px auto;padding:0 14px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 10px 30px #00000040}
-    h3{margin:0 0 10px}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    input,select,button{border:1px solid var(--line);background:#0b1220;color:var(--txt);border-radius:10px;padding:10px 12px;font-size:16px}
-    input,select{min-width:130px} button{cursor:pointer}
-    .hidden{display:none}
-    /* rooms */
-    .rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-    .room-btn{padding:14px;border-radius:12px;border:1px solid var(--line);background:#0c1428;text-align:right}
-    .room-btn:hover{transform:translateY(-1px)}
-    .owner-tools{display:flex;gap:8px;margin-top:10px}
-    /* chat */
-    #msgs{height:58vh;overflow:auto;background:#0b0f1a;border:1px solid var(--line);border-radius:12px;padding:10px}
-    .msg{padding:8px 10px;margin:6px 0;border-radius:10px;background:#121a2e}
-    .me{background:#1b2540}
-    .sys{opacity:.85;background:transparent;border:1px dashed var(--line)}
-    #typing{min-height:20px;opacity:.8}
-    .users{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-    .pill{border:1px solid var(--line);background:#0e1730;border-radius:999px;padding:6px 10px;font-size:12px}
-    .footer{display:flex;gap:8px;margin-top:8px}
-    .footer input{flex:1}
-  </style>
+  <title>StageChat</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <header>
-    <div class="nav">
-      <div class="brand">StageChat</div>
-      <div class="status" id="status">🟡 يحاول الاتصال…</div>
-    </div>
-  </header>
-
   <div class="wrap">
-    <!-- دخول -->
-    <div id="view-login" class="card">
-      <h3>دخول</h3>
-      <div class="row">
-        <input id="name" placeholder="اسمك">
-        <select id="role">
-          <option value="member">عضو</option>
+
+    <!-- شاشة الدخول (نفس التصميم) -->
+    <section id="view-login" class="card login-card">
+      <div class="login-head">
+        <div class="login-icon" aria-hidden="true">🎧</div>
+        <h1>تسجيل الدخول</h1>
+      </div>
+
+      <div class="login-grid">
+        <div class="login-left">
+          <label class="lbl">اسمك وصورتك</label>
+          <div class="field">
+            <input id="name" class="input" placeholder="اكتب اسمك (للعضو ممكن تتركه فاضي)">
+          </div>
+        </div>
+        <div class="login-right">
+          <span class="avatar">imgbb.com<br>image not found</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl">الدور</label>
+        <select id="role" class="select">
+          <option value="member" selected>عضو</option>
           <option value="admin">أدمن</option>
           <option value="owner">أونر</option>
         </select>
-        <input id="pass" placeholder="كلمة السر (للأونر/الأدمن)">
-        <button id="go-login">استمرار</button>
       </div>
-      <div style="opacity:.8;margin-top:6px;font-size:13px">
-        الأونر الافتراضي: 7770 — الأدمن: 7771 (تقدر تغيّرهم من Render)
-      </div>
-    </div>
 
-    <!-- الرومات -->
-    <div id="view-rooms" class="card hidden">
-      <h3>الرومات</h3>
+      <div class="field">
+        <input id="pass" class="input" placeholder="كلمة السر (للأونر/الأدمن)">
+      </div>
+
+      <button id="go-login" class="btn-primary">دخول</button>
+
+      <p class="hint">الأونر الافتراضي: 7770 — الأدمن: 7771 (تقدر تغيّرهم من Render)</p>
+    </section>
+
+    <!-- صفحة الرومات -->
+    <section id="view-rooms" class="card hidden">
+      <h2 class="title">الرومات</h2>
       <div id="rooms" class="rooms"></div>
-      <div id="owner-tools" class="owner-tools hidden">
-        <input id="newRoom" placeholder="اسم روم جديد">
-        <button id="addRoom">إضافة روم</button>
-      </div>
-      <div style="margin-top:8px">
-        <button id="backToLogin">تغيير الاسم/الدور</button>
-      </div>
-    </div>
 
-    <!-- الشات -->
-    <div id="view-chat" class="card hidden">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div id="roomTitle"></div>
-        <button id="leave">خروج من الروم</button>
+      <div id="owner-tools" class="owner hidden">
+        <div class="field">
+          <input id="newRoom" class="input" placeholder="اسم روم جديد">
+        </div>
+        <button id="addRoom" class="btn-secondary">إضافة روم</button>
       </div>
-      <div class="users" id="users"></div>
-      <div id="msgs"></div>
-      <div id="typing"></div>
-      <div class="footer">
-        <input id="text" placeholder="اكتب رسالة…">
-        <button id="send">إرسال</button>
+
+      <div class="row">
+        <button id="backToLogin" class="btn-ghost">تغيير الاسم/الدور</button>
       </div>
-    </div>
+    </section>
+
+    <!-- صفحة الشات -->
+    <section id="view-chat" class="card hidden">
+      <div class="chat-top">
+        <div id="roomTitle" class="title"></div>
+        <button id="leave" class="btn-ghost">خروج</button>
+      </div>
+
+      <div id="users" class="users"></div>
+
+      <div id="msgs" class="msgs"></div>
+      <div id="typing" class="typing"></div>
+
+      <div class="send-row">
+        <input id="text" class="input" placeholder="اكتب رسالة…">
+        <button id="send" class="btn-primary">إرسال</button>
+      </div>
+    </section>
+
   </div>
 
-  <!-- سكربتات -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="./script.js"></script>
 </body>
