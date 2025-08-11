@@ -1,9 +1,12 @@
-// script.js — client
+// script.js — client (مربوط على سيرفرك)
 const $ = s => document.querySelector(s);
 
-// غيّر هذا الرابط لو بتفتح من GitHub Pages أو أي دومين خارجي:
-const SERVER_FALLBACK = "https://YOUR-APP.onrender.com"; // ← حط رابط Render هنا
-const USE_SAME_ORIGIN = location.hostname.endsWith("onrender.com") || location.hostname === "localhost";
+// ✅ رابط السيرفر على Render (مثل ما عطيتني)
+const SERVER_FALLBACK = "https://kwpooop.onrender.com";
+
+// لو كنت فاتح من نفس سيرفر Render ما تحتاج الرابط، غير كذا بنستخدم SERVER_FALLBACK
+const USE_SAME_ORIGIN =
+  location.hostname.endsWith("onrender.com") || location.hostname === "localhost";
 
 let socket = null;
 let me = { name: "", role: "member" };
@@ -12,25 +15,34 @@ const typingHints = new Map();
 
 const login = document.querySelector(".login");
 const app = document.querySelector(".app");
-const nameI = $("#name"), roleI = $("#role"), passI = $("#pass");
-const joinB = $("#join"), msgs = $("#msgs"), text = $("#text"), sendB = $("#send");
-const stage = $("#stage");
+const nameI = document.querySelector("#name");
+const roleI = document.querySelector("#role");
+const passI = document.querySelector("#pass");
+const joinB = document.querySelector("#join");
+const msgs  = document.querySelector("#msgs");
+const text  = document.querySelector("#text");
+const sendB = document.querySelector("#send");
+const stage = document.querySelector("#stage");
 
+// الغرفة (تقدر تغيّرها من الكويري ?room=اسم-الغرفة)
 const room = new URLSearchParams(location.search).get("room") || "مجلس-١";
 
-// رسم الاستيج (5 خانات أفقية)
+// ـــــــــــــــ UI مساعدات ـــــــــــــــ
 function drawStage(data) {
   stage.innerHTML = "";
   (data || []).forEach((s, i) => {
     const el = document.createElement("button");
     el.className = "slot" + (s ? " on" : "");
-    el.innerHTML = `<div class="ped"></div><div class="mic">🎤</div><div class="nm">${s ? s.name : ""}</div>`;
+    el.innerHTML = `
+      <div class="ped"></div>
+      <div class="mic">🎤</div>
+      <div class="nm">${s ? s.name : ""}</div>`;
+    // اضغط على الخانة: يصعد/ينزل
     el.onclick = () => socket.emit("stage:occupy", i);
     stage.appendChild(el);
   });
 }
 
-// إضافة رسالة
 function addMsg(name, body) {
   const row = document.createElement("div");
   row.className = "msg";
@@ -40,25 +52,35 @@ function addMsg(name, body) {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-// اتصال وانضمام
+// ـــــــــــــــ اتصال وانضمام ـــــــــــــــ
 joinB.onclick = () => {
-  const name = nameI.value.trim();
+  const name = (nameI.value || "").trim();
   const role = roleI.value;
   const pass = passI.value;
 
-  socket = USE_SAME_ORIGIN ? io() : io(SERVER_FALLBACK, { transports: ["websocket", "polling"] });
+  // اتصال
+  socket = USE_SAME_ORIGIN
+    ? io()
+    : io(SERVER_FALLBACK, { transports: ["websocket", "polling"] });
 
   socket.on("join-denied", (m) => alert(m || "رفض الدخول"));
-  socket.on("joined", (u) => { me = u; login.style.display = "none"; app.style.display = "block"; });
+
+  socket.on("joined", (u) => {
+    me = u;
+    login.style.display = "none";
+    app.style.display = "block";
+  });
+
   socket.on("state", (st) => {
     msgs.innerHTML = "";
     (st.messages || []).forEach(m => addMsg(m.name, m.text));
     drawStage(st.stage);
   });
-  socket.on("msg", (m) => addMsg(m.name, m.text));
+
+  socket.on("msg",   (m)  => addMsg(m.name, m.text));
   socket.on("stage", (st) => drawStage(st));
+
   socket.on("typing", ({ name }) => {
-    // لمحة "…يكتب"
     if (typingHints.get(name)) clearTimeout(typingHints.get(name));
     let hint = msgs.querySelector(`.msg.typing[data-name="${name}"]`);
     if (!hint) {
@@ -76,6 +98,7 @@ joinB.onclick = () => {
   socket.emit("join", { name, role, pass, room });
 };
 
+// إرسال رسالة
 sendB.onclick = () => {
   const t = text.value.trim();
   if (!t) return;
@@ -83,6 +106,7 @@ sendB.onclick = () => {
   text.value = "";
 };
 
+// إشارة "يكتب..."
 text.addEventListener("input", () => {
   const now = Date.now();
   if (!socket || now - lastTyping < 800) return;
