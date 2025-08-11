@@ -1,15 +1,15 @@
 {
-  "name": "kw777-live",
+  "name": "stagechat-full",
   "version": "1.0.0",
-  "description": "Kuwait 777 voice chat (UI + stage) live with Socket.IO",
+  "type": "module",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
-    "body-parser": "^1.20.2",
-    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "helmet": "^7.1.0",
     "socket.io": "^4.7.5"
-  }
+  },
+  "engines": { "node": ">=18.0.0" }
 }
