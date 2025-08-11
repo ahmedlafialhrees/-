@@ -1,140 +1,215 @@
-// ===== Kuwait 777 — Live server (stage + chat) =====
-const path = require('path');
-const fs = require('fs');
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const helmet = require('helmet');
-const cookie = require('cookie-parser');
-const bodyParser = require('body-parser');
+// server.js
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] } });
-
-app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
-app.use(cookie());
-app.use(bodyParser.json({ limit: '2mb' }));
+app.use(express.static("public"));
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
 
-// صفحة واحدة (نقرأ index.html من الجذر)
-app.get('/', (_req,res)=>{
-  res.setHeader('Content-Type','text/html; charset=utf-8');
-  res.send(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'));
+// كلمات سر افتراضية – تقدر تغيّرها من متغيرات البيئة في Render
+const OWNER_PASS = process.env.OWNER_PASS || "7770";
+const ADMIN_PASS = process.env.ADMIN_PASS || "7771";
+
+// حالة لكل غرفة (مجموعة)
+const rooms = new Map(); // roomName -> { users, nameToId, tempAdmins, bans, stage, messages, accounts }
+const makeState = () => ({
+  users: new Map(),
+  nameToId: new Map(),
+  tempAdmins: new Set(),
+  bans: new Map(),
+  stage: Array(5).fill(null),
+  messages: [],
+  accounts: new Map()
 });
+const getRoom = (name) => {
+  if (!rooms.has(name)) rooms.set(name, makeState());
+  return rooms.get(name);
+};
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-// —— حسابات بسيطة داخل الذاكرة
-const OWNER_MAIN = { username:'owner', password:'66773707' };
-const accounts = new Map(); // username -> {username,password,role}
-accounts.set('admin1', { username:'admin1', password:'1234', role:'admin' });
-
-// —— غرفة + استيج (٥ مقاعد)
-const roomName = 'الاستقبال';
-const rooms = { [roomName]: { users:new Map(), speakers:new Set() } };
-let nextUid = 1;
-const pub = u => ({ uid:u.uid, name:u.name, role:u.role, avatar:u.avatar });
-
-io.on('connection', (socket)=>{
-  socket.on('join', ({ displayName, role, loginUser, loginPass, avatar })=>{
-    // تحقق الدور
-    let eff = 'member';
-    if(role==='owner'){
-      const ok = (loginUser===OWNER_MAIN.username && loginPass===OWNER_MAIN.password) ||
-                 (accounts.has(loginUser) && accounts.get(loginUser).password===loginPass && accounts.get(loginUser).role==='owner');
-      if(!ok) return socket.emit('auth:fail');
-      eff = 'owner';
-    } else if (role==='admin'){
-      const ok = accounts.has(loginUser) && accounts.get(loginUser).password===loginPass && accounts.get(loginUser).role==='admin';
-      if(!ok) return socket.emit('auth:fail');
-      eff = 'admin';
-    }
-
-    const uid = nextUid++;
-    const user = {
-      uid,
-      name: String(displayName||'مستخدم').slice(0,32),
-      role: eff,
-      avatar: avatar || '🙂',
-      room: roomName,
-    };
-
-    socket.data.user = user;
-    rooms[roomName].users.set(socket.id, user);
-    socket.join(roomName);
-
-    socket.emit('welcome', { text:`🎉 مرحباً بك يا ${user.name} في الدردشة الصوتية!` });
-    io.to(roomName).emit('user:list', [...rooms[roomName].users.values()].map(pub));
-    socket.emit('stage:update', stageSnap());
-    io.to(roomName).emit('system:msg', { text:`${user.name} دخل الغرفة` });
-    socket.emit('joined', { uid, role: eff });
+function pushMsg(room, name, text) {
+  const R = getRoom(room);
+  R.messages.push({ name, text, ts: Date.now() });
+  R.messages = R.messages.slice(-100);
+  io.to(room).emit("msg", { name, text });
+}
+function sendFull(room, sid) {
+  const R = getRoom(room);
+  io.to(sid).emit("state", {
+    messages: R.messages,
+    stage: R.stage,
+    users: [...R.users.values()].map(u => ({ name: u.name, role: u.role }))
   });
-
-  socket.on('chat:msg', ({ text })=>{
-    const u = socket.data.user; if(!u) return;
-    const payload = { from: pub(u), text: String(text||'').slice(0,500), ts: Date.now() };
-    io.to(u.room).emit('chat:msg', payload);
-    io.to(u.room).emit('ticker:update', payload);
-  });
-
-  // طلب صعود/نزول الاستيج
-  socket.on('stage:request', ()=>{
-    const u = socket.data.user; if(!u) return;
-    const r = rooms[u.room];
-    if(r.speakers.size >= 5) return socket.emit('stage:full');
-    r.speakers.add(socket.id);
-    io.to(u.room).emit('stage:update', stageSnap());
-    io.to(u.room).emit('system:msg', { text:`📢 ${u.name} صعد الاستيج` });
-  });
-
-  socket.on('stage:leave', ()=>{
-    const u = socket.data.user; if(!u) return;
-    const r = rooms[u.room];
-    r.speakers.delete(socket.id);
-    io.to(u.room).emit('stage:update', stageSnap());
-    io.to(u.room).emit('system:msg', { text:`⬇️ ${u.name} نزل من الاستيج` });
-  });
-
-  // صلاحيات (تنزيل/طرد)
-  socket.on('stage:drop', ({ targetUid })=>{
-    const u = socket.data.user; if(!u || !['owner','admin'].includes(u.role)) return;
-    const r = rooms[u.room];
-    for (const [sid, usr] of r.users) if (usr.uid===targetUid){
-      r.speakers.delete(sid);
-      io.to(u.room).emit('stage:update', stageSnap());
-      io.to(u.room).emit('system:msg', { text:`${usr.name} تم إنزاله من الاستيج` });
-      io.to(sid).emit('stage:dropped');
-    }
-  });
-
-  socket.on('admin:kick', ({ targetUid })=>{
-    const u = socket.data.user; if(!u || !['owner','admin'].includes(u.role)) return;
-    const r = rooms[u.room];
-    for (const [sid, usr] of r.users) if (usr.uid===targetUid){
-      io.to(sid).emit('kicked');
-      r.users.delete(sid); r.speakers.delete(sid);
-      io.to(u.room).emit('user:list', [...r.users.values()].map(pub));
-      io.to(u.room).emit('stage:update', stageSnap());
-      io.to(u.room).emit('system:msg', { text:`${usr.name} طُرد` });
-    }
-  });
-
-  socket.on('disconnect', ()=>{
-    const u = socket.data.user; if(!u) return;
-    const r = rooms[u.room]; if(!r) return;
-    r.users.delete(socket.id); r.speakers.delete(socket.id);
-    io.to(u.room).emit('user:list', [...r.users.values()].map(pub));
-    io.to(u.room).emit('stage:update', stageSnap());
-  });
-});
-
-function stageSnap(){
-  const r = rooms[roomName];
-  return [...r.speakers].slice(0,5).map(sid => {
-    const u = r.users.get(sid);
-    return u ? pub(u) : null;
-  }).filter(Boolean);
+}
+function broadcastUsers(room) {
+  const R = getRoom(room);
+  io.to(room).emit(
+    "users",
+    [...R.users.values()].map(u => ({ name: u.name, role: u.role }))
+  );
+}
+function removeFromStage(room, name) {
+  const R = getRoom(room);
+  let changed = false;
+  R.stage = R.stage.map(s => (s && s.name === name ? (changed = true, null) : s));
+  if (changed) io.to(room).emit("stage", R.stage);
 }
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, ()=> console.log('Server on http://localhost:'+PORT));
+io.on("connection", (socket) => {
+  // join: {name, role, pass, room}
+  socket.on("join", ({ name, role, pass, room }) => {
+    const roomName = (room || "مجلس-١").trim() || "مجلس-١";
+    socket.join(roomName);
+    socket.data.room = roomName;
+
+    const R = getRoom(roomName);
+
+    // حظر مؤقت؟
+    const until = R.bans.get(name);
+    if (until && until > Date.now()) {
+      return socket.emit("join-denied", "محظور مؤقتًا");
+    }
+
+    // حسابات محفوظة/كلمات سر
+    const acc = R.accounts.get(name);
+    const okOwner = pass === OWNER_PASS || (acc && acc.role === "owner" && acc.pass === pass);
+    const okAdmin = pass === ADMIN_PASS || R.tempAdmins.has(name) || (acc && acc.role === "admin" && acc.pass === pass);
+
+    if (role === "owner" && !okOwner) return socket.emit("join-denied", "كلمة سر الأونر غير صحيحة");
+    if (role === "admin" && !okAdmin)  return socket.emit("join-denied", "كلمة سر الأدمن غير صحيحة/غير مخوّل");
+
+    // اسم فريد داخل الغرفة
+    let base = (name || `ضيف-${Math.floor(1000 + Math.random() * 9000)}`).trim();
+    let final = base, i = 1;
+    while (R.nameToId.has(final)) final = `${base}-${i++}`;
+
+    R.users.set(socket.id, { name: final, role });
+    R.nameToId.set(final, socket.id);
+    socket.data.name = final;
+    socket.data.role = role;
+
+    socket.emit("joined", { name: final, role, room: roomName });
+    sendFull(roomName, socket.id);
+    pushMsg(roomName, "النظام", `${final} انضمّ`);
+    broadcastUsers(roomName);
+  });
+
+  // رسالة عادية
+  socket.on("msg", (text) => {
+    const { room, name } = socket.data;
+    if (!room) return;
+    const t = String(text || "").slice(0, 500).trim();
+    if (!t) return;
+    pushMsg(room, name, t);
+  });
+
+  // إشارة "يكتب..."
+  socket.on("typing", () => {
+    const { room, name } = socket.data;
+    if (!room || !name) return;
+    socket.to(room).emit("typing", { name });
+  });
+
+  // صعود/نزول الاستيج (ضغط على خانة المايك)
+  socket.on("stage:occupy", (rawIdx) => {
+    const { room, name } = socket.data;
+    if (!room || !name) return;
+    const R = getRoom(room);
+    const idx = clamp(rawIdx | 0, 0, R.stage.length - 1);
+
+    if (R.stage[idx]?.name === name) {
+      R.stage[idx] = null;                 // نزول
+      io.to(room).emit("stage", R.stage);
+      pushMsg(room, "النظام", `${name} نزل من الاستيج`);
+      return;
+    }
+    if (R.stage[idx]) return;              // مشغول
+
+    // إزالة من أي خانة قديمة ثم صعود
+    R.stage = R.stage.map(s => (s && s.name === name ? null : s));
+    R.stage[idx] = { name };
+    io.to(room).emit("stage", R.stage);
+    pushMsg(room, "النظام", `${name} صعد الاستيج`);
+  });
+
+  // صلاحيات الأدمن/الأونر
+  socket.on("admin:drop", (target) => {
+    const { room, role } = socket.data;
+    if (!room) return;
+    if (!(role === "owner" || role === "admin")) return;
+    removeFromStage(room, target);
+    pushMsg(room, "النظام", `تم تنزيل ${target} من الاستيج`);
+  });
+
+  socket.on("admin:grantTempAdmin", (target) => {
+    const { room, role } = socket.data;
+    if (!room) return;
+    if (!(role === "owner" || role === "admin")) return;
+    const R = getRoom(room);
+    R.tempAdmins.add(target);
+    pushMsg(room, "النظام", `تم إعطاء ${target} أدمن (جلسة)`);
+  });
+
+  socket.on("admin:ban2h", (target) => {
+    const { room, role } = socket.data;
+    if (!room) return;
+    if (!(role === "owner" || role === "admin")) return;
+    const R = getRoom(room);
+    const until = Date.now() + 2 * 60 * 60 * 1000;
+    R.bans.set(target, until);
+    const sid = R.nameToId.get(target);
+    if (sid) {
+      io.to(sid).emit("join-denied", "تم حظرك ساعتين");
+      R.users.delete(sid);
+      R.nameToId.delete(target);
+      removeFromStage(room, target);
+      io.sockets.sockets.get(sid)?.disconnect(true);
+    }
+    pushMsg(room, "النظام", `${target} محظور ساعتين`);
+    broadcastUsers(room);
+  });
+
+  // لوحة تحكم الأونر: حسابات محفوظة داخل الغرفة
+  socket.on("owner:addAccount", ({ name, pass, role }) => {
+    const { room, role: myRole } = socket.data;
+    if (!room || myRole !== "owner") return;
+    if (!name || !pass || !["admin", "owner"].includes(role)) return;
+    getRoom(room).accounts.set(name, { pass, role });
+    const list = [...getRoom(room).accounts.entries()].map(([n, v]) => ({ name: n, role: v.role }));
+    io.to(socket.id).emit("owner:accounts", list);
+  });
+
+  socket.on("owner:deleteAccount", (name) => {
+    const { room, role } = socket.data;
+    if (!room || role !== "owner") return;
+    getRoom(room).accounts.delete(name);
+    const list = [...getRoom(room).accounts.entries()].map(([n, v]) => ({ name: n, role: v.role }));
+    io.to(socket.id).emit("owner:accounts", list);
+  });
+
+  socket.on("owner:listAccounts", () => {
+    const { room, role } = socket.data;
+    if (!room || role !== "owner") return;
+    const list = [...getRoom(room).accounts.entries()].map(([n, v]) => ({ name: n, role: v.role }));
+    io.to(socket.id).emit("owner:accounts", list);
+  });
+
+  socket.on("disconnect", () => {
+    const { room, name } = socket.data || {};
+    if (!room || !name) return;
+    const R = getRoom(room);
+    R.users.delete(socket.id);
+    R.nameToId.delete(name);
+    R.tempAdmins.delete(name);
+    removeFromStage(room, name);
+    broadcastUsers(room);
+    pushMsg(room, "النظام", `${name} خرج`);
+  });
+});
+
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, () => console.log("StageChat live on :" + PORT));
