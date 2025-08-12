@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <!-- يمنع التقريب والسكيل على iOS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>دخول المستخدم</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
@@ -12,45 +13,42 @@
       <h1 class="login-title">دخول المستخدم</h1>
 
       <div class="login-fields">
-
-        <!-- اسم العضو + أيقونة شخص -->
+        <!-- اسم المستخدم + أيقونة شخص -->
         <div class="input-wrap user-ico">
           <span class="ico">
             <!-- شخص -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20a8 8 0 0116 0v1H4z"/>
+              <path d="M4 20a8 8 0 0 1 16 0v1H4z"/>
             </svg>
           </span>
-          <input id="name" class="input" placeholder="اكتب اسمك"/>
+          <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
         </div>
 
-        <!-- اختيار الدور: عضو/أدمن/أونر (خانة واحدة تنزل) -->
+        <!-- اختيار الدور (أدمن/أونر) في خانة وحدة -->
         <div class="select-wrap crown-ico">
           <span class="ico" id="roleIcon">
-            <!-- تاج افتراضي رمادي -->
+            <!-- تاج رمادي افتراضي -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
               <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
             </svg>
           </span>
           <select id="roleSelect" class="select">
-            <option value="">— الدور (اختياري) —</option>
+            <option value="">— اختر الدور (اختياري) —</option>
             <option value="admin">أدمن</option>
             <option value="owner">أونر</option>
           </select>
         </div>
 
-        <!-- كلمة السر للدور المختار (واحدة) -->
+        <!-- كلمة السر حسب الدور المختار -->
         <div class="input-wrap crown-ico">
           <span class="ico" id="passIcon">
-            <!-- نفس التاج يتبدل حسب الاختيار -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
               <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
             </svg>
           </span>
-          <input id="rolePass" class="input" placeholder="كلمة السر (اختياري)"/>
+          <input id="rolePass" class="input" placeholder="كلمة السر (اختياري)" autocomplete="current-password"/>
         </div>
-
       </div>
 
       <button id="enter" class="btn big">دخول</button>
@@ -58,25 +56,23 @@
   </div>
 
   <script>
-    // تغيير الأيقونة والنص حسب الدور
-    const roleSel = document.getElementById('roleSelect');
+    // تبديل أيقونة/نص التاج حسب الدور
+    const roleSel  = document.getElementById('roleSelect');
     const roleIcon = document.getElementById('roleIcon');
     const passIcon = document.getElementById('passIcon');
     const rolePass = document.getElementById('rolePass');
 
     function setCrown(role){
-      let color = "#adb1c7"; // افتراضي
-      let glow  = "";
-      if(role === "admin"){ color = "#ff5d5d"; glow = "drop-shadow(0 0 8px rgba(255,93,93,.9))"; rolePass.placeholder = "كلمة سر الأدمن (اختياري)"; }
-      else if(role === "owner"){ color = "#ffd166"; glow = "drop-shadow(0 0 8px rgba(255,209,102,.95))"; rolePass.placeholder = "كلمة سر الأونر (اختياري)"; }
-      else { rolePass.placeholder = "كلمة السر (اختياري)"; }
-
+      let color = "#adb1c7", glow = "", ph = "كلمة السر (اختياري)";
+      if(role === "admin"){ color = "#ff5d5d"; glow = "drop-shadow(0 0 8px rgba(255,93,93,.9))";  ph = "كلمة سر الأدمن (اختياري)"; }
+      if(role === "owner"){ color = "#ffd166"; glow = "drop-shadow(0 0 8px rgba(255,209,102,.95))"; ph = "كلمة سر الأونر (اختياري)"; }
       const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style='fill:${color};filter:${glow}'><path d='M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z'/></svg>`;
       roleIcon.innerHTML = svg;
       passIcon.innerHTML = svg;
+      rolePass.placeholder = ph;
     }
     roleSel.addEventListener('change', ()=> setCrown(roleSel.value));
-    setCrown(""); // مبدئياً
+    setCrown(""); // افتراضي
 
     // الدخول
     document.getElementById('enter').onclick = () => {
@@ -84,14 +80,42 @@
       const role = roleSel.value;
       const pass = rolePass.value.trim();
       if(!name){ alert("اكتب اسمك"); return; }
-
       sessionStorage.setItem("loginName", name);
-      // نخزن كلمة السر حسب الدور المختار (متوافقة مع server.js)
       sessionStorage.setItem("adminPass", role === "admin" ? pass : "");
       sessionStorage.setItem("ownerPass", role === "owner" ? pass : "");
-
       location.href = "/chat";
-    }
+    };
+
+    // ====== منع التقريب والـ pull-to-refresh على iOS ======
+    (function(){
+      // منع Double-Tap Zoom
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function (e) {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+          if (e.cancelable) e.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, {passive:false});
+
+      // منع Pinch Zoom
+      document.addEventListener('gesturestart', (e)=>{ e.preventDefault(); }, {passive:false});
+
+      // منع السحب للتحديث (الباونس) أعلى/أسفل الصفحة
+      let startY = 0;
+      document.addEventListener('touchstart', (e)=>{ startY = e.touches[0].clientY; }, {passive:true});
+      document.addEventListener('touchmove', (e)=>{
+        const el = document.scrollingElement || document.documentElement;
+        const y  = e.touches[0].clientY;
+        const atTop    = el.scrollTop <= 0;
+        const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
+        const pullingDown = y > startY;
+        const pullingUp   = y < startY;
+        if ((atTop && pullingDown) || (atBottom && pullingUp)) {
+          if (e.cancelable) e.preventDefault();
+        }
+      }, {passive:false});
+    })();
   </script>
 </body>
 </html>
