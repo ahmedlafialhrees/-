@@ -4,12 +4,13 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>الشات</title>
-  <link rel="stylesheet" href="/style.css"/>
+  <link rel="stylesheet" href="style.css"/>
 </head>
-<body>
+<body class="chat-page">
+  <!-- شريط علوي -->
   <div class="topbar">
     <div class="badge">الغرفة العامة</div>
-    <a class="btn ghost" id="ownerPanel" href="/owner" style="display:none">لوحة التحكم</a>
+    <a class="btn ghost" id="ownerPanel" href="/owner" style="display:none">دخول التحكم</a>
   </div>
 
   <div class="chat-wrap">
@@ -27,7 +28,7 @@
       </div>
     </div>
 
-    <!-- المحتوى الرئيسي -->
+    <!-- الرسائل + الأعضاء -->
     <div class="main">
       <div class="msgs" id="msgs"></div>
       <div class="users" id="users"></div>
@@ -39,7 +40,7 @@
       <div class="grid" id="amBtns"></div>
     </div>
 
-    <!-- الإدخال -->
+    <!-- الإدخال ثابت تحت -->
     <div class="input-bar">
       <input class="input" id="text" placeholder="...اكتب رسالة"/>
       <button class="btn" id="send">إرسال</button>
@@ -47,6 +48,6 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/chat.js"></script>
+  <script src="chat.js"></script>
 </body>
 </html>
