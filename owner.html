@@ -8,6 +8,14 @@
     :root{--bg:#0b0f16; --card:#111827; --line:#1d2840; --text:#e8ecf3}
     body{margin:0; background:linear-gradient(180deg,#0e1420,#0b0f16); color:var(--text);
          font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; padding:16px}
+
+    /* توب بار + زر الرجوع أقصى اليسار */
+    .topbar{position:sticky;top:0;z-index:40;height:56px;display:flex;align-items:center;justify-content:space-between;
+            padding:8px 12px;margin:-16px -16px 16px;border-bottom:1px solid var(--line);
+            background:linear-gradient(180deg,#121a2a,#0f1420)}
+    .left{display:flex;align-items:center;gap:8px}
+    .backBtn{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#0c1220;color:#e8ecf3;cursor:pointer}
+
     .card{background:linear-gradient(180deg,#111827,#0f1420); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px}
     h2{margin:0 0 12px}
     .row{display:flex; gap:8px; flex-wrap:wrap}
@@ -21,6 +29,12 @@
   </style>
 </head>
 <body>
+  <div class="topbar">
+    <div class="left">
+      <button class="backBtn" onclick="location.href='chat.html'">رجوع للروم</button>
+    </div>
+  </div>
+
   <h2>لوحة التحكم</h2>
 
   <div class="card">
@@ -42,10 +56,6 @@
       <thead><tr><th>الاسم</th><th>الدور</th><th>إجراء</th></tr></thead>
       <tbody id="rolesBody"></tbody>
     </table>
-  </div>
-
-  <div class="row">
-    <button onclick="location.href='chat.html'">رجوع للروم</button>
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -81,7 +91,7 @@
       const pass=(uPass.value||"").trim();
       const role=uRole.value;
       if(!target || !pass){ flash("اكتب الاسم وكلمة السر", false); return; }
-      socket.emit("roles:save", { target, role, pass }); // حفظ فقط
+      socket.emit("roles:save", { target, role, pass });
       uPass.value="";
       setTimeout(()=> socket.emit("roles:request"), 150);
       flash("تم الحفظ");
@@ -99,7 +109,6 @@
       });
     });
 
-    // حدّث القائمة دورياً كضمان
     setInterval(()=> socket.emit("roles:request"), 4000);
   </script>
 </body>
