@@ -3,33 +3,49 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>دخول الشات</title>
-  <link rel="stylesheet" href="/style.css"/>
+  <title>دخول المستخدم</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
-<body>
-  <div class="container" style="padding-top:40px">
-    <div class="card col" style="max-width:520px;margin:auto">
-      <h2 style="margin:0">سجل الدخول</h2>
-      <div class="badge">بدون إيميل — الاسم فقط</div>
-      <input class="input" id="name" placeholder="اكتب اسمك"/>
-      <div class="row">
-        <input class="input" id="adminPass" placeholder="كلمة سر الأدمن (اختياري)"/>
-        <input class="input" id="ownerPass" placeholder="كلمة سر الأونر (اختياري)"/>
+<body class="login-page">
+  <div class="login-wrap">
+    <div class="login-card">
+      <h1 class="login-title">دخول المستخدم</h1>
+      <p class="login-sub">بدون إيميل — الاسم فقط</p>
+
+      <div class="login-fields">
+        <div class="input-wrap">
+          <span class="ico">👤</span>
+          <input id="name" class="input" placeholder="اكتب اسمك"/>
+        </div>
+
+        <div class="row2">
+          <div class="input-wrap">
+            <span class="ico">🛡️</span>
+            <input id="adminPass" class="input" placeholder="كلمة سر الأدمن (اختياري)"/>
+          </div>
+          <div class="input-wrap">
+            <span class="ico">👑</span>
+            <input id="ownerPass" class="input" placeholder="كلمة سر الأونر (اختياري)"/>
+          </div>
+        </div>
       </div>
-      <button class="btn" id="enter">دخول</button>
-      <div id="err" style="color:#ff6b6b"></div>
-      <hr style="opacity:.1;width:100%"/>
-      <div class="row" style="justify-content:space-between">
-        <a href="/owner">لوحة تحكم الأونر</a>
-        <span class="badge">الظهور كـ متصل</span>
+
+      <button id="enter" class="btn big">دخول</button>
+
+      <div class="links-row">
+        <a href="/owner" class="link">لوحة تحكم الأونر</a>
+        <span class="muted">الظهور كـ متصل</span>
       </div>
     </div>
   </div>
+
   <script>
+    // نفس طريقة دخولنا قبل
     document.getElementById('enter').onclick = () => {
       const n = document.getElementById('name').value.trim();
       const a = document.getElementById('adminPass').value.trim();
       const o = document.getElementById('ownerPass').value.trim();
+      if(!n){ alert("اكتب اسمك"); return; }
       sessionStorage.setItem("loginName", n);
       sessionStorage.setItem("adminPass", a);
       sessionStorage.setItem("ownerPass", o);
