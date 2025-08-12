@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>لوحة التحكم</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
@@ -12,7 +12,7 @@
     <a class="btn ghost" href="/chat">رجوع للشات</a>
   </div>
 
-  <div class="container" style="padding-top:12px">
+  <div class="container" style="padding:12px">
     <div class="card">
       <h3 style="margin:0 0 10px">إدارة الصلاحيات</h3>
       <div id="warn" class="badge" style="display:none"></div>
@@ -26,6 +26,7 @@
     const name = sessionStorage.getItem("loginName") || "";
     const adminPass = sessionStorage.getItem("adminPass") || "";
     const ownerPass = sessionStorage.getItem("ownerPass") || "";
+    if (!name){ location.href="/"; }
     socket.emit("auth:login", { name, adminPass, ownerPass });
 
     let me = null;
@@ -43,11 +44,7 @@
       list.innerHTML = "";
       users.forEach(u=>{
         const row = document.createElement("div");
-        row.className = "row";
-        row.style.justifyContent = "space-between";
-        row.style.border = "1px solid #2a2a3e";
-        row.style.borderRadius = "10px";
-        row.style.padding = "10px";
+        row.className = "owner-list-row";
 
         const left = document.createElement("div");
         left.innerHTML = `${u.name} ${
