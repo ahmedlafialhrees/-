@@ -10,37 +10,27 @@
   <div class="login-wrap">
     <div class="login-card">
       <h1 class="login-title">دخول المستخدم</h1>
-      <p class="login-sub">بدون إيميل — الاسم فقط</p>
 
       <div class="login-fields">
         <div class="input-wrap">
-          <span class="ico">👤</span>
           <input id="name" class="input" placeholder="اكتب اسمك"/>
         </div>
 
         <div class="row2">
           <div class="input-wrap">
-            <span class="ico">🛡️</span>
             <input id="adminPass" class="input" placeholder="كلمة سر الأدمن (اختياري)"/>
           </div>
           <div class="input-wrap">
-            <span class="ico">👑</span>
             <input id="ownerPass" class="input" placeholder="كلمة سر الأونر (اختياري)"/>
           </div>
         </div>
       </div>
 
       <button id="enter" class="btn big">دخول</button>
-
-      <div class="links-row">
-        <a href="/owner" class="link">لوحة تحكم الأونر</a>
-        <span class="muted">الظهور كـ متصل</span>
-      </div>
     </div>
   </div>
 
   <script>
-    // نفس طريقة دخولنا قبل
     document.getElementById('enter').onclick = () => {
       const n = document.getElementById('name').value.trim();
       const a = document.getElementById('adminPass').value.trim();
