@@ -6,7 +6,7 @@ let me=null, stage=[null,null,null,null], meOnStage=false;
 // خروج
 document.getElementById("exitBtn").onclick = ()=> location.href="index.html";
 
-// دخول تلقائي
+// دخول
 (function(){
   const name = sessionStorage.getItem("loginName")||"";
   const adminPass = sessionStorage.getItem("adminPass")||"";
@@ -17,15 +17,19 @@ document.getElementById("exitBtn").onclick = ()=> location.href="index.html";
 
 socket.on("auth:ok", ({me: my}) => {
   me = my;
+  document.getElementById("composerName").textContent = `ترسل كـ: ${me.name}`;
   if (me.role === "owner" && (!window.MAIN_OWNER_NAME || me.name === window.MAIN_OWNER_NAME)) {
     document.getElementById("ownerPanel").style.display = "inline-flex";
   }
 });
 socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="index.html"; });
 socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="index.html"; });
-socket.on("connect_error", ()=> addSystem("⚠️ غير متصل بالسيرفر"));
 
-// ===== الرسائل (بدون أسماء) =====
+// حالة الاتصال
+socket.on("connect_error", ()=> addSystem("⚠️ غير متصل بالسيرفر"));
+socket.on("connect", ()=> addSystem("✅ تم الاتصال بالسيرفر"));
+
+/* رسائل */
 function addMsgBox(text){
   const msgs=document.getElementById("msgs");
   const box=document.createElement("div");
@@ -42,14 +46,9 @@ function addSystem(t){
   msgs.appendChild(box);
   msgs.scrollTop=msgs.scrollHeight;
 }
-
-// استقبال رسائل من السيرفر (يدعم string أو object)
 socket.on("chat:msg", (payload)=>{
-  let text = typeof payload === "string" ? payload : (payload?.text || "");
-  if (!text) return;
-  // لو السيرفر يرسل from.id نفس معرفي، نتجاهلها لأننا أضفناها محلياً
-  if (payload?.from?.id && me?.id && payload.from.id === me.id) return;
-  addMsgBox(text);
+  const text = typeof payload==="string" ? payload : (payload?.text || "");
+  if(text) addMsgBox(text);
 });
 
 // إرسال + عرض فوري
@@ -57,35 +56,31 @@ function sendNow(){
   const t=document.getElementById("text");
   const v=(t.value||"").trim();
   if(!v) return;
-  addMsgBox(v);                 // عرض فوري
-  socket.emit("chat:msg", v);   // إرسال للسيرفر
+  addMsgBox(v);          // عرض فوري
+  socket.emit("chat:msg", v);
   t.value="";
 }
 document.getElementById("send").addEventListener("click", sendNow);
 document.getElementById("text").addEventListener("keydown", e=>{ if(e.key==="Enter") sendNow(); });
 
-// ===== الاستيج Overlay =====
+/* الاستيج */
 document.querySelectorAll(".slot").forEach(el=>{
   el.addEventListener("click", ()=>{
-    const panel=document.getElementById("stagePanel");
-    if (panel.classList.contains("closed")) return; // مقفول
+    if (document.getElementById("stagePanel").classList.contains("closed")) return;
     socket.emit("stage:toggle");
   });
 });
 socket.on("stage:update", (view)=>{
   stage=view;
   meOnStage=!!stage.find(s=>s && me && s.id===me.id);
-  document.querySelectorAll(".slot").forEach((el,idx)=>{
-    el.classList.toggle("filled", !!stage[idx]);
-  });
+  document.querySelectorAll(".slot").forEach((el,idx)=> el.classList.toggle("filled", !!stage[idx]));
 });
 
-// زر المايك: يفتح/يقفل
+// زر المايك أعلى اليمين: فتح/قفل الاستيج
 const stagePanel=document.getElementById("stagePanel");
 const stageFab=document.getElementById("stageFab");
-function toggleStage(){
+stageFab.addEventListener("click", ()=>{
   const closing = !stagePanel.classList.contains("closed");
-  if (closing && meOnStage) socket.emit("stage:toggle"); // نزّلني إذا كنت فوق
+  if (closing && meOnStage) socket.emit("stage:toggle");
   stagePanel.classList.toggle("closed");
-}
-stageFab.addEventListener("click", toggleStage);
+});
