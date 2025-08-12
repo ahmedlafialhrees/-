@@ -7,32 +7,27 @@
   <link rel="stylesheet" href="style.css"/>
   <script src="config.js"></script>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-
-  <!-- اسم المرسِل فوق خانة الكتابة + ستايل بسيط للوحة الإيموجي -->
   <style>
     .composer-name{margin:8px 12px 4px;opacity:.75;font-weight:700;font-size:14px}
-    .emoji-panel{
-      position:fixed; bottom:84px; inset-inline-end:14px; z-index:50;
-      display:none; grid-template-columns:repeat(8, 28px); gap:6px;
-      background:#1b1c29; border:1px solid #2a2a3e; border-radius:12px; padding:10px;
-      box-shadow:0 12px 30px rgba(0,0,0,.35);
-    }
+    .emoji-panel{position:fixed;bottom:84px;inset-inline-end:14px;z-index:50;display:none;
+      grid-template-columns:repeat(8,28px);gap:6px;background:#1b1c29;border:1px solid #2a2a3e;
+      border-radius:12px;padding:10px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
     .emoji-panel button{width:28px;height:28px;border:0;background:transparent;cursor:pointer;font-size:20px;line-height:1}
   </style>
 </head>
 <body class="chat-page">
 
-  <!-- نخلي التوببار LTR عشان “يسار/يمين” تكون فيزيائياً -->
+  <!-- نجبر الشريط LTR عشان يسار/يمين يكونون فعليين -->
   <div class="topbar" dir="ltr"
        style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;width:100%;">
     <!-- يسار فعلياً -->
     <a class="btn ghost back" id="exitBtn" style="justify-self:start">خروج</a>
 
-    <!-- منتصف الشاشة: تظهر فقط للأونر الرئيسي (chat.js يتحكم بالعرض) -->
+    <!-- المنتصف: محجوز دايمًا، وتبان فقط للأونر الرئيسي -->
     <a class="btn ghost" id="ownerPanel" href="owner.html"
-       style="justify-self:center;display:none">لوحة التحكم</a>
+       style="justify-self:center;visibility:hidden">لوحة التحكم</a>
 
-    <!-- يمين فعلياً: زر المايك يفتح/يقفل الاستيج -->
+    <!-- يمين فعلياً: زر المايك -->
     <button id="stageFab" aria-label="فتح/إقفال الاستيج"
             style="justify-self:end;position:static;width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">
       <svg viewBox="0 0 24 24" width="22" height="22">
@@ -42,35 +37,21 @@
   </div>
 
   <div class="chat-wrap">
-    <!-- الاستيج Overlay -->
     <div class="stage-panel open" id="stagePanel">
       <div class="stage">
         <div class="slots">
-          <div class="slot" data-idx="0"><div class="mic">
-            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
-          </div></div>
-          <div class="slot" data-idx="1"><div class="mic">
-            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
-          </div></div>
-          <div class="slot" data-idx="2"><div class="mic">
-            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
-          </div></div>
-          <div class="slot" data-idx="3"><div class="mic">
-            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
-          </div></div>
+          <div class="slot" data-idx="0"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
+          <div class="slot" data-idx="1"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
+          <div class="slot" data-idx="2"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
+          <div class="slot" data-idx="3"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
         </div>
       </div>
     </div>
 
-    <!-- الرسائل -->
-    <div class="main">
-      <div class="msgs" id="msgs"></div>
-    </div>
+    <div class="main"><div class="msgs" id="msgs"></div></div>
 
-    <!-- اسم المرسِل -->
     <div id="composerName" class="composer-name"></div>
 
-    <!-- الإدخال + زر الإيموجي -->
     <div class="input-bar">
       <button id="emojiBtn" class="btn small" title="إيموجي" style="min-width:44px;padding:8px 0">🙂</button>
       <input class="input chat-input" id="text" placeholder="...اكتب رسالة"/>
@@ -78,7 +59,6 @@
     </div>
   </div>
 
-  <!-- لوحة الإيموجي -->
   <div id="emojiPanel" class="emoji-panel" dir="ltr"></div>
 
   <script src="chat.js"></script>
