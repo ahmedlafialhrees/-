@@ -1,5 +1,5 @@
 {
-  "name": "single-room-chat-bottom-sheet",
+  "name": "single-room-chat",
   "version": "1.0.0",
   "type": "module",
   "scripts": { "start": "node server.js" },
