@@ -22,18 +22,19 @@
 </head>
 <body class="chat-page">
 
-  <!-- Grid بثلاث أعمدة: يسار/وسط/يمين -->
-  <div class="topbar" style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;width:100%;">
-    <!-- يسار (RTL: end = يسار) -->
-    <a class="btn ghost back" id="exitBtn" style="justify-self:end">خروج</a>
+  <!-- نخلي التوببار LTR عشان “يسار/يمين” تكون فيزيائياً -->
+  <div class="topbar" dir="ltr"
+       style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;width:100%;">
+    <!-- يسار فعلياً -->
+    <a class="btn ghost back" id="exitBtn" style="justify-self:start">خروج</a>
 
-    <!-- نص: تظهر فقط للأونر الرئيسي (chat.js يتحكم بالعرض) -->
+    <!-- منتصف الشاشة: تظهر فقط للأونر الرئيسي (chat.js يتحكم بالعرض) -->
     <a class="btn ghost" id="ownerPanel" href="owner.html"
        style="justify-self:center;display:none">لوحة التحكم</a>
 
-    <!-- يمين (RTL: start = يمين) -->
+    <!-- يمين فعلياً: زر المايك يفتح/يقفل الاستيج -->
     <button id="stageFab" aria-label="فتح/إقفال الاستيج"
-            style="justify-self:start;position:static;width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">
+            style="justify-self:end;position:static;width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">
       <svg viewBox="0 0 24 24" width="22" height="22">
         <path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/>
       </svg>
