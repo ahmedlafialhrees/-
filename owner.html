@@ -8,66 +8,68 @@
   <script src="config.js"></script>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
-<body class="chat-page">
+<body>
   <div class="topbar">
+    <a class="btn ghost back" href="chat.html">رجوع للشات</a>
     <div class="badge">لوحة التحكم</div>
-    <a class="btn ghost" href="chat.html">رجوع للشات</a>
   </div>
 
-  <div class="container" style="padding:12px">
-    <div class="card">
-      <h3 style="margin:0 0 10px">إدارة الصلاحيات</h3>
-      <div id="warn" class="badge" style="display:none"></div>
-      <div id="list" class="col" style="margin-top:10px"></div>
+  <div class="container">
+    <div id="meInfo" style="margin:8px 0 14px;opacity:.85"></div>
+
+    <div class="card" style="padding:12px">
+      <h3 style="margin:6px 0 12px">الأعضاء</h3>
+      <div id="list"></div>
     </div>
   </div>
 
   <script>
     const socket = io(window.SERVER_URL, {transports:['websocket']});
-    const name = sessionStorage.getItem("loginName") || "";
-    const adminPass = sessionStorage.getItem("adminPass") || "";
-    const ownerPass = sessionStorage.getItem("ownerPass") || "";
-    if (!name){ location.href="index.html"; }
-    socket.emit("auth:login", { name, adminPass, ownerPass });
+    let me=null;
 
-    let me = null;
-    socket.on("auth:ok", ({me: my})=>{
+    (function(){
+      const name = sessionStorage.getItem("loginName")||"";
+      const adminPass = sessionStorage.getItem("adminPass")||"";
+      const ownerPass = sessionStorage.getItem("ownerPass")||"";
+      if (!name) { alert("ادخل اسمك أول"); location.href="index.html"; return; }
+      socket.emit("auth:login", { name, adminPass, ownerPass });
+    })();
+
+    socket.on("auth:ok", ({me: my}) => {
       me = my;
-      if (me.role !== "owner"){
-        document.getElementById('warn').style.display = "inline-flex";
-        document.getElementById('warn').textContent = "هذه الصفحة للأونر فقط";
+      if (me.role !== "owner" || (window.MAIN_OWNER_NAME && me.name !== window.MAIN_OWNER_NAME)) {
+        alert("هذه الصفحة للأونر الرئيسي فقط"); location.href="chat.html"; return;
       }
+      document.getElementById("meInfo").textContent = `أنت: ${me.name} — صلاحيتك: Owner`;
     });
-    socket.on("auth:error", ()=> location.href="index.html");
 
-    const list = document.getElementById("list");
-    socket.on("users:list", (users)=>{
-      list.innerHTML = "";
-      users.forEach(u=>{
+    socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="index.html"; });
+    socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="index.html"; });
+
+    socket.on("users:list", (list)=>{
+      const wrap = document.getElementById("list");
+      wrap.innerHTML = "";
+      list.forEach(u=>{
         const row = document.createElement("div");
         row.className = "owner-list-row";
-
-        const left = document.createElement("div");
-        left.innerHTML = `${u.name} ${
-          u.role==="owner" ? '<span class="rolechip owner">اونر</span>' :
-          u.role==="admin" ? '<span class="rolechip admin">ادمن</span>' : ''
-        }`;
-
-        const right = document.createElement("div");
-        right.className = "row";
-
-        const btn = (t, fn)=>{ const b=document.createElement("button"); b.className="btn ghost"; b.textContent=t; b.onclick=fn; return b; }
-        if (u.role !== "admin") right.appendChild(btn("إعطاء أدمن", ()=> act(u.id,"grantAdmin")));
-        if (u.role === "admin") right.appendChild(btn("إزالة أدمن", ()=> act(u.id,"revokeAdmin")));
-        if (u.role !== "owner") right.appendChild(btn("إعطاء أونر", ()=> act(u.id,"grantOwner")));
-        if (u.role === "owner") right.appendChild(btn("إزالة أونر", ()=> act(u.id,"revokeOwner")));
-
-        row.appendChild(left); row.appendChild(right);
-        list.appendChild(row);
+        row.innerHTML = `
+          <div>${u.name} <small style="opacity:.7">(${u.role})</small></div>
+          <div class="row">
+            ${u.role!=="admin"?'<button class="btn small" data-act="grantAdmin">إعطاء أدمن</button>':'<button class="btn small" data-act="revokeAdmin">إزالة أدمن</button>'}
+            ${u.role!=="owner"?'<button class="btn small" data-act="grantOwner">إعطاء أونر</button>':'<button class="btn small" data-act="revokeOwner">إزالة أونر</button>'}
+            <button class="btn small" data-act="removeFromStage">إنزال من الاستيج</button>
+            <button class="btn small" data-act="kick">طرد</button>
+            <button class="btn small" data-act="tempban2h">طرد ساعتين</button>
+          </div>
+        `;
+        row.querySelectorAll("button").forEach(b=>{
+          b.onclick = ()=>{
+            socket.emit("user:action", { targetId: u.id, action: b.dataset.act });
+          };
+        });
+        wrap.appendChild(row);
       });
     });
-
-    function act(targetId, action){ socket.emit("user:action", { targetId, action }); }
   </script>
 </body>
 </html>
