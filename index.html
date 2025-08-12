@@ -2,9 +2,30 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
+  <!-- يمنع التقريب على iOS -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>دخول المستخدم</title>
+
+  <!-- ستايلك الأساسي -->
   <link rel="stylesheet" href="style.css"/>
+
+  <!-- تصحيح حجم الأيقونات داخل كرت الدخول (منع التمدد) -->
+  <style>
+    .login-card{position:relative;overflow:hidden}
+    .input-wrap,.select-wrap{position:relative}
+    .ico{
+      position:absolute;left:12px;top:50%;transform:translateY(-50%);
+      width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center
+    }
+    .login-card .ico svg{width:22px;height:22px;max-width:22px;max-height:22px;display:block}
+    /* مسافة يسار للأيقونة + سهم القائمة */
+    .input,.select{padding:13px 14px 13px 48px}
+    .select{appearance:none;background-image:none}
+    .select-wrap::after{
+      content:"▾";position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      color:#8b8ea6;font-size:14px;pointer-events:none
+    }
+  </style>
 </head>
 <body class="login-page">
   <div class="login-wrap">
@@ -12,19 +33,21 @@
       <h1 class="login-title">دخول المستخدم</h1>
 
       <div class="login-fields">
-        <!-- اسم المستخدم -->
+        <!-- اسم المستخدم + أيقونة شخص -->
         <div class="input-wrap user-ico">
           <span class="ico">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0v1H4z"/>
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 20a8 8 0 0 1 16 0v1H4z"/>
             </svg>
           </span>
           <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
         </div>
 
-        <!-- اختيار الدور (اختياري) -->
+        <!-- اختيار الدور (أدمن/أونر) في خانة واحدة -->
         <div class="select-wrap crown-ico">
           <span class="ico" id="roleIcon">
+            <!-- تاج رمادي افتراضي -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
               <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
             </svg>
@@ -36,7 +59,7 @@
           </select>
         </div>
 
-        <!-- كلمة السر (تتغيّر حسب الاختيار) -->
+        <!-- كلمة السر حسب الدور المختار (واحدة) -->
         <div class="input-wrap crown-ico">
           <span class="ico" id="passIcon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
@@ -52,6 +75,7 @@
   </div>
 
   <script>
+    // تبديل أيقونة/نص التاج حسب الدور (بحجم ثابت 22px)
     const roleSel  = document.getElementById('roleSelect');
     const roleIcon = document.getElementById('roleIcon');
     const passIcon = document.getElementById('passIcon');
@@ -61,11 +85,21 @@
       let color = "#adb1c7", glow = "", ph = "كلمة السر (اختياري)";
       if(role === "admin"){ color = "#ff5d5d"; glow = "drop-shadow(0 0 8px rgba(255,93,93,.9))";  ph = "كلمة سر الأدمن (اختياري)"; }
       if(role === "owner"){ color = "#ffd166"; glow = "drop-shadow(0 0 8px rgba(255,209,102,.95))"; ph = "كلمة سر الأونر (اختياري)"; }
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style='fill:${color};filter:${glow}'><path d='M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z'/></svg>`;
-      roleIcon.innerHTML = svg; passIcon.innerHTML = svg; rolePass.placeholder = ph;
-    }
-    roleSel.addEventListener('change', ()=> setCrown(roleSel.value)); setCrown("");
 
+      const crownSvg =
+        `<svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+              style="display:block;fill:${color};filter:${glow}">
+           <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+         </svg>`;
+
+      roleIcon.innerHTML = crownSvg;
+      passIcon.innerHTML = crownSvg;
+      rolePass.placeholder = ph;
+    }
+    roleSel.addEventListener('change', ()=> setCrown(roleSel.value));
+    setCrown(""); // افتراضي
+
+    // الدخول (روابط نسبية لصفحات GitHub Pages)
     document.getElementById('enter').onclick = () => {
       const name = document.getElementById('name').value.trim();
       const role = roleSel.value;
@@ -74,15 +108,16 @@
       sessionStorage.setItem("loginName", name);
       sessionStorage.setItem("adminPass", role === "admin" ? pass : "");
       sessionStorage.setItem("ownerPass", role === "owner" ? pass : "");
-      // GitHub Pages = روابط نسبية
       location.href = "chat.html";
     };
 
-    // تقليل الزووم/السحب على iOS
+    // تقليل الدبل تاب/الزووم على iOS
     (function(){
       let last = 0;
       document.addEventListener('touchend', e=>{
-        const now = Date.now(); if(now-last<=300 && e.cancelable) e.preventDefault(); last = now;
+        const now = Date.now();
+        if(now-last<=300 && e.cancelable) e.preventDefault();
+        last = now;
       }, {passive:false});
       document.addEventListener('gesturestart', e=>e.preventDefault(), {passive:false});
     })();
