@@ -15,13 +15,20 @@ document.getElementById("exitBtn").onclick = ()=> location.href="index.html";
   socket.emit("auth:login", { name, adminPass, ownerPass });
 })();
 
+// بعد التحقق
 socket.on("auth:ok", ({me: my}) => {
   me = my;
+
+  // اسم المرسِل
   document.getElementById("composerName").textContent = `ترسل كـ: ${me.name}`;
-  if (me.role === "owner" && (!window.MAIN_OWNER_NAME || me.name === window.MAIN_OWNER_NAME)) {
-    document.getElementById("ownerPanel").style.display = "inline-flex";
-  }
+
+  // لوحة التحكم: تظهر فقط للأونر الرئيسي
+  const op = document.getElementById("ownerPanel");
+  const isOwner = me.role === "owner";
+  const isMainOwner = isOwner && (!window.MAIN_OWNER_NAME || me.name === window.MAIN_OWNER_NAME);
+  op.style.display = isMainOwner ? "inline-flex" : "none";
 });
+
 socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="index.html"; });
 socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="index.html"; });
 
@@ -29,7 +36,7 @@ socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="index.
 socket.on("connect_error", ()=> addSystem("⚠️ غير متصل بالسيرفر"));
 socket.on("connect", ()=> addSystem("✅ تم الاتصال بالسيرفر"));
 
-/* رسائل */
+/* ===== الرسائل ===== */
 function addMsgBox(text){
   const msgs=document.getElementById("msgs");
   const box=document.createElement("div");
@@ -46,6 +53,8 @@ function addSystem(t){
   msgs.appendChild(box);
   msgs.scrollTop=msgs.scrollHeight;
 }
+
+// استقبال رسائل من السيرفر
 socket.on("chat:msg", (payload)=>{
   const text = typeof payload==="string" ? payload : (payload?.text || "");
   if(text) addMsgBox(text);
@@ -63,7 +72,7 @@ function sendNow(){
 document.getElementById("send").addEventListener("click", sendNow);
 document.getElementById("text").addEventListener("keydown", e=>{ if(e.key==="Enter") sendNow(); });
 
-/* الاستيج */
+/* ===== الاستيج: صعود/نزول بالضغط على أي خانة ===== */
 document.querySelectorAll(".slot").forEach(el=>{
   el.addEventListener("click", ()=>{
     if (document.getElementById("stagePanel").classList.contains("closed")) return;
@@ -81,6 +90,40 @@ const stagePanel=document.getElementById("stagePanel");
 const stageFab=document.getElementById("stageFab");
 stageFab.addEventListener("click", ()=>{
   const closing = !stagePanel.classList.contains("closed");
-  if (closing && meOnStage) socket.emit("stage:toggle");
+  if (closing && meOnStage) socket.emit("stage:toggle"); // نزّل لو كنت فوق
   stagePanel.classList.toggle("closed");
+});
+
+/* ====== إيموجي بسيط ====== */
+const emojiBtn = document.getElementById('emojiBtn');
+const emojiPanel = document.getElementById('emojiPanel');
+const textInput = document.getElementById('text');
+
+const emojis = "😀 😃 😄 😁 😆 😅 😂 🙂 😉 😊 😇 🙃 🥲 😍 😘 😗 😚 😎 🤩 🥳 🤔 🤗 🤝 👍 👎 🙏 ❤️ 💙 💚 💛 💜 🖤 🤍 🔥 ✨ 💯 🎉 🎁".split(' ');
+function buildEmojiPanel(){
+  emojiPanel.innerHTML = '';
+  emojis.forEach(e=>{
+    const b = document.createElement('button');
+    b.type='button'; b.textContent=e;
+    b.onclick = ()=> { insertAtCaret(textInput, e); textInput.focus(); };
+    emojiPanel.appendChild(b);
+  });
+}
+function insertAtCaret(input, str){
+  const start = input.selectionStart ?? input.value.length;
+  const end   = input.selectionEnd ?? input.value.length;
+  input.value = input.value.slice(0,start) + str + input.value.slice(end);
+  const pos = start + str.length;
+  input.setSelectionRange(pos, pos);
+}
+buildEmojiPanel();
+let panelOpen=false;
+emojiBtn.addEventListener('click', ()=>{
+  panelOpen = !panelOpen;
+  emojiPanel.style.display = panelOpen ? 'grid' : 'none';
+});
+document.addEventListener('click', (e)=>{
+  if (panelOpen && !e.target.closest('#emojiPanel') && !e.target.closest('#emojiBtn')){
+    panelOpen = false; emojiPanel.style.display='none';
+  }
 });
