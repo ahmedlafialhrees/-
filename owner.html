@@ -43,9 +43,6 @@
       document.getElementById("meInfo").textContent = `أنت: ${me.name} — صلاحيتك: Owner`;
     });
 
-    socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="index.html"; });
-    socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="index.html"; });
-
     socket.on("users:list", (list)=>{
       const wrap = document.getElementById("list");
       wrap.innerHTML = "";
@@ -63,13 +60,14 @@
           </div>
         `;
         row.querySelectorAll("button").forEach(b=>{
-          b.onclick = ()=>{
-            socket.emit("user:action", { targetId: u.id, action: b.dataset.act });
-          };
+          b.onclick = ()=> socket.emit("user:action", { targetId: u.id, action: b.dataset.act });
         });
         wrap.appendChild(row);
       });
     });
+
+    socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="index.html"; });
+    socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="index.html"; });
   </script>
 </body>
 </html>
