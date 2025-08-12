@@ -1,4 +1,4 @@
-// مهم: حدد عنوان السيرفر في config.js (window.SERVER_URL)
+// يتصل بالسيرفر الخارجي
 const socket = io(window.SERVER_URL, {transports:['websocket']});
 
 let me = null;
@@ -17,7 +17,10 @@ let actionMenuOpenFor = null;
 
 socket.on("auth:ok", ({me: my}) => {
   me = my;
-  if (me.role === "owner") document.getElementById("ownerPanel").style.display = "inline-flex";
+  // لوحة التحكم تظهر للأونر الرئيسي فقط
+  if (me.role === "owner" && (!window.MAIN_OWNER_NAME || me.name === window.MAIN_OWNER_NAME)) {
+    document.getElementById("ownerPanel").style.display = "inline-flex";
+  }
   addSystem(`مرحباً ${me.name} — دورك: ${me.role}`);
 });
 socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="index.html"; });
@@ -65,29 +68,28 @@ document.getElementById("text").addEventListener("keydown",(e)=>{
   if(e.key==="Enter") document.getElementById("send").click();
 });
 
-// الاستيج
-document.getElementById("toggleStage").onclick = ()=> socket.emit("stage:toggle");
+// الاستيج: طق على أي خانة = صعود/نزول
 document.querySelectorAll(".slot").forEach(el=>{
   el.addEventListener("click", ()=> socket.emit("stage:toggle"));
 });
+
 socket.on("stage:update", (view)=>{
   stage = view;
   document.querySelectorAll(".slot").forEach((el,idx)=>{
     const s = stage[idx];
     const nameEl = el.querySelector(".name");
-    const pinEl  = el.querySelector(".pin");
     const chipEl = el.querySelector(".rolechip");
     if (s) {
       el.classList.add("filled");
       nameEl.textContent = s.name;
-      pinEl.style.display = "none";
+      nameEl.style.display = "block";
       chipEl.style.display = "inline-flex";
       chipEl.textContent = s.role==="owner"?"اونر":(s.role==="admin"?"ادمن":"");
       chipEl.className = "rolechip " + (s.role==="owner"?"owner":(s.role==="admin"?"admin":""));
     } else {
       el.classList.remove("filled");
-      nameEl.textContent = "فارغ";
-      pinEl.style.display = "inline";
+      nameEl.textContent = "";
+      nameEl.style.display = "none";
       chipEl.style.display = "none";
     }
   });
