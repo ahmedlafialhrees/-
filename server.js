@@ -13,26 +13,21 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
-// نخدم كل الملفات من الجذر (زي اللي عندك بالريبو)
-app.use(express.static("."));
+app.use(express.static(".")); // يخدم index.html والملفات
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// ===== البيانات =====
-const users = new Map();          // socketId -> user
+// ===== بيانات بسيطة في الذاكرة =====
+const users = new Map();           // socketId -> {id,name,role}
 let stage = [null, null, null, null];
 let nextId = 1;
-const bannedByName = new Map();   // name -> timestamp (طرد ساعتين)
+const bannedByName = new Map();    // name -> timestamp (لطرد ساعتين)
 
 const pub = (u) => ({ id: u.id, name: u.name, role: u.role });
 const sendUsers = () => io.emit("users:list", [...users.values()].map(pub));
-const sendStage = () => {
-  io.emit(
-    "stage:update",
-    stage.map((sid) => (sid && users.get(sid) ? pub(users.get(sid)) : null))
-  );
-};
+const sendStage = () =>
+  io.emit("stage:update", stage.map(sid => sid && users.get(sid) ? pub(users.get(sid)) : null));
 
 io.on("connection", (socket) => {
   socket.on("auth:login", ({ name, ownerPass, adminPass }) => {
@@ -61,7 +56,6 @@ io.on("connection", (socket) => {
   socket.on("chat:msg", (text) => {
     const u = users.get(socket.id);
     if (!u) return;
-    if (u.mutedUntil && Date.now() < u.mutedUntil) return;
     text = (text || "").toString().slice(0, 500).trim();
     if (!text) return;
     io.to("room").emit("chat:msg", { from: pub(u), text, ts: Date.now() });
@@ -70,25 +64,21 @@ io.on("connection", (socket) => {
   socket.on("stage:toggle", () => {
     const u = users.get(socket.id);
     if (!u) return;
-    const on = stage.findIndex((sid) => sid === socket.id);
+    const on = stage.findIndex(sid => sid === socket.id);
     if (on !== -1) { stage[on] = null; sendStage(); return; }
-    const idx = stage.findIndex((sid) => sid === null);
+    const idx = stage.findIndex(sid => sid === null);
     if (idx !== -1) { stage[idx] = socket.id; sendStage(); }
   });
 
-  // أوامر الأعضاء
   socket.on("user:action", ({ targetId, action, payload }) => {
     const actor = users.get(socket.id);
     if (!actor) return;
-
     const entry = [...users.entries()].find(([sid, u]) => u.id === targetId);
     if (!entry) return;
     const [tSid, target] = entry;
-
     const isOwner = actor.role === "owner";
     const isAdmin = actor.role === "admin";
 
-    // تغيير الاسم (لنفسه أو للأدمن/الأونر)
     if (action === "rename") {
       if (!(isOwner || isAdmin || actor.id === target.id)) return;
       const newName = (payload?.name || "").trim().slice(0, 20);
@@ -98,7 +88,6 @@ io.on("connection", (socket) => {
       sendUsers(); sendStage(); return;
     }
 
-    // إنزال من الاستيج
     if (action === "removeFromStage") {
       if (!(isOwner || isAdmin)) return;
       const idx = stage.findIndex((sid) => sid === tSid);
@@ -106,7 +95,6 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // طرد
     if (action === "kick") {
       if (!(isOwner || isAdmin)) return;
       io.to(tSid).emit("auth:kicked", "تم طردك من الغرفة");
@@ -117,7 +105,6 @@ io.on("connection", (socket) => {
       sendUsers(); sendStage(); return;
     }
 
-    // طرد ساعتين
     if (action === "tempban2h") {
       if (!(isOwner || isAdmin)) return;
       bannedByName.set(target.name, Date.now() + 2 * 60 * 60 * 1000);
@@ -129,13 +116,12 @@ io.on("connection", (socket) => {
       sendUsers(); sendStage(); return;
     }
 
-    // ترقيات/إزالة — أونر فقط
+    // ترقيات أونر فقط
     if (!isOwner) return;
-
-    if (action === "grantAdmin") { target.role = "admin"; io.emit("chat:system", `${target.name} أصبح أدمن`); sendUsers(); return; }
-    if (action === "grantOwner") { target.role = "owner"; io.emit("chat:system", `${target.name} أصبح أونر`); sendUsers(); return; }
-    if (action === "revokeAdmin") { if (target.role === "admin") { target.role = "user"; io.emit("chat:system", `${target.name} أزيل من الأدمن`); sendUsers(); } return; }
-    if (action === "revokeOwner") { if (target.role === "owner") { target.role = "user"; io.emit("chat:system", `${target.name} أزيل من الأونر`); sendUsers(); } return; }
+    if (action === "grantAdmin")  { target.role = "admin"; io.emit("chat:system", `${target.name} أصبح أدمن`); sendUsers(); return; }
+    if (action === "grantOwner")  { target.role = "owner"; io.emit("chat:system", `${target.name} أصبح أونر`); sendUsers(); return; }
+    if (action === "revokeAdmin" && target.role === "admin") { target.role = "user"; io.emit("chat:system", `${target.name} أزيل من الأدمن`); sendUsers(); return; }
+    if (action === "revokeOwner" && target.role === "owner") { target.role = "user"; io.emit("chat:system", `${target.name} أزيل من الأونر`); sendUsers(); return; }
   });
 
   socket.on("disconnect", () => {
@@ -149,10 +135,10 @@ io.on("connection", (socket) => {
   });
 });
 
-// روتات الصفحات
+// صفحات
 app.get("/", (_, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/chat", (_, res) => res.sendFile(path.join(__dirname, "chat.html")));
 app.get("/owner", (_, res) => res.sendFile(path.join(__dirname, "owner.html")));
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("http://localhost:" + PORT));
+server.listen(PORT, () => console.log("Server running on http://localhost:" + PORT));
