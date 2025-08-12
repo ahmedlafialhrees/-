@@ -1,43 +1,22 @@
 import { SERVER_URL, OWNER_NAME } from "./config.js";
 
-// الهوية
+/* الهوية */
 const name = (localStorage.getItem("name")||"").trim();
 const role = localStorage.getItem("role") || "user";
+const pass = localStorage.getItem("pass") || "";
 if(!name){ location.href="index.html"; }
-const isOwnerMain = role==="ownerMain" && name===OWNER_NAME;
+const isOwnerMain = (role==="ownerMain" && name===OWNER_NAME);
 
-// عناصر
-const menuBtn = document.getElementById("menuBtn");
-const dropdown = document.getElementById("dropdown");
-const controlLink = document.getElementById("controlLink");
-const toggleStageLink = document.getElementById("toggleStage");
-const logoutLink = document.getElementById("logoutLink");
-
+/* عناصر أساسية */
 const messagesEl = document.getElementById("messages");
-const msgInput   = document.getElementById("msgInput");
-const sendBtn    = document.getElementById("sendBtn");
-const asLine     = document.getElementById("asLine");
-
-const emojiBtn   = document.getElementById("emojiBtn");
-const emojiPanel = document.getElementById("emojiPanel");
-
-const stageOverlay = document.getElementById("stageOverlay");
-const closeStage   = document.getElementById("closeStage");
-const slotsEl      = document.getElementById("slots");
-
+const msgInput = document.getElementById("msgInput");
+const sendBtn = document.getElementById("sendBtn");
+const asLine = document.getElementById("asLine");
 asLine.textContent = `ترسل كـ: ${name}`;
-if (isOwnerMain) controlLink.classList.remove("hidden");
 
-// قائمة
-menuBtn.addEventListener("click", ()=> dropdown.classList.toggle("hidden"));
-document.addEventListener("click",(e)=>{
-  if(!menuBtn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add("hidden");
-});
-logoutLink.addEventListener("click", ()=>{
-  localStorage.clear(); location.href="index.html";
-});
-
-// إيموجي
+/* إيموجي */
+const emojiBtn = document.getElementById("emojiBtn");
+const emojiPanel = document.getElementById("emojiPanel");
 emojiBtn.addEventListener("click",()=> emojiPanel.classList.toggle("hidden"));
 emojiPanel.addEventListener("click",(e)=>{
   const el = e.target.closest(".emoji"); if(!el) return;
@@ -47,83 +26,96 @@ document.addEventListener("click",(e)=>{
   if(!emojiBtn.contains(e.target) && !emojiPanel.contains(e.target)) emojiPanel.classList.add("hidden");
 });
 
-// Socket
-const socket = io(SERVER_URL, { transports: ["websocket"] });
+/* Bottom Sheet: افتح */
+const openBtn = document.getElementById("openBtn");
+const sheet = document.getElementById("sheet");
+const sheetBack = document.getElementById("sheetBack");
+const closeSheet = document.getElementById("closeSheet");
+const ownerPanel = document.getElementById("ownerPanel");
+const logoutBtn = document.getElementById("logoutBtn");
 
-// انضمام (روم واحد)
-socket.on("connect", ()=>{
-  socket.emit("join", { name, role }); // روم افتراضي واحد
-  socket.emit("stage:request");
-});
-
-// رسائل
-socket.on("message",(p)=> addMessage(p, p.name===name));
-
-// الاستيج
-let lastStage = { slots:[null,null,null,null] };
-socket.on("stage:update",(stage)=> renderStage(stage));
-
-// عقوبات
-socket.on("kicked",(reason)=>{
-  alert(`تم طردك: ${reason||""}`); localStorage.clear(); location.href="index.html";
-});
-socket.on("banned",(untilTs)=>{
-  alert(`تم حظرك حتى ${new Date(untilTs).toLocaleString()}`);
+function openSheet(){
+  if (isOwnerMain) ownerPanel.classList.remove("hidden");
+  else ownerPanel.classList.add("hidden");
+  sheet.classList.add("open"); sheetBack.classList.add("show");
+}
+function closeSheetFn(){ sheet.classList.remove("open"); sheetBack.classList.remove("show"); }
+openBtn.addEventListener("click", openSheet);
+closeSheet.addEventListener("click", closeSheetFn);
+sheetBack.addEventListener("click", closeSheetFn);
+logoutBtn.addEventListener("click", ()=>{
   localStorage.clear(); location.href="index.html";
 });
 
-// إرسال — “إرسال متفائل”
+/* Socket */
+const socket = io(SERVER_URL, { transports: ["websocket"] });
+
+socket.on("connect", ()=>{
+  socket.emit("join", { name, role, pass }); // نرسل كلمة السر للتحقق من الأدمن/الأونر
+  socket.emit("stage:request");
+  if (isOwnerMain) socket.emit("roles:request");
+});
+
+/* رسائل */
+socket.on("message",(p)=> addMessage(p, p.name===name));
 function send(){
   const text = (msgInput.value||"").trim();
   if(!text) return;
-
-  // اعرض الرسالة فورًا
-  addMessage({ name, text, ts: Date.now() }, true);
-
-  // أرسل للسيرفر (لو تعذّر الاتصال، تبقى رسالتك ظاهرة عندك)
-  try { socket.emit("message",{ text }); } catch(e) {}
-
+  addMessage({ name, text, ts: Date.now() }, true);   // إرسال متفائل
+  try { socket.emit("message",{ text }); } catch(e){}
   msgInput.value=""; msgInput.focus();
 }
 sendBtn.addEventListener("click",send);
 msgInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter") send(); });
 
-// إضافة رسالة
 function addMessage({ name:n, text, ts }, mine=false){
   const div = document.createElement("div");
   div.className = "msg" + (mine?" me":"");
   const when = ts ? new Date(ts) : new Date();
-  const isOwner = n === OWNER_NAME;
-  const metaName = `<span class="name ${isOwner?'owner':''}">${escape(n)}</span>`;
-  div.innerHTML = `<div class="meta">${metaName} • ${when.toLocaleTimeString()}</div>${escape(text)}`;
+  div.innerHTML = `<div class="meta"><span class="name">${escape(n)}</span> • ${when.toLocaleTimeString()}</div>${escape(text)}`;
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 function escape(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// الاستيج
-function renderStage(stage){
-  lastStage = stage || lastStage;
-  slotsEl.innerHTML = "";
-  lastStage.slots.forEach((slot, i)=>{
-    const d = document.createElement("div");
-    const isMe = slot && slot.name===name;
-    d.className = "slot"+(isMe?" me":"");
-    d.textContent = slot ? `🎤 ${slot.name}` : "— فارغ —";
-    d.title = isMe ? "اضغط للنزول" : "اضغط للصعود";
-    d.addEventListener("click", ()=> socket.emit("stage:toggle",{ index:i }));
-    slotsEl.appendChild(d);
+/* الاستيج (لو تبغاه لاحقًا نفس السابق) — محجوز */
+socket.on("stage:update",()=>{}); // نتركه فاضي للروم الواحد بدون صوت فعلي الآن
+
+/* إدارة الصلاحيات داخل الشيت (للأونر الرئيسي) */
+const roleName = document.getElementById("roleName");
+const roleType = document.getElementById("roleType");
+const rolePass = document.getElementById("rolePass");
+const grantBtn = document.getElementById("grantBtn");
+const revokeBtn = document.getElementById("revokeBtn");
+const refreshRoles = document.getElementById("refreshRoles");
+const rolesList = document.getElementById("rolesList");
+
+if (isOwnerMain) {
+  grantBtn.addEventListener("click", ()=>{
+    const target = (roleName.value||"").trim();
+    const r = roleType.value;
+    const p = (rolePass.value||"").trim();
+    if(!target || !p) { alert("اكتب الاسم وكلمة السر"); return; }
+    socket.emit("roles:grant", { target, role:r, pass:p });
+  });
+  revokeBtn.addEventListener("click", ()=>{
+    const target = (roleName.value||"").trim();
+    if(!target){ alert("اكتب اسم المستخدم لإزالته"); return; }
+    socket.emit("roles:revoke", { target });
+  });
+  refreshRoles.addEventListener("click", ()=> socket.emit("roles:request"));
+  socket.on("roles:list",(list)=>{
+    rolesList.innerHTML = "";
+    list.forEach(({name, role})=>{
+      const pill = document.createElement("span");
+      pill.className = "pill";
+      pill.textContent = `${name} — ${role}`;
+      pill.addEventListener("click", ()=> roleName.value = name);
+      rolesList.appendChild(pill);
+    });
   });
 }
 
-// فتح/إغلاق الاستيج
-toggleStageLink.addEventListener("click", ()=>{
-  stageOverlay.style.display = "flex";
-  dropdown.classList.add("hidden");
-  socket.emit("stage:request");
-});
-closeStage.addEventListener("click", ()=>{
-  const myIdx = (lastStage.slots||[]).findIndex(x=>x && x.name===name);
-  if (myIdx!==-1) socket.emit("stage:toggle",{ index: myIdx, forceDown:true });
-  stageOverlay.style.display = "none";
-});
+/* طرد/حظر رسائل */
+socket.on("kicked", (reason)=> { alert(`تم طردك: ${reason||""}`); localStorage.clear(); location.href="index.html"; });
+socket.on("banned", (untilTs)=> { alert(`تم حظرك حتى ${new Date(untilTs).toLocaleString()}`); localStorage.clear(); location.href="index.html"; });
