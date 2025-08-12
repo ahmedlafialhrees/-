@@ -22,12 +22,13 @@
     padding:8px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#121a2a,#0f1420)}
   .left,.right{display:flex;align-items:center;gap:8px}
   .menu{position:relative}
-  .openBtn{padding:10px 12px;border:0;border-radius:12px;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2))}
   .iconBtn{width:44px;height:44px;border-radius:12px;border:0;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,#ffd86b,#ffb300)}
-  .dropdown{position:absolute;top:calc(100% + 8px);left:0;
+
+  /* القائمة الخاصة بميك يسار: تفتح يمين الزر */
+  .dropdown{position:absolute;top:calc(100% + 8px);left:calc(100% + 8px);right:auto;
     min-width:180px;background:linear-gradient(180deg,#111827,#0e1420);border:1px solid var(--line);
     border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.35)}
-  .dropdown a{display:block; padding:10px 12px; text-decoration:none; color:var(--text); cursor:pointer}
+  .dropdown a{display:block;padding:10px 12px;text-decoration:none;color:var(--text);cursor:pointer}
   .dropdown a:hover{background:#121a2a}
   .hidden{display:none!important}
 
@@ -66,17 +67,19 @@
 <body>
   <div class="wrap">
     <div class="topbar">
+      <!-- ميك يسار + قائمته تفتح يمين -->
       <div class="left">
         <div class="menu">
-          <button id="openBtn" class="openBtn">افتح ▾</button>
+          <button id="micLeftBtn" class="iconBtn" title="قائمة">🎤</button>
           <div id="menuDrop" class="dropdown hidden">
             <a id="ownerLink" class="hidden" href="owner.html">لوحة التحكم</a>
             <a id="logoutLink">خروج</a>
           </div>
         </div>
       </div>
+      <!-- ميك يمين يفتح/يقفل الاستيج -->
       <div class="right">
-        <button id="micBtn" class="iconBtn" title="الاستيج">🎤</button>
+        <button id="micRightBtn" class="iconBtn" title="الاستيج">🎤</button>
       </div>
     </div>
 
@@ -103,11 +106,11 @@
     <div class="stage">
       <h3>🎤 الاستيج</h3>
       <div id="slots" class="slots"></div>
-      <!-- يغلق/يفتح بالمايك فقط -->
+      <!-- يفتح ويقفل بميك يمين فقط -->
     </div>
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script type="module" src="./chat.js?v=9"></script>
+  <script type="module" src="./chat.js?v=11"></script>
 </body>
 </html>
