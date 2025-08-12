@@ -11,11 +11,8 @@
 
   <style>
     .composer-name{margin:8px 12px 4px;opacity:.75;font-weight:700;font-size:14px}
-    /* لفّ الرسالة داخل الفقاعة وكسر الكلمات الطويلة */
     .msgs{overflow-y:auto;-webkit-overflow-scrolling:touch}
     .msg{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
-
-    /* لوحة الإيموجي */
     .emoji-panel{
       position:fixed; bottom:84px; inset-inline-end:14px; z-index:50; display:none;
       grid-template-columns:repeat(8,28px); gap:6px; background:#1b1c29;
@@ -32,7 +29,7 @@
     <!-- يسار فعلياً -->
     <a class="btn ghost back" id="exitBtn" style="justify-self:start">خروج</a>
 
-    <!-- المنتصف: مكان محفوظ دايم — نكشفه فقط للأونر الرئيسي -->
+    <!-- المنتصف: مكان محفوظ دائمًا — نكشفه فقط للأونر الرئيسي -->
     <a class="btn ghost" id="ownerPanel" href="owner.html"
        style="justify-self:center;display:inline-flex;visibility:hidden;pointer-events:none">لوحة التحكم</a>
 
@@ -61,10 +58,8 @@
     <!-- الرسائل -->
     <div class="main"><div class="msgs" id="msgs"></div></div>
 
-    <!-- اسم المُرسل -->
     <div id="composerName" class="composer-name"></div>
 
-    <!-- الإدخال -->
     <div class="input-bar">
       <button id="emojiBtn" class="btn small" title="إيموجي" style="min-width:44px;padding:8px 0">🙂</button>
       <input class="input chat-input" id="text" placeholder="...اكتب رسالة"/>
