@@ -4,9 +4,14 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>الشات</title>
-  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/style.css"/>
 </head>
 <body>
+  <div class="topbar">
+    <div class="badge">الغرفة العامة</div>
+    <a class="btn ghost" id="ownerPanel" href="/owner" style="display:none">لوحة التحكم</a>
+  </div>
+
   <div class="chat-wrap">
     <!-- الاستيج -->
     <div class="stage card">
@@ -15,10 +20,10 @@
         <button id="toggleStage" class="btn ghost">صعود/نزول الاستيج</button>
       </div>
       <div class="slots">
-        <div class="slot" data-idx="0"><div class="mic"></div><span class="name">فارغ</span><span class="pin">🔒</span></div>
-        <div class="slot" data-idx="1"><div class="mic"></div><span class="name">فارغ</span><span class="pin">🔒</span></div>
-        <div class="slot" data-idx="2"><div class="mic"></div><span class="name">فارغ</span><span class="pin">🔒</span></div>
-        <div class="slot" data-idx="3"><div class="mic"></div><span class="name">فارغ</span><span class="pin">🔒</span></div>
+        <div class="slot" data-idx="0"><div class="mic"></div><span class="name">فارغ</span><span class="rolechip" style="display:none"></span><span class="pin">🔒</span></div>
+        <div class="slot" data-idx="1"><div class="mic"></div><span class="name">فارغ</span><span class="rolechip" style="display:none"></span><span class="pin">🔒</span></div>
+        <div class="slot" data-idx="2"><div class="mic"></div><span class="name">فارغ</span><span class="rolechip" style="display:none"></span><span class="pin">🔒</span></div>
+        <div class="slot" data-idx="3"><div class="mic"></div><span class="name">فارغ</span><span class="rolechip" style="display:none"></span><span class="pin">🔒</span></div>
       </div>
     </div>
 
