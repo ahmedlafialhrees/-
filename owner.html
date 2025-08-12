@@ -1,39 +1,43 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>لوحة الأونر</title>
-<style>
-  :root{--bg:#0b0f16; --card:#111827; --line:#1d2840; --text:#e8ecf3; --accent:#f5c84c; --accent2:#ffb300}
-  body{margin:0;background:linear-gradient(180deg,#0e1420,#0b0f16);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:16px}
-  .card{background:linear-gradient(180deg,#111827,#0f1420); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px}
-  input,button{padding:10px;border-radius:10px;border:1px solid var(--line);background:#0c1220;color:var(--text)}
-  button{border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#161616;font-weight:700;cursor:pointer}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  table{width:100%;border-collapse:collapse}
-  th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right}
-  .tag{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:999px;font-size:12px;margin-inline-start:6px}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"/>
+  <title>لوحة التحكم</title>
+  <style>
+    :root{--bg:#0b0f16; --card:#111827; --line:#1d2840; --text:#e8ecf3}
+    body{margin:0; background:linear-gradient(180deg,#0e1420,#0b0f16); color:var(--text);
+         font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; padding:16px}
+    .card{background:linear-gradient(180deg,#111827,#0f1420); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px}
+    h2{margin:0 0 12px}
+    .row{display:flex; gap:8px; flex-wrap:wrap}
+    input,select,button{padding:12px;border-radius:12px;border:1px solid var(--line);background:#0c1220;color:#e8ecf3;font-size:16px}
+    button{cursor:pointer}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right}
+    .del{background:#2a3146;border:1px solid var(--line)}
+  </style>
 </head>
 <body>
-  <h2>لوحة تحكم الأونر (روم واحد)</h2>
+  <h2>لوحة التحكم</h2>
 
   <div class="card">
     <div class="row">
-      <input id="targetName" type="text" placeholder="اسم المستخدم"/>
-      <button id="grantAdmin">منح أدمن</button>
-      <button id="revokeAdmin">سحب أدمن</button>
-      <button id="kick">طرد</button>
-      <button id="ban2h">حظر ساعتين</button>
+      <input id="uName" type="text" placeholder="اسم المستخدم" style="flex:2"/>
+      <input id="uPass" type="text" placeholder="كلمة السر للمستخدم" style="flex:2"/>
+      <select id="uRole" style="flex:1">
+        <option value="admin">أدمن</option>
+        <option value="owner">أونر</option>
+      </select>
+      <button id="grant" style="flex:1;background:linear-gradient(135deg,#f5c84c,#ffb300);color:#161616;font-weight:700">حفظ/منح</button>
     </div>
   </div>
 
   <div class="card">
-    <h3>المتواجدون الآن</h3>
+    <h3 style="margin-top:0">القائمة المحفوظة</h3>
     <table>
-      <thead><tr><th>الاسم</th><th>الدور</th><th>الحالة</th></tr></thead>
-      <tbody id="usersBody"></tbody>
+      <thead><tr><th>الاسم</th><th>الدور</th><th>إجراء</th></tr></thead>
+      <tbody id="rolesBody"></tbody>
     </table>
   </div>
 
@@ -43,40 +47,56 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script type="module">
-    import { SERVER_URL, OWNER_NAME } from "./config.js";
+    import { SERVER_URL, OWNER_NAME } from "./config.js?v=2";
+
+    // حماية الصفحة
     const role = localStorage.getItem("role");
     const name = (localStorage.getItem("name")||"").trim();
-    if(!(role==="ownerMain" && name===OWNER_NAME)){ alert("ممنوع — للأونر الرئيسي فقط"); location.href="chat.html"; }
+    if(!(role==="ownerMain" && name===OWNER_NAME)){
+      alert("ممنوع — للأونر الرئيسي فقط");
+      location.href="chat.html";
+    }
 
     const socket = io(SERVER_URL, { transports:["websocket"] });
-    const usersBody = document.getElementById("usersBody");
-    const targetName = document.getElementById("targetName");
-    const grantAdmin = document.getElementById("grantAdmin");
-    const revokeAdmin = document.getElementById("revokeAdmin");
-    const kick       = document.getElementById("kick");
-    const ban2h      = document.getElementById("ban2h");
+    const rolesBody = document.getElementById("rolesBody");
+    const uName = document.getElementById("uName");
+    const uPass = document.getElementById("uPass");
+    const uRole = document.getElementById("uRole");
+    const grant = document.getElementById("grant");
 
     socket.on("connect", ()=>{
       socket.emit("join", { name, role: "ownerMain" });
-      socket.emit("users:request");
+      socket.emit("roles:request");
     });
-    socket.on("users:list",(list)=>{
-      usersBody.innerHTML="";
-      list.forEach(u=>{
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${esc(u.name)}</td><td>${esc(u.role)}</td><td>${u.onStage ? "<span class='tag'>على الاستيج</span>":""}</td>`;
-        usersBody.appendChild(tr);
+
+    grant.onclick = ()=>{
+      const target=(uName.value||"").trim();
+      const pass=(uPass.value||"").trim();
+      const role=uRole.value;
+      if(!target || !pass){ alert("اكتب الاسم وكلمة السر"); return; }
+      socket.emit("roles:grant", { target, role, pass });
+      uPass.value="";
+      setTimeout(()=> socket.emit("roles:request"), 150);
+    };
+
+    socket.on("roles:list",(list)=>{
+      rolesBody.innerHTML="";
+      list.forEach(({name, role})=>{
+        const tr=document.createElement("tr");
+        const td1=document.createElement("td"); td1.textContent=name;
+        const td2=document.createElement("td"); td2.textContent=role;
+        const td3=document.createElement("td");
+        const btn=document.createElement("button"); btn.className="del"; btn.textContent="حذف";
+        btn.onclick=()=> socket.emit("roles:revoke", { target:name });
+        td3.appendChild(btn);
+        tr.append(td1,td2,td3);
+        rolesBody.appendChild(tr);
       });
     });
 
-    function esc(s){ return String(s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-    grantAdmin.onclick = ()=> socket.emit("admin:grant",{ target: targetName.value.trim() });
-    revokeAdmin.onclick= ()=> socket.emit("admin:revoke",{ target: targetName.value.trim() });
-    kick.onclick       = ()=> socket.emit("admin:kick",{ target: targetName.value.trim(), reason:"بقرار الأونر" });
-    ban2h.onclick      = ()=> socket.emit("admin:tempban2h",{ target: targetName.value.trim() });
-
-    setInterval(()=> socket.emit("users:request"), 3000);
+    // ريفرش القائمة بعد الحذف
+    socket.on("connect_error",console.error);
+    setInterval(()=> socket.emit("roles:request"), 5000);
   </script>
 </body>
 </html>
