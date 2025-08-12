@@ -1,4 +1,4 @@
-import { SERVER_URL, OWNER_NAME } from "./config.js?v=11";
+import { SERVER_URL, OWNER_NAME } from "./config.js?v=12";
 
 /* تثبيت الارتفاع للجوال */
 const setVh = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
@@ -29,15 +29,15 @@ document.addEventListener("click",(e)=>{
   if(!emojiBtn.contains(e.target) && !emojiPanel.contains(e.target)) emojiPanel.classList.add("hidden");
 });
 
-/* ميك يسار: يفتح القائمة (لوحة التحكم/خروج) باتجاه اليمين */
-const micLeftBtn = document.getElementById("micLeftBtn");
-const menuDrop   = document.getElementById("menuDrop");
-const ownerLink  = document.getElementById("ownerLink");
-const logoutLink = document.getElementById("logoutLink");
+/* زر «افتح» (يمين) */
+const openBtn   = document.getElementById("openBtn");
+const menuDrop  = document.getElementById("menuDrop");
+const ownerLink = document.getElementById("ownerLink");
+const logoutLink= document.getElementById("logoutLink");
 if (isOwnerMain) ownerLink.classList.remove("hidden");
-micLeftBtn.addEventListener("click", ()=> menuDrop.classList.toggle("hidden"));
+openBtn.addEventListener("click", ()=> menuDrop.classList.toggle("hidden"));
 document.addEventListener("click",(e)=>{
-  if(!micLeftBtn.contains(e.target) && !menuDrop.contains(e.target)) menuDrop.classList.add("hidden");
+  if(!openBtn.contains(e.target) && !menuDrop.contains(e.target)) menuDrop.classList.add("hidden");
 });
 logoutLink.addEventListener("click", ()=>{ localStorage.clear(); location.href="index.html"; });
 
@@ -48,7 +48,7 @@ socket.on("connect", ()=>{
   socket.emit("stage:request");
 });
 
-/* رسائل (إرسال متفائل) */
+/* رسائل */
 socket.on("message", (p)=> addMessage(p, p.name===name));
 function send(){
   const text = (msgInput.value||"").trim();
@@ -70,8 +70,8 @@ function addMessage({ name:n, text, ts }, mine=false){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* ميك يمين: يفتح/يقفل الاستيج */
-const micRightBtn = document.getElementById("micRightBtn");
+/* الاستيج: ٤ خانات — يفتح/يغلق من زر المايك (يسار) */
+const micBtn = document.getElementById("micBtn");
 const stageOverlay = document.getElementById("stageOverlay");
 const slotsEl = document.getElementById("slots");
 let stageVisible = false;
@@ -82,7 +82,7 @@ const toggleStage = ()=>{
   stageOverlay.style.display = stageVisible ? "flex" : "none";
   if (stageVisible) socket.emit("stage:request");
 };
-micRightBtn.addEventListener("click", toggleStage);
+micBtn.addEventListener("click", toggleStage);
 
 socket.on("stage:update",(stage)=> renderStage(stage));
 
