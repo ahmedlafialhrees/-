@@ -10,60 +10,56 @@
 </head>
 <body class="chat-page">
   <div class="topbar">
-    <a class="btn ghost back" href="index.html">الواجهة الرئيسية</a>
-    <div class="badge">الغرفة العامة</div>
+    <a class="btn ghost back" id="exitBtn">خروج</a>
+    <span></span>
     <a class="btn ghost" id="ownerPanel" href="owner.html" style="display:none">لوحة التحكم</a>
   </div>
 
   <div class="chat-wrap">
-    <!-- الاستيج: ٤ خانات مايك -->
-    <div class="stage card">
-      <div class="slots">
-        <div class="slot" data-idx="0">
-          <div class="mic">
-            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
+    <!-- الاستيج: نافذة قابلة للإظهار/الإخفاء -->
+    <div class="stage-panel open" id="stagePanel">
+      <div class="stage-header">
+        <div class="badge">الاستيج</div>
+        <button id="stageToggleBtn" class="btn ghost small">إخفاء</button>
+      </div>
+      <div class="stage card">
+        <div class="slots">
+          <div class="slot" data-idx="0">
+            <div class="mic">
+              <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
+            </div>
+            <div class="name"></div>
+            <span class="rolechip" style="display:none"></span>
           </div>
-          <div class="name"></div>
-          <span class="rolechip" style="display:none"></span>
-        </div>
-
-        <div class="slot" data-idx="1">
-          <div class="mic">
-            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
+          <div class="slot" data-idx="1">
+            <div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div>
+            <div class="name"></div><span class="rolechip" style="display:none"></span>
           </div>
-          <div class="name"></div>
-          <span class="rolechip" style="display:none"></span>
-        </div>
-
-        <div class="slot" data-idx="2">
-          <div class="mic">
-            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
+          <div class="slot" data-idx="2">
+            <div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div>
+            <div class="name"></div><span class="rolechip" style="display:none"></span>
           </div>
-          <div class="name"></div>
-          <span class="rolechip" style="display:none"></span>
-        </div>
-
-        <div class="slot" data-idx="3">
-          <div class="mic">
-            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
+          <div class="slot" data-idx="3">
+            <div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div>
+            <div class="name"></div><span class="rolechip" style="display:none"></span>
           </div>
-          <div class="name"></div>
-          <span class="rolechip" style="display:none"></span>
         </div>
       </div>
     </div>
 
+    <!-- الرسائل + قائمة الأعضاء -->
     <div class="main">
       <div class="msgs" id="msgs"></div>
       <div class="users" id="users"></div>
     </div>
 
+    <!-- منيو الأوامر -->
     <div class="action-menu" id="actionMenu">
       <div class="title" id="amTitle">أوامر</div>
       <div class="grid" id="amBtns"></div>
     </div>
 
-    <!-- الكتابة تحت أكبر + زر إرسال صغير -->
+    <!-- الإدخال أسفل -->
     <div class="input-bar">
       <input class="input chat-input" id="text" placeholder="...اكتب رسالة"/>
       <button class="btn send" id="send">إرسال</button>
