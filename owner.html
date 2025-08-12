@@ -60,20 +60,20 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script type="module">
-    import { SERVER_URL, OWNER_NAME } from "./config.js?v=7";
+    import { SERVER_URL, OWNER_NAME } from "./config.js?v=8";
 
     // حماية الصفحة
-    const role = localStorage.getItem("role");
-    const name = (localStorage.getItem("name")||"").trim();
-    if(!(role==="ownerMain" && name===OWNER_NAME)){ alert("ممنوع — للأونر الرئيسي فقط"); location.href="chat.html"; }
+    const roleLS = localStorage.getItem("role");
+    const nameLS = (localStorage.getItem("name")||"").trim();
+    if(!(roleLS==="ownerMain" && nameLS===OWNER_NAME)){ alert("ممنوع — للأونر الرئيسي فقط"); location.href="chat.html"; }
 
-    const socket = io(SERVER_URL, { transports:["websocket"] });
-    const rolesBody = document.getElementById("rolesBody");
-    const uName = document.getElementById("uName");
-    const uPass = document.getElementById("uPass");
-    const uRole = document.getElementById("uRole");
-    const save  = document.getElementById("save");
-    const msgEl = document.getElementById("msg");
+    const socket   = io(SERVER_URL, { transports:["websocket"] });
+    const rolesBody= document.getElementById("rolesBody");
+    const uName    = document.getElementById("uName");
+    const uPass    = document.getElementById("uPass");
+    const uRole    = document.getElementById("uRole");
+    const saveBtn  = document.getElementById("save");
+    const msgEl    = document.getElementById("msg");
 
     function flash(text, ok=true){
       msgEl.textContent = text;
@@ -81,39 +81,61 @@
       setTimeout(()=>{ msgEl.textContent=""; msgEl.className=""; }, 1800);
     }
 
+    function renderList(list){
+      rolesBody.innerHTML="";
+      list.forEach(({name, role})=>{
+        addRow(name, role);
+      });
+    }
+
+    function addRow(name, role){
+      // لو موجود حدّثه
+      const old = rolesBody.querySelector(`tr[data-n="${cssEscape(name)}"]`);
+      if (old) old.remove();
+
+      const tr = document.createElement("tr");
+      tr.dataset.n = name;
+      tr.innerHTML = `<td>${escapeHtml(name)}</td><td>${role}</td><td><button class="del">حذف</button></td>`;
+      tr.querySelector(".del").onclick = ()=>{
+        socket.emit("roles:revoke",{ target:name });
+        tr.remove(); // إزالة متفائلة
+      };
+      rolesBody.prepend(tr); // يظهر فورًا فوق
+    }
+
+    function cssEscape(s){ return String(s).replace(/"/g,'\\"'); }
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
     socket.on("connect", ()=>{
-      socket.emit("join", { name, role: "ownerMain" });
+      socket.emit("join", { name: nameLS, role: "ownerMain" });
       socket.emit("roles:request");
     });
 
-    // حفظ (يدعم السيرفر القديم والجديد)
-    save.onclick = ()=>{
+    // حفظ + إضافة فورية تحت القائمة
+    saveBtn.onclick = ()=>{
       const target=(uName.value||"").trim();
-      const pass=(uPass.value||"").trim();
-      const role=uRole.value;
+      const pass  =(uPass.value||"").trim();
+      const role  = uRole.value;
       if(!target || !pass){ flash("اكتب الاسم وكلمة السر", false); return; }
+
+      // تظهر مباشرة في الجدول (متفائل)
+      addRow(target, role);
+
+      // إرسال للسيرفر (يدعم الجديد والقديم)
       const payload = { target, role, pass };
-      socket.emit("roles:save", payload);   // للسيرفر الجديد
-      socket.emit("roles:grant", payload);  // توافق مع السيرفر القديم
+      socket.emit("roles:save",  payload);   // الجديد
+      socket.emit("roles:grant", payload);   // توافقية
+
+      // تنظيف خانة السر وتحديث القائمة من السيرفر بعد شوي
       uPass.value="";
-      setTimeout(()=> socket.emit("roles:request"), 150);
+      setTimeout(()=> socket.emit("roles:request"), 200);
       flash("تم الحفظ");
     };
 
-    socket.on("roles:list",(list)=>{
-      rolesBody.innerHTML="";
-      list.forEach(({name, role})=>{
-        const tr=document.createElement("tr");
-        tr.innerHTML = `<td>${name}</td><td>${role}</td><td><button class="del" data-n="${name}">حذف</button></td>`;
-        rolesBody.appendChild(tr);
-      });
-      rolesBody.querySelectorAll(".del").forEach(btn=>{
-        btn.onclick=()=> socket.emit("roles:revoke",{ target: btn.dataset.n });
-      });
-    });
+    socket.on("roles:list",(list)=> renderList(list));
 
-    // حدّث القائمة بشكل دوري
-    setInterval(()=> socket.emit("roles:request"), 4000);
+    // تحديث دوري كضمان
+    setInterval(()=> socket.emit("roles:request"), 5000);
   </script>
 </body>
 </html>
