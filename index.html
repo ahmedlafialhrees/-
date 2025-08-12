@@ -2,88 +2,39 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>StageChat</title>
-  <link rel="stylesheet" href="./style.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>دخول الشات</title>
+  <link rel="stylesheet" href="/styles.css"/>
 </head>
 <body>
-  <div class="wrap">
-
-    <!-- شاشة الدخول (نفس التصميم) -->
-    <section id="view-login" class="card login-card">
-      <div class="login-head">
-        <div class="login-icon" aria-hidden="true">🎧</div>
-        <h1>تسجيل الدخول</h1>
-      </div>
-
-      <div class="login-grid">
-        <div class="login-left">
-          <label class="lbl">اسمك وصورتك</label>
-          <div class="field">
-            <input id="name" class="input" placeholder="اكتب اسمك (للعضو ممكن تتركه فاضي)">
-          </div>
-        </div>
-        <div class="login-right">
-          <span class="avatar">imgbb.com<br>image not found</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="lbl">الدور</label>
-        <select id="role" class="select">
-          <option value="member" selected>عضو</option>
-          <option value="admin">أدمن</option>
-          <option value="owner">أونر</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <input id="pass" class="input" placeholder="كلمة السر (للأونر/الأدمن)">
-      </div>
-
-      <button id="go-login" class="btn-primary">دخول</button>
-
-      <p class="hint">الأونر الافتراضي: 7770 — الأدمن: 7771 (تقدر تغيّرهم من Render)</p>
-    </section>
-
-    <!-- صفحة الرومات -->
-    <section id="view-rooms" class="card hidden">
-      <h2 class="title">الرومات</h2>
-      <div id="rooms" class="rooms"></div>
-
-      <div id="owner-tools" class="owner hidden">
-        <div class="field">
-          <input id="newRoom" class="input" placeholder="اسم روم جديد">
-        </div>
-        <button id="addRoom" class="btn-secondary">إضافة روم</button>
-      </div>
-
+  <div class="container" style="padding-top:40px">
+    <div class="card col" style="max-width:520px;margin:auto">
+      <h2 style="margin:0">سجل الدخول</h2>
+      <div class="badge">بدون إيميل — الاسم فقط</div>
+      <input class="input" id="name" placeholder="اكتب اسمك"/>
       <div class="row">
-        <button id="backToLogin" class="btn-ghost">تغيير الاسم/الدور</button>
+        <input class="input" id="adminPass" placeholder="كلمة سر الأدمن (اختياري)"/>
+        <input class="input" id="ownerPass" placeholder="كلمة سر الأونر (اختياري)"/>
       </div>
-    </section>
-
-    <!-- صفحة الشات -->
-    <section id="view-chat" class="card hidden">
-      <div class="chat-top">
-        <div id="roomTitle" class="title"></div>
-        <button id="leave" class="btn-ghost">خروج</button>
+      <button class="btn" id="enter">دخول</button>
+      <div id="err" style="color:#ff6b6b"></div>
+      <hr style="opacity:.1;width:100%"/>
+      <div class="row" style="justify-content:space-between">
+        <a href="/owner">لوحة تحكم الأونر</a>
+        <span class="badge">الظهور كـ متصل</span>
       </div>
-
-      <div id="users" class="users"></div>
-
-      <div id="msgs" class="msgs"></div>
-      <div id="typing" class="typing"></div>
-
-      <div class="send-row">
-        <input id="text" class="input" placeholder="اكتب رسالة…">
-        <button id="send" class="btn-primary">إرسال</button>
-      </div>
-    </section>
-
+    </div>
   </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="./script.js"></script>
+  <script>
+    document.getElementById('enter').onclick = () => {
+      const n = document.getElementById('name').value.trim();
+      const a = document.getElementById('adminPass').value.trim();
+      const o = document.getElementById('ownerPass').value.trim();
+      sessionStorage.setItem("loginName", n);
+      sessionStorage.setItem("adminPass", a);
+      sessionStorage.setItem("ownerPass", o);
+      location.href = "/chat";
+    }
+  </script>
 </body>
 </html>
