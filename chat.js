@@ -1,15 +1,17 @@
-const socket = io();
+// مهم: حدد عنوان السيرفر في config.js (window.SERVER_URL)
+const socket = io(window.SERVER_URL, {transports:['websocket']});
+
 let me = null;
 let users = [];
 let stage = [null,null,null,null];
 let actionMenuOpenFor = null;
 
-// دخول تلقائي من sessionStorage
+// دخول تلقائي
 (function(){
   const name = sessionStorage.getItem("loginName") || "";
   const adminPass = sessionStorage.getItem("adminPass") || "";
   const ownerPass = sessionStorage.getItem("ownerPass") || "";
-  if (!name) { alert("ادخل اسمك أول"); location.href="/"; return; }
+  if (!name) { alert("ادخل اسمك أول"); location.href="index.html"; return; }
   socket.emit("auth:login", { name, adminPass, ownerPass });
 })();
 
@@ -18,8 +20,8 @@ socket.on("auth:ok", ({me: my}) => {
   if (me.role === "owner") document.getElementById("ownerPanel").style.display = "inline-flex";
   addSystem(`مرحباً ${me.name} — دورك: ${me.role}`);
 });
-socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="/"; });
-socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="/"; });
+socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="index.html"; });
+socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="index.html"; });
 
 function roleChip(role){
   if (role === "owner") return `<span class="rolechip owner">اونر</span>`;
