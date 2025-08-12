@@ -9,19 +9,36 @@
 <body class="login-page">
   <div class="login-wrap">
     <div class="login-card">
-      <h1 class="login-title">دخول المستخدم</h1>
+      <h1 class="login-title" style="text-align:center">دخول المستخدم</h1>
 
       <div class="login-fields">
-        <div class="input-wrap">
+        <!-- اسم العضو مع أيقونة شخص -->
+        <div class="input-wrap with-ico user-ico">
+          <span class="ico"></span>
           <input id="name" class="input" placeholder="اكتب اسمك"/>
         </div>
 
+        <!-- الأدمن: اسم + كلمة مرور مع تاج أحمر -->
         <div class="row2">
-          <div class="input-wrap">
-            <input id="adminPass" class="input" placeholder="كلمة سر الأدمن (اختياري)"/>
+          <div class="input-wrap with-ico admin-ico">
+            <span class="ico"></span>
+            <input id="adminUser" class="input" placeholder="اسم الأدمن"/>
           </div>
-          <div class="input-wrap">
-            <input id="ownerPass" class="input" placeholder="كلمة سر الأونر (اختياري)"/>
+          <div class="input-wrap with-ico admin-ico">
+            <span class="ico"></span>
+            <input id="adminPass" class="input" placeholder="كلمة مرور الأدمن (اختياري)"/>
+          </div>
+        </div>
+
+        <!-- الأونر: اسم + كلمة مرور مع تاج ذهبي -->
+        <div class="row2">
+          <div class="input-wrap with-ico owner-ico">
+            <span class="ico"></span>
+            <input id="ownerUser" class="input" placeholder="اسم الأونر"/>
+          </div>
+          <div class="input-wrap with-ico owner-ico">
+            <span class="ico"></span>
+            <input id="ownerPass" class="input" placeholder="كلمة مرور الأونر (اختياري)"/>
           </div>
         </div>
       </div>
@@ -32,13 +49,19 @@
 
   <script>
     document.getElementById('enter').onclick = () => {
-      const n = document.getElementById('name').value.trim();
-      const a = document.getElementById('adminPass').value.trim();
-      const o = document.getElementById('ownerPass').value.trim();
+      const n  = document.getElementById('name').value.trim();
+      const au = (document.getElementById('adminUser')||{}).value?.trim() || "";
+      const ap = (document.getElementById('adminPass')||{}).value?.trim() || "";
+      const ou = (document.getElementById('ownerUser')||{}).value?.trim() || "";
+      const op = (document.getElementById('ownerPass')||{}).value?.trim() || "";
       if(!n){ alert("اكتب اسمك"); return; }
+      // نخزنهم لو احتجناهم لاحقاً
       sessionStorage.setItem("loginName", n);
-      sessionStorage.setItem("adminPass", a);
-      sessionStorage.setItem("ownerPass", o);
+      sessionStorage.setItem("adminUser", au);
+      sessionStorage.setItem("adminPass", ap);
+      sessionStorage.setItem("ownerUser", ou);
+      sessionStorage.setItem("ownerPass", op);
+      // السيرفر يعتمد على كلمات السر فقط حالياً
       location.href = "/chat";
     }
   </script>
