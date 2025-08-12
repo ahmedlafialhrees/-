@@ -1,32 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>الشات الصوتي</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>الشات</title>
+  <link rel="stylesheet" href="/styles.css"/>
 </head>
-<body class="chat-bg">
+<body>
+  <div class="chat-wrap">
+    <!-- الاستيج -->
+    <div class="stage card">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px">
+        <div class="badge">الاستيج</div>
+        <button id="toggleStage" class="btn ghost">صعود/نزول الاستيج</button>
+      </div>
+      <div class="slots">
+        <div class="slot" data-idx="0"><div class="mic"></div><span class="name">فارغ</span><span class="pin">🔒</span></div>
+        <div class="slot" data-idx="1"><div class="mic"></div><span class="name">فارغ</span><span class="pin">🔒</span></div>
+        <div class="slot" data-idx="2"><div class="mic"></div><span class="name">فارغ</span><span class="pin">🔒</span></div>
+        <div class="slot" data-idx="3"><div class="mic"></div><span class="name">فارغ</span><span class="pin">🔒</span></div>
+      </div>
+    </div>
 
-  <!-- الاستيج ثابت أعلى الصفحة -->
-  <header class="stage">
-    <div class="mic-slot">🎤</div>
-    <div class="mic-slot">🎤</div>
-    <div class="mic-slot">🎤</div>
-    <div class="mic-slot">🎤</div>
-  </header>
+    <!-- المحتوى الرئيسي -->
+    <div class="main">
+      <div class="msgs" id="msgs"></div>
+      <div class="users" id="users"></div>
+    </div>
 
-  <!-- الرسائل (تسكرول) -->
-  <main class="chat-box" id="chatBox"></main>
+    <!-- منيو الأوامر -->
+    <div class="action-menu" id="actionMenu">
+      <div class="title" id="amTitle">أوامر</div>
+      <div class="grid" id="amBtns"></div>
+    </div>
 
-  <!-- شريط الإرسال ثابت بالأسفل -->
-  <footer class="message-input">
-    <input type="text" id="message" placeholder="اكتب رسالتك..." />
-    <button onclick="sendMessage()">إرسال</button>
-  </footer>
+    <!-- الإدخال -->
+    <div class="input-bar">
+      <input class="input" id="text" placeholder="...اكتب رسالة"/>
+      <button class="btn" id="send">إرسال</button>
+    </div>
+  </div>
 
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="./script.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/chat.js"></script>
 </body>
 </html>
