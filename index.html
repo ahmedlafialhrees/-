@@ -1,66 +1,45 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-  <title>دخول المستخدم</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body class="login-page">
-  <div class="login-card">
-    <h1 class="login-title">دخول المستخدم</h1>
+<!-- داخل الفورم -->
+<input id="nameInput" type="text" placeholder="اسمك" required />
+<select id="roleSelect">
+  <option value="user">عضو</option>
+  <option value="admin">أدمن</option>
+  <option value="owner">أونر</option>
+</select>
+<input id="passwordInput" type="password" placeholder="كلمة السر (للأدمن/الأونر)" />
+<button id="enterBtn" type="button">دخول</button>
 
-    <div class="login-fields">
-      <div class="input-wrap">
-        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0v1H4z"/></svg></span>
-        <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
-      </div>
+<script type="module">
+  import { OWNER_NAME, OWNER_PASS } from "./config.js";
 
-      <div class="select-wrap">
-        <span class="ico" id="roleIcon"><svg viewBox="0 0 24 24"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></span>
-        <select id="roleSelect" class="select">
-          <option value="">— اختر الدور (اختياري) —</option>
-          <option value="admin">أدمن</option>
-          <option value="owner">أونر</option>
-        </select>
-      </div>
+  const nameEl = document.getElementById("nameInput");
+  const roleEl = document.getElementById("roleSelect");
+  const passEl = document.getElementById("passwordInput");
+  const btn = document.getElementById("enterBtn");
 
-      <div class="input-wrap">
-        <span class="ico" id="passIcon"><svg viewBox="0 0 24 24"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></span>
-        <input id="rolePass" class="input" placeholder="كلمة السر (اختياري)" autocomplete="current-password"/>
-      </div>
-    </div>
+  btn.addEventListener("click", () => {
+    const name = (nameEl.value || "").trim();
+    const role = roleEl.value;
+    const pass = (passEl.value || "").trim();
 
-    <button id="enter" class="btn big">دخول</button>
-  </div>
+    if (!name) { alert("اكتب اسمك"); return; }
 
-  <script>
-    const roleSel=document.getElementById('roleSelect');
-    const roleIcon=document.getElementById('roleIcon');
-    const passIcon=document.getElementById('passIcon');
-    const rolePass=document.getElementById('rolePass');
-    function setCrown(role){
-      let color="#adb1c7",glow="",ph="كلمة السر (اختياري)";
-      if(role==="admin"){color="#ff5d5d";glow="drop-shadow(0 0 8px rgba(255,93,93,.9))";ph="كلمة سر الأدمن (اختياري)";}
-      if(role==="owner"){color="#ffd166";glow="drop-shadow(0 0 8px rgba(255,209,102,.95))";ph="كلمة سر الأونر (اختياري)";}
-      const svg=`<svg width="22" height="22" viewBox="0 0 24 24" style="display:block;fill:${color};filter:${glow}"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>`;
-      roleIcon.innerHTML=svg; passIcon.innerHTML=svg; rolePass.placeholder=ph;
+    // تحقق الأونر الرئيسي
+    if (name === OWNER_NAME) {
+      if (pass !== OWNER_PASS) { alert("كلمة سر الأونر غلط"); return; }
+      localStorage.setItem("role", "ownerMain");
+    } else if (role === "owner") {
+      // يمنع أي أحد ينتحل الأونر الرئيسي باسم مختلف
+      alert("الأونر الرئيسي اسمه 'احمد' فقط");
+      return;
+    } else if (role === "admin") {
+      if (!pass) { alert("حط كلمة سر الأدمن"); return; }
+      localStorage.setItem("role", "admin");
+    } else {
+      localStorage.setItem("role", "user");
     }
-    roleSel.addEventListener('change',()=>setCrown(roleSel.value)); setCrown("");
 
-    document.getElementById('enter').onclick=()=>{
-      const name=document.getElementById('name').value.trim();
-      const role=roleSel.value;
-      const pass=document.getElementById('rolePass').value.trim();
-      if(!name){alert("اكتب اسمك");return;}
-      sessionStorage.setItem("loginName",name);
-      sessionStorage.setItem("adminPass", role==="admin"?pass:"");
-      sessionStorage.setItem("ownerPass", role==="owner"?pass:"");
-      location.href="chat.html";
-    };
-
-    // منع الزووم/الدبل تاب في iOS
-    (function(){let last=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-last<=300&&e.cancelable)e.preventDefault();last=n;},{passive:false});document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});})();
-  </script>
-</body>
-</html>
+    localStorage.setItem("name", name);
+    localStorage.setItem("authTs", Date.now().toString());
+    window.location.href = "chat.html";
+  });
+</script>
