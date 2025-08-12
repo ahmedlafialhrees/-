@@ -1,4 +1,4 @@
-// server.js — Single Room + Bottom Sheet Control + Roles with passwords
+// server.js — Single Room + Roles control page
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -17,7 +17,7 @@ const io = new Server(server, { cors:{ origin:"*", methods:["GET","POST"] } });
 const users = new Map(); // socket.id -> {name, role}
 const bans  = new Map(); // name -> untilTs
 
-// صلاحيات مخزّنة (ذاكرة مؤقتة): name -> {role:"admin"|"owner", pass:""}
+// صلاحيات مخزّنة بالذاكرة: name -> {role:"admin"|"owner", pass:""}
 const allowed = new Map();
 
 function isBanned(name){ const u=bans.get(name); if(!u) return false; if(Date.now()>u){bans.delete(name);return false;} return true; }
@@ -32,7 +32,6 @@ io.on("connection", (socket)=>{
     if(!name){ socket.disconnect(); return; }
     if(isBanned(name)){ socket.emit("banned", bans.get(name)); socket.disconnect(); return; }
 
-    // تحقّق الأدوار
     if (role === "admin") {
       const rec = allowed.get(name);
       if (!(rec && rec.role==="admin" && rec.pass===pass)) role = "user";
@@ -40,7 +39,6 @@ io.on("connection", (socket)=>{
       const rec = allowed.get(name);
       if (!(rec && rec.role==="owner" && rec.pass===pass)) role = "user";
     } else if (role === "ownerMain") {
-      // السماح فقط إذا الاسم يطابق الأونر الرئيسي
       if (name !== OWNER_NAME) role = "user";
     }
 
@@ -48,14 +46,13 @@ io.on("connection", (socket)=>{
     socket.data.name = name;
   });
 
-  // رسائل
   socket.on("message", ({ text })=>{
     const u = users.get(socket.id); if(!u) return;
     const t = String(text||"").trim(); if(!t) return;
     io.emit("message", { name: u.name, role: u.role, text: t, ts: Date.now() });
   });
 
-  /* إدارة الصلاحيات — للأونر الرئيسي فقط */
+  // لوحة التحكم
   socket.on("roles:request", ()=>{
     if (!isOwnerMainSocket(socket)) return;
     socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
@@ -69,12 +66,8 @@ io.on("connection", (socket)=>{
     if (!target || !pass) return;
 
     allowed.set(target, { role, pass });
-
-    // لو المستخدم متصل الآن ونفس الاسم، حدّث دوره فوريًا لو كلمة السر صحيحة
     for (const [id,u] of users.entries()){
-      if (u.name === target) {
-        u.role = role; users.set(id, u);
-      }
+      if (u.name === target) { u.role = role; users.set(id, u); }
     }
     socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
   });
@@ -82,18 +75,14 @@ io.on("connection", (socket)=>{
   socket.on("roles:revoke", ({ target })=>{
     if (!isOwnerMainSocket(socket)) return;
     target = String(target||"").trim(); if(!target) return;
-
     allowed.delete(target);
-    // نزّل دوره لو متصل
     for (const [id,u] of users.entries()){
-      if (u.name === target) {
-        u.role = "user"; users.set(id, u);
-      }
+      if (u.name === target) { u.role = "user"; users.set(id, u); }
     }
     socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
   });
 
-  // طرد/حظر (تبقى موجودة لو بغيتها لاحقًا)
+  // (اختياري) طرد/حظر
   socket.on("admin:kick", ({ target, reason })=>{
     if (!isOwnerMainSocket(socket)) return;
     for (const [id,u] of users.entries()){
