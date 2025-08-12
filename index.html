@@ -1,38 +1,12 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>دخول المستخدم</title>
-<style>
-  :root{
-    --bg:#0b0c10; --bg2:#0e0f15; --card:#14151f; --text:#e7e7f6; --muted:#9aa0a6;
-    --accent:#9b87ff; --accent2:#b6a9ff; --border:#26273a;
-  }
-  *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto}
-  .login-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
-  .login-card{width:min(560px,94vw);background:linear-gradient(180deg,var(--card),rgba(20,21,31,.96));border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
-  .login-title{margin:2px 0 16px;text-align:center;font-size:26px;font-weight:800}
-  .login-fields{display:flex;flex-direction:column;gap:10px}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px} @media(max-width:520px){.row2{grid-template-columns:1fr}}
-  .input-wrap{position:relative}
-  .input{width:100%;background:#0f1120;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px 14px 13px 48px;outline:none;-webkit-appearance:none}
-  .input::placeholder{color:#7f8294}
-  .input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(155,135,255,.18)}
-  /* الأيقونة داخل الحقل (يمين علشان RTL) */
-  .ico{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center}
-  .ico svg{width:22px;height:22px;display:block}
-  /* وميض */
-  @keyframes glowRed{0%{filter:none}50%{filter:drop-shadow(0 0 8px rgba(255,93,93,.9))}100%{filter:none}}
-  @keyframes glowGold{0%{filter:none}50%{filter:drop-shadow(0 0 8px rgba(255,209,102,.95))}100%{filter:none}}
-  .admin-ico .ico svg{fill:#ff5d5d;animation:glowRed 2s infinite ease-in-out}
-  .owner-ico .ico svg{fill:#ffd166;animation:glowGold 2s infinite ease-in-out}
-  .user-ico  .ico svg{fill:#a8b2ff}
-  .btn{background:var(--accent);color:#0d0d14;border:none;border-radius:12px;padding:14px 18px;font-weight:800;cursor:pointer;width:100%}
-  .btn:hover{background:var(--accent2)}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>دخول المستخدم</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
-<body>
+<body class="login-page">
   <div class="login-wrap">
     <div class="login-card">
       <h1 class="login-title">دخول المستخدم</h1>
@@ -41,22 +15,30 @@
         <!-- العضو: اسم + أيقونة شخص -->
         <div class="input-wrap user-ico">
           <span class="ico">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0116 0v1H4z"/></svg>
+            <!-- أيقونة شخص -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 20a8 8 0 0116 0v1H4z"/>
+            </svg>
           </span>
-          <input id="name" class="input" placeholder="اكتب اسمك"/>
+        <input id="name" class="input" placeholder="اكتب اسمك"/>
         </div>
 
         <!-- الأدمن: اسم + كلمة مرور (تاج أحمر) -->
         <div class="row2">
           <div class="input-wrap admin-ico">
             <span class="ico">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+              </svg>
             </span>
             <input id="adminUser" class="input" placeholder="اسم الأدمن"/>
           </div>
           <div class="input-wrap admin-ico">
             <span class="ico">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+              </svg>
             </span>
             <input id="adminPass" class="input" placeholder="كلمة مرور الأدمن (اختياري)"/>
           </div>
@@ -66,24 +48,29 @@
         <div class="row2">
           <div class="input-wrap owner-ico">
             <span class="ico">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 7l4 3 3-5 3 5 3-5 3 5 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M3 7l4 3 3-5 3 5 3-5 3 5 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+              </svg>
             </span>
             <input id="ownerUser" class="input" placeholder="اسم الأونر"/>
           </div>
           <div class="input-wrap owner-ico">
             <span class="ico">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 7l4 3 3-5 3 5 3-5 3 5 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M3 7l4 3 3-5 3 5 3-5 3 5 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+              </svg>
             </span>
             <input id="ownerPass" class="input" placeholder="كلمة مرور الأونر (اختياري)"/>
           </div>
         </div>
       </div>
 
-      <button id="enter" class="btn">دخول</button>
+      <button id="enter" class="btn big">دخول</button>
     </div>
   </div>
 
   <script>
+    // نفس التخزين السابق للاستفادة بالشات
     document.getElementById('enter').onclick = () => {
       const n  = document.getElementById('name').value.trim();
       const au = (document.getElementById('adminUser')||{}).value?.trim() || "";
