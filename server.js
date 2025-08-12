@@ -1,149 +1,173 @@
-import 'dotenv/config';
-import express from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
-import cors from 'cors';
+// server.js — StageChat (Express + Socket.IO)
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
-app.get('/', (req,res)=> res.send('OK'));
+app.use(express.static(".")); // قدّم الملفات من نفس المجلد (ضع html/js بجانب server.js)
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET','POST'] }
+  cors: { origin: "*", methods: ["GET","POST"] }
 });
 
-// إعدادات كلمات السر والأونر
-const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
-const OWNER_PASS = process.env.OWNER_PASS || 'owner123';
-const MAIN_OWNER_NAME = process.env.MAIN_OWNER_NAME || ''; // اختياري
+// حالة عامة بالسيرفر (ذاكرة مؤقتة)
+const users = new Map(); // socket.id -> {name, role}
+const bans = new Map();  // name -> untilTs
+const stage = { slots: [null, null, null, null] }; // كل خانة: {name}
 
-// ذاكرات
-const users = new Map(); // id -> {id,name,role,ip}
-const bans = new Map();  // ip -> ts
-const stage = [null,null,null,null];
-
-function ipOf(socket){
-  const xf = socket.handshake.headers['x-forwarded-for'];
-  return (xf ? xf.split(',')[0].trim() : socket.handshake.address) || socket.id;
+function isBanned(name) {
+  const until = bans.get(name);
+  if (!until) return false;
+  if (Date.now() > until) { bans.delete(name); return false; }
+  return true;
 }
-function broadcastUsers(){
-  const list = [...users.values()].map(u=>({id:u.id, name:u.name, role:u.role}));
-  io.emit('users:list', list);
+function broadcastStage() {
+  io.emit("stage:update", stage);
 }
-function emitStage(){
-  const view = stage.map(sid => sid && users.get(sid) ? ({id:sid, name:users.get(sid).name, role:users.get(sid).role}) : null);
-  io.emit('stage:update', view);
-}
-function onStage(socketId){
-  const idx = stage.findIndex(s=>s===socketId);
-  return idx;
+function listUsers() {
+  const list = [];
+  users.forEach((u) => {
+    const onStage = stage.slots.some(s => s && s.name === u.name);
+    list.push({ name: u.name, role: u.role, onStage });
+  });
+  return list;
 }
 
-// اتصال
-io.on('connection', (socket)=>{
-  const ip = ipOf(socket);
+io.on("connection", (socket) => {
+  // تعريف المستخدم
+  socket.on("join", ({ name, role }) => {
+    name = (name || "").trim();
+    if (!name) { socket.disconnect(); return; }
 
-  socket.on('auth:login', ({name='', adminPass='', ownerPass=''})=>{
-    name = String(name).slice(0,24).trim() || 'مستخدم';
+    if (isBanned(name)) {
+      socket.emit("banned", bans.get(name));
+      socket.disconnect();
+      return;
+    }
+    users.set(socket.id, { name, role: role || "user" });
+    socket.data.name = name;
 
-    const bannedUntil = bans.get(ip) || 0;
-    if (Date.now() < bannedUntil){
-      const mins = Math.ceil((bannedUntil-Date.now())/60000);
-      socket.emit('auth:error', `محظور لمدة ${mins} دقيقة`);
-      socket.disconnect(true);
+    socket.emit("stage:update", stage);
+  });
+
+  // رسائل نصية
+  socket.on("message", ({ text }) => {
+    const u = users.get(socket.id);
+    if (!u || !text) return;
+    const payload = { name: u.name, text: String(text), ts: Date.now() };
+    io.emit("message", payload);
+  });
+
+  // طلب حالة الاستيج
+  socket.on("stage:request", () => {
+    socket.emit("stage:update", stage);
+  });
+
+  // صعود/نزول الاستيج
+  socket.on("stage:toggle", ({ index, forceDown }) => {
+    const u = users.get(socket.id);
+    if (!u) return;
+    if (typeof index !== "number" || index < 0 || index > 3) return;
+
+    // إذا forceDown: نزّل لو كنت فوق
+    if (forceDown) {
+      const myIdx = stage.slots.findIndex(s => s && s.name === u.name);
+      if (myIdx !== -1) stage.slots[myIdx] = null;
+      broadcastStage();
       return;
     }
 
-    let role = 'user';
-    if (ownerPass && ownerPass === OWNER_PASS) role = 'owner';
-    else if (adminPass && adminPass === ADMIN_PASS) role = 'admin';
+    // إذا كان بنفس الخانة وهو فوق -> نزّل
+    const curr = stage.slots[index];
+    if (curr && curr.name === u.name) {
+      stage.slots[index] = null;
+      broadcastStage();
+      return;
+    }
 
-    users.set(socket.id, { id: socket.id, name, role, ip });
-    socket.emit('auth:ok', { me: { id: socket.id, name, role } });
-    broadcastUsers();
-    emitStage();
-  });
+    // إذا موجود فوق بخانة ثانية -> نزله من القديمة
+    const existing = stage.slots.findIndex(s => s && s.name === u.name);
+    if (existing !== -1) stage.slots[existing] = null;
 
-  socket.on('chat:msg', (txt='')=>{
-    const u = users.get(socket.id);
-    if(!u) return;
-    const text = String(txt).slice(0, 2000).trim();
-    if(!text) return;
-    io.emit('chat:msg', { text, from: { id:u.id, name:u.name } });
-  });
-
-  socket.on('stage:toggle', ()=>{
-    const u = users.get(socket.id); if(!u) return;
-    const i = onStage(socket.id);
-    if (i >= 0) { stage[i] = null; emitStage(); return; }
-    const free = stage.findIndex(s=>!s);
-    if (free >= 0) { stage[free] = socket.id; emitStage(); }
-  });
-
-  socket.on('user:action', ({targetId, action, payload})=>{
-    const actor = users.get(socket.id); if(!actor) return;
-    const target = users.get(targetId);
-    const isOwner = actor.role === 'owner';
-    const isAdmin = actor.role === 'admin';
-    const isMainOwner = isOwner && (!MAIN_OWNER_NAME || actor.name === MAIN_OWNER_NAME);
-    if(!target && action!=='renameSelf') return;
-
-    const doRename = (u,newName)=>{
-      u.name = String(newName||'').slice(0,24).trim() || u.name;
-    };
-
-    switch(action){
-      case 'rename':
-        if (!(isAdmin || isOwner)) return;
-        doRename(target, payload?.name);
-        broadcastUsers(); break;
-
-      case 'removeFromStage':
-        if (!(isAdmin || isOwner)) return;
-        const idx = onStage(targetId);
-        if (idx>=0){ stage[idx]=null; emitStage(); }
-        break;
-
-      case 'kick':
-        if (!(isAdmin || isOwner)) return;
-        io.to(targetId).emit('auth:kicked','تم طردك');
-        io.sockets.sockets.get(targetId)?.disconnect(true);
-        break;
-
-      case 'tempban2h':
-        if (!(isAdmin || isOwner)) return;
-        bans.set(target.ip, Date.now()+2*60*60*1000);
-        io.to(targetId).emit('auth:kicked','تم حظرك ساعتين');
-        io.sockets.sockets.get(targetId)?.disconnect(true);
-        break;
-
-      case 'grantAdmin':
-        if (!(isOwner)) return;
-        target.role = 'admin'; broadcastUsers(); break;
-      case 'revokeAdmin':
-        if (!(isOwner)) return;
-        if (target.role==='admin'){ target.role = 'user'; broadcastUsers(); }
-        break;
-
-      case 'grantOwner':
-        if (!isMainOwner) return;
-        target.role = 'owner'; broadcastUsers(); break;
-      case 'revokeOwner':
-        if (!isMainOwner) return;
-        if (target.role==='owner'){ target.role = 'user'; broadcastUsers(); }
-        break;
+    // إذا الخانة فاضية -> ارفعه
+    if (!stage.slots[index]) {
+      stage.slots[index] = { name: u.name };
+      broadcastStage();
     }
   });
 
-  socket.on('disconnect', ()=>{
-    const idx = onStage(socket.id);
-    if (idx>=0) stage[idx]=null;
+  // إدارة المستخدمين (للأونر فقط)
+  socket.on("users:request", () => {
+    socket.emit("users:list", listUsers());
+  });
+
+  function isOwnerMainSocket(sock) {
+    const u = users.get(sock.id);
+    return u && u.role === "ownerMain" && u.name; // الاسم تحقق تم بالواجهة
+  }
+
+  socket.on("admin:grant", ({ target }) => {
+    if (!isOwnerMainSocket(socket)) return;
+    for (const [id, u] of users.entries()) {
+      if (u.name === target) { u.role = "admin"; users.set(id, u); }
+    }
+  });
+  socket.on("admin:revoke", ({ target }) => {
+    if (!isOwnerMainSocket(socket)) return;
+    for (const [id, u] of users.entries()) {
+      if (u.name === target) { u.role = "user"; users.set(id, u); }
+    }
+  });
+  socket.on("admin:kick", ({ target, reason }) => {
+    if (!isOwnerMainSocket(socket)) return;
+    for (const [id, u] of users.entries()) {
+      if (u.name === target) {
+        const s = io.sockets.sockets.get(id);
+        if (s) { s.emit("kicked", reason || ""); s.disconnect(true); }
+        // نزله لو كان فوق
+        const idx = stage.slots.findIndex(s => s && s.name === u.name);
+        if (idx !== -1) stage.slots[idx] = null;
+      }
+    }
+    broadcastStage();
+  });
+  socket.on("admin:tempban2h", ({ target }) => {
+    if (!isOwnerMainSocket(socket)) return;
+    const until = Date.now() + 2*60*60*1000;
+    bans.set(target, until);
+    // افصل الآن إن كان متصل
+    for (const [id, u] of users.entries()) {
+      if (u.name === target) {
+        const s = io.sockets.sockets.get(id);
+        if (s) { s.emit("banned", until); s.disconnect(true); }
+        const idx = stage.slots.findIndex(s => s && s.name === u.name);
+        if (idx !== -1) stage.slots[idx] = null;
+      }
+    }
+    broadcastStage();
+  });
+
+  socket.on("disconnect", () => {
+    const u = users.get(socket.id);
+    if (u) {
+      // نزله من الاستيج إذا كان فوق
+      const idx = stage.slots.findIndex(s => s && s.name === u.name);
+      if (idx !== -1) stage.slots[idx] = null;
+    }
     users.delete(socket.id);
-    broadcastUsers();
-    emitStage();
+    broadcastStage();
   });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, ()=> console.log('Server on :'+PORT));
+server.listen(PORT, () => {
+  console.log("StageChat server running on http://localhost:"+PORT);
+});
