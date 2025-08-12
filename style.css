@@ -24,14 +24,21 @@ body{
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:520px){.row2{grid-template-columns:1fr}}
 
-.input-wrap{position:relative}
-.input{
+.input-wrap,.select-wrap{position:relative}
+.input,.select{
   width:100%; background:#0f1120; color:var(--text);
   border:1px solid var(--border); border-radius:12px;
   padding:13px 14px 13px 48px; outline:none; -webkit-appearance:none;
 }
 .input::placeholder{color:#7f8294}
-.input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(155,135,255,.18)}
+.input:focus,.select:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(155,135,255,.18)}
+
+/* Select tweak (iOS/Android/desktop) */
+.select{appearance:none; background-image:none}
+.select-wrap::after{
+  content:"▾"; position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  color:#8b8ea6; font-size:14px; pointer-events:none;
+}
 
 /* أيقونة داخل الحقل — يسار */
 .ico{
@@ -39,13 +46,6 @@ body{
   width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
 }
 .ico svg{width:22px;height:22px;display:block}
-
-/* وميض للتاج */
-@keyframes glowRed{0%{filter:none}50%{filter:drop-shadow(0 0 8px rgba(255,93,93,.9))}100%{filter:none}}
-@keyframes glowGold{0%{filter:none}50%{filter:drop-shadow(0 0 8px rgba(255,209,102,.95))}100%{filter:none}}
-.user-ico  .ico svg{fill:#a8b2ff}
-.admin-ico .ico svg{fill:var(--danger);animation:glowRed 2s infinite ease-in-out}
-.owner-ico .ico svg{fill:var(--gold);animation:glowGold 2s infinite ease-in-out}
 
 /* Buttons */
 .btn{
@@ -55,7 +55,7 @@ body{
 }
 .btn:hover{background:var(--accent2)}
 
-/* ===== (اختياري) أجزاء الشات ولوحة التحكم — تقدر تتركها أو تستفيد منها لاحقاً ===== */
+/* ===== (اختياري) بقية ستايل الشات/التحكم لو حاب تستخدمه لاحقاً ===== */
 .topbar{position:sticky;top:0;z-index:6;background:#13131b;border-bottom:1px solid var(--border);padding:8px 10px;display:flex;justify-content:space-between;align-items:center}
 .chat-wrap{position:relative;max-width:1100px;margin:0 auto}
 .stage{position:sticky;top:48px;z-index:5;padding:10px 10px 6px;border-bottom:1px solid var(--border)}
