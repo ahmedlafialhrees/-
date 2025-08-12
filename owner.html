@@ -16,6 +16,8 @@
     table{width:100%;border-collapse:collapse;margin-top:8px}
     th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right}
     .del{background:#2a3146;border:1px solid var(--line)}
+    .ok{color:#9BE28C;font-size:13px;margin-inline-start:8px}
+    .err{color:#ff9d9d;font-size:13px;margin-inline-start:8px}
   </style>
 </head>
 <body>
@@ -29,7 +31,8 @@
         <option value="admin">أدمن</option>
         <option value="owner">أونر</option>
       </select>
-      <button id="grant" style="flex:1;background:linear-gradient(135deg,#f5c84c,#ffb300);color:#161616;font-weight:700">حفظ/منح</button>
+      <button id="save" style="flex:1;background:linear-gradient(135deg,#f5c84c,#ffb300);color:#161616;font-weight:700">حفظ</button>
+      <span id="msg"></span>
     </div>
   </div>
 
@@ -47,8 +50,9 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script type="module">
-    import { SERVER_URL, OWNER_NAME } from "./config.js?v=3";
+    import { SERVER_URL, OWNER_NAME } from "./config.js?v=6";
 
+    // حماية الصفحة
     const role = localStorage.getItem("role");
     const name = (localStorage.getItem("name")||"").trim();
     if(!(role==="ownerMain" && name===OWNER_NAME)){ alert("ممنوع — للأونر الرئيسي فقط"); location.href="chat.html"; }
@@ -58,21 +62,29 @@
     const uName = document.getElementById("uName");
     const uPass = document.getElementById("uPass");
     const uRole = document.getElementById("uRole");
-    const grant = document.getElementById("grant");
+    const save  = document.getElementById("save");
+    const msgEl = document.getElementById("msg");
+
+    function flash(text, ok=true){
+      msgEl.textContent = text;
+      msgEl.className = ok ? "ok" : "err";
+      setTimeout(()=>{ msgEl.textContent=""; msgEl.className=""; }, 1800);
+    }
 
     socket.on("connect", ()=>{
       socket.emit("join", { name, role: "ownerMain" });
       socket.emit("roles:request");
     });
 
-    grant.onclick = ()=>{
+    save.onclick = ()=>{
       const target=(uName.value||"").trim();
       const pass=(uPass.value||"").trim();
       const role=uRole.value;
-      if(!target || !pass){ alert("اكتب الاسم وكلمة السر"); return; }
-      socket.emit("roles:grant", { target, role, pass });
+      if(!target || !pass){ flash("اكتب الاسم وكلمة السر", false); return; }
+      socket.emit("roles:save", { target, role, pass }); // حفظ فقط
       uPass.value="";
       setTimeout(()=> socket.emit("roles:request"), 150);
+      flash("تم الحفظ");
     };
 
     socket.on("roles:list",(list)=>{
@@ -87,6 +99,7 @@
       });
     });
 
+    // حدّث القائمة دورياً كضمان
     setInterval(()=> socket.emit("roles:request"), 4000);
   </script>
 </body>
