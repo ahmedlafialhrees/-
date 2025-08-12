@@ -46,11 +46,11 @@
   </div>
 
   <script type="module">
-    // تثبيت الارتفاع على الجوال
+    // تثبيت ارتفاع الجوال
     const setVh=()=>document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
     setVh(); addEventListener('resize', setVh);
 
-    import { OWNER_NAME, OWNER_PASS } from "./config.js?v=1";
+    import { OWNER_NAME, OWNER_PASS } from "./config.js?v=3";
     const $=id=>document.getElementById(id);
     const nameEl=$("nameInput"), roleEl=$("roleSelect"), passEl=$("passwordInput"), btn=$("enterBtn");
 
