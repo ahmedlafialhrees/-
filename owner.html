@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>لوحة التحكم</title>
   <link rel="stylesheet" href="style.css"/>
+  <script src="config.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body class="chat-page">
   <div class="topbar">
     <div class="badge">لوحة التحكم</div>
-    <a class="btn ghost" href="/chat">رجوع للشات</a>
+    <a class="btn ghost" href="chat.html">رجوع للشات</a>
   </div>
 
   <div class="container" style="padding:12px">
@@ -20,13 +22,12 @@
     </div>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
+    const socket = io(window.SERVER_URL, {transports:['websocket']});
     const name = sessionStorage.getItem("loginName") || "";
     const adminPass = sessionStorage.getItem("adminPass") || "";
     const ownerPass = sessionStorage.getItem("ownerPass") || "";
-    if (!name){ location.href="/"; }
+    if (!name){ location.href="index.html"; }
     socket.emit("auth:login", { name, adminPass, ownerPass });
 
     let me = null;
@@ -37,7 +38,7 @@
         document.getElementById('warn').textContent = "هذه الصفحة للأونر فقط";
       }
     });
-    socket.on("auth:error", ()=> location.href="/");
+    socket.on("auth:error", ()=> location.href="index.html");
 
     const list = document.getElementById("list");
     socket.on("users:list", (users)=>{
@@ -55,22 +56,17 @@
         const right = document.createElement("div");
         right.className = "row";
 
-        const mkAdmin = btn("إعطاء أدمن", ()=> act(u.id,"grantAdmin"));
-        const rmAdmin = btn("إزالة أدمن", ()=> act(u.id,"revokeAdmin"));
-        const mkOwner = btn("إعطاء أونر", ()=> act(u.id,"grantOwner"));
-        const rmOwner = btn("إزالة أونر", ()=> act(u.id,"revokeOwner"));
-
-        if (u.role !== "admin") right.appendChild(mkAdmin);
-        if (u.role === "admin") right.appendChild(rmAdmin);
-        if (u.role !== "owner") right.appendChild(mkOwner);
-        if (u.role === "owner") right.appendChild(rmOwner);
+        const btn = (t, fn)=>{ const b=document.createElement("button"); b.className="btn ghost"; b.textContent=t; b.onclick=fn; return b; }
+        if (u.role !== "admin") right.appendChild(btn("إعطاء أدمن", ()=> act(u.id,"grantAdmin")));
+        if (u.role === "admin") right.appendChild(btn("إزالة أدمن", ()=> act(u.id,"revokeAdmin")));
+        if (u.role !== "owner") right.appendChild(btn("إعطاء أونر", ()=> act(u.id,"grantOwner")));
+        if (u.role === "owner") right.appendChild(btn("إزالة أونر", ()=> act(u.id,"revokeOwner")));
 
         row.appendChild(left); row.appendChild(right);
         list.appendChild(row);
       });
     });
 
-    function btn(t, fn){ const b=document.createElement("button"); b.className="btn ghost"; b.textContent=t; b.onclick=fn; return b; }
     function act(targetId, action){ socket.emit("user:action", { targetId, action }); }
   </script>
 </body>
