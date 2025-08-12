@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <!-- يمنع التقريب والسحب للتحديث على iOS قدر الإمكان -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>دخول المستخدم</title>
   <link rel="stylesheet" href="style.css"/>
@@ -13,22 +12,19 @@
       <h1 class="login-title">دخول المستخدم</h1>
 
       <div class="login-fields">
-        <!-- اسم المستخدم + أيقونة شخص -->
+        <!-- اسم المستخدم -->
         <div class="input-wrap user-ico">
           <span class="ico">
-            <!-- شخص -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20a8 8 0 0 1 16 0v1H4z"/>
+              <circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0v1H4z"/>
             </svg>
           </span>
           <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
         </div>
 
-        <!-- اختيار الدور (Dropdown واحد) -->
+        <!-- اختيار الدور (اختياري) -->
         <div class="select-wrap crown-ico">
           <span class="ico" id="roleIcon">
-            <!-- تاج رمادي افتراضي -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
               <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
             </svg>
@@ -40,7 +36,7 @@
           </select>
         </div>
 
-        <!-- كلمة السر حسب الدور المختار -->
+        <!-- كلمة السر (تتغيّر حسب الاختيار) -->
         <div class="input-wrap crown-ico">
           <span class="ico" id="passIcon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
@@ -56,7 +52,6 @@
   </div>
 
   <script>
-    // تبديل أيقونة/نص التاج حسب الدور
     const roleSel  = document.getElementById('roleSelect');
     const roleIcon = document.getElementById('roleIcon');
     const passIcon = document.getElementById('passIcon');
@@ -67,43 +62,29 @@
       if(role === "admin"){ color = "#ff5d5d"; glow = "drop-shadow(0 0 8px rgba(255,93,93,.9))";  ph = "كلمة سر الأدمن (اختياري)"; }
       if(role === "owner"){ color = "#ffd166"; glow = "drop-shadow(0 0 8px rgba(255,209,102,.95))"; ph = "كلمة سر الأونر (اختياري)"; }
       const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style='fill:${color};filter:${glow}'><path d='M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z'/></svg>`;
-      roleIcon.innerHTML = svg;
-      passIcon.innerHTML = svg;
-      rolePass.placeholder = ph;
+      roleIcon.innerHTML = svg; passIcon.innerHTML = svg; rolePass.placeholder = ph;
     }
-    roleSel.addEventListener('change', ()=> setCrown(roleSel.value));
-    setCrown(""); // افتراضي
+    roleSel.addEventListener('change', ()=> setCrown(roleSel.value)); setCrown("");
 
-    // دخول
     document.getElementById('enter').onclick = () => {
       const name = document.getElementById('name').value.trim();
       const role = roleSel.value;
-      const pass = document.getElementById('rolePass').value.trim();
+      const pass = rolePass.value.trim();
       if(!name){ alert("اكتب اسمك"); return; }
       sessionStorage.setItem("loginName", name);
       sessionStorage.setItem("adminPass", role === "admin" ? pass : "");
       sessionStorage.setItem("ownerPass", role === "owner" ? pass : "");
-      location.href = "/chat";
+      // GitHub Pages = روابط نسبية
+      location.href = "chat.html";
     };
 
-    // منع التقريب/الدبل تاب/السحب للتحديث قدر الإمكان على iOS
+    // تقليل الزووم/السحب على iOS
     (function(){
-      let lastTouchEnd = 0;
-      document.addEventListener('touchend', function (e) {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) { if (e.cancelable) e.preventDefault(); }
-        lastTouchEnd = now;
+      let last = 0;
+      document.addEventListener('touchend', e=>{
+        const now = Date.now(); if(now-last<=300 && e.cancelable) e.preventDefault(); last = now;
       }, {passive:false});
-      document.addEventListener('gesturestart', (e)=>{ e.preventDefault(); }, {passive:false});
-      let startY = 0;
-      document.addEventListener('touchstart', (e)=>{ startY = e.touches[0].clientY; }, {passive:true});
-      document.addEventListener('touchmove', (e)=>{
-        const el = document.scrollingElement || document.documentElement;
-        const y  = e.touches[0].clientY;
-        const atTop    = el.scrollTop <= 0;
-        const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
-        if ((atTop && y > startY) || (atBottom && y < startY)) { if (e.cancelable) e.preventDefault(); }
-      }, {passive:false});
+      document.addEventListener('gesturestart', e=>e.preventDefault(), {passive:false});
     })();
   </script>
 </body>
