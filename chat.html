@@ -13,27 +13,51 @@
     .composer-name{margin:8px 12px 4px;opacity:.75;font-weight:700;font-size:14px}
     .msgs{overflow-y:auto;-webkit-overflow-scrolling:touch}
     .msg{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
-    .emoji-panel{
-      position:fixed; bottom:84px; inset-inline-end:14px; z-index:50; display:none;
-      grid-template-columns:repeat(8,28px); gap:6px; background:#1b1c29;
-      border:1px solid #2a2a3e; border-radius:12px; padding:10px; box-shadow:0 12px 30px rgba(0,0,0,.35)
+
+    /* قائمة "افتح" المنسدلة */
+    .menu-wrap{position:relative}
+    .menu-btn{display:inline-flex;align-items:center;gap:8px}
+    .dropdown{
+      position:absolute; top:calc(100% + 8px); inset-inline-start:0; z-index:50;
+      display:none; min-width:180px; background:#1b1c29; border:1px solid #2a2a3e;
+      border-radius:12px; padding:8px; box-shadow:0 12px 30px rgba(0,0,0,.35)
     }
-    .emoji-panel button{width:28px;height:28px;border:0;background:transparent;cursor:pointer;font-size:20px;line-height:1}
+    .dropdown.open{display:block}
+    .menu-item{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:10px; color:#e8e9f0; text-decoration:none
+    }
+    .menu-item:hover{background:#232638}
+    .menu-sep{height:1px;background:#2a2a3e;margin:6px 0}
   </style>
 </head>
 <body class="chat-page">
 
-  <!-- LTR عشان يسار/يمين تكون فعلية -->
+  <!-- LTR عشان "يسار/يمين" تكون فعلية -->
   <div class="topbar" dir="ltr"
        style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;width:100%;">
-    <!-- يسار فعلياً -->
-    <a class="btn ghost back" id="exitBtn" style="justify-self:start">خروج</a>
+    <!-- أقصى اليسار: زر "افتح" يطلع منه القائمة -->
+    <div class="menu-wrap" style="justify-self:start">
+      <button id="menuToggle" class="btn ghost menu-btn" aria-expanded="false">
+        افتح
+        <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#b9bfd3" d="M7 10l5 5 5-5z"/></svg>
+      </button>
+      <div id="dropdownMenu" class="dropdown" role="menu">
+        <a id="menuOwner" href="owner.html" class="menu-item" style="display:none">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ffd166" d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+          لوحة التحكم
+        </a>
+        <div class="menu-sep"></div>
+        <a id="menuExit" href="#" class="menu-item">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ff7a7a" d="M10 17l-1.41-1.41L12.17 12 8.59 8.41 10 7l5 5-5 5zM4 19h6v-2H6V7h4V5H4v14z"/></svg>
+          خروج
+        </a>
+      </div>
+    </div>
 
-    <!-- المنتصف: مكان محفوظ دائمًا — نكشفه فقط للأونر الرئيسي -->
-    <a class="btn ghost" id="ownerPanel" href="owner.html"
-       style="justify-self:center;display:inline-flex;visibility:hidden;pointer-events:none">لوحة التحكم</a>
+    <!-- المنتصف الآن بدون عنصر (المكان فاضي) -->
 
-    <!-- يمين فعلياً: زر المايك -->
+    <!-- أقصى اليمين: زر المايك لفتح/قفل الاستيج -->
     <button id="stageFab" aria-label="فتح/إقفال الاستيج"
             style="justify-self:end;position:static;width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">
       <svg viewBox="0 0 24 24" width="22" height="22">
