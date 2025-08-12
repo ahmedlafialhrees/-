@@ -47,15 +47,11 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script type="module">
-    import { SERVER_URL, OWNER_NAME } from "./config.js?v=2";
+    import { SERVER_URL, OWNER_NAME } from "./config.js?v=3";
 
-    // حماية الصفحة
     const role = localStorage.getItem("role");
     const name = (localStorage.getItem("name")||"").trim();
-    if(!(role==="ownerMain" && name===OWNER_NAME)){
-      alert("ممنوع — للأونر الرئيسي فقط");
-      location.href="chat.html";
-    }
+    if(!(role==="ownerMain" && name===OWNER_NAME)){ alert("ممنوع — للأونر الرئيسي فقط"); location.href="chat.html"; }
 
     const socket = io(SERVER_URL, { transports:["websocket"] });
     const rolesBody = document.getElementById("rolesBody");
@@ -83,20 +79,15 @@
       rolesBody.innerHTML="";
       list.forEach(({name, role})=>{
         const tr=document.createElement("tr");
-        const td1=document.createElement("td"); td1.textContent=name;
-        const td2=document.createElement("td"); td2.textContent=role;
-        const td3=document.createElement("td");
-        const btn=document.createElement("button"); btn.className="del"; btn.textContent="حذف";
-        btn.onclick=()=> socket.emit("roles:revoke", { target:name });
-        td3.appendChild(btn);
-        tr.append(td1,td2,td3);
+        tr.innerHTML = `<td>${name}</td><td>${role}</td><td><button class="del" data-n="${name}">حذف</button></td>`;
         rolesBody.appendChild(tr);
+      });
+      rolesBody.querySelectorAll(".del").forEach(btn=>{
+        btn.onclick=()=> socket.emit("roles:revoke",{ target: btn.dataset.n });
       });
     });
 
-    // ريفرش القائمة بعد الحذف
-    socket.on("connect_error",console.error);
-    setInterval(()=> socket.emit("roles:request"), 5000);
+    setInterval(()=> socket.emit("roles:request"), 4000);
   </script>
 </body>
 </html>
