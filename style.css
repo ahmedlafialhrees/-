@@ -3,12 +3,14 @@
   --bg:#0b0c10; --bg2:#0e0f15;
   --text:#e7e7f6; --muted:#9aa0a6;
   --accent:#9b87ff; --accent2:#b6a9ff;
+  --pane:#1b1c29;     /* للخلفيات الداكنة */
+  --bubble:#1a1b23;   /* فقاعة الرسالة */
 
-  --pane:#1b1c29;     /* خلفية الرسائل والاستيج */
-  --bubble:#1a1b23;   /* فقاعات الرسائل */
+  --topbarH:56px;
+  --fabSize:48px;
 }
 
-/* ===== أساس ===== */
+/* أساس */
 *{box-sizing:border-box}
 html,body{height:100%;overscroll-behavior:none}
 body{
@@ -18,7 +20,7 @@ body{
   -webkit-text-size-adjust:100%;touch-action:manipulation;
 }
 
-/* ===== صفحة الدخول (كما هي) ===== */
+/* ===== صفحة الدخول (كما كانت) ===== */
 body.login-page{display:flex;min-height:100dvh;align-items:center;justify-content:center;padding:24px}
 .login-card{
   width:min(520px,94vw);background:linear-gradient(180deg,#14151f,rgba(20,21,31,.96));
@@ -40,36 +42,66 @@ body.login-page{display:flex;min-height:100dvh;align-items:center;justify-conten
 
 /* ===== الشريط العلوي ===== */
 .topbar{
-  position:sticky;top:0;z-index:6;background:#13131b; /* بدون حدود */
-  padding:8px 10px;display:flex;align-items:center;gap:10px
+  position:sticky;top:0;z-index:6;background:#13131b;
+  height:var(--topbarH); display:flex;align-items:center; padding:0 10px;
 }
 .btn.ghost{background:transparent;color:#dfe0ff;border:0}
-.back{margin-inline-start:auto}   /* يخلي "خروج" يسار في RTL */
+.back{margin-inline-start:auto}  /* يسار في RTL */
 
-/* ===== تخطيط الشات —— كله بفليكس علشان الرسائل تتمدد للنهاية ===== */
+/* ===== تخطيط الشات (الرسائل ثابتة وكاملة) ===== */
 .chat-wrap{
-  min-height:100dvh;
-  display:flex; flex-direction:column;
-  max-width:1100px; margin:0 auto;
+  height:calc(100dvh - var(--topbarH));
+  display:flex;flex-direction:column;max-width:1100px;margin:0 auto;
 }
+.main{
+  flex:1;min-height:0;display:flex;flex-direction:column;
+  padding:0 10px;
+}
+.msgs{
+  flex:1;min-height:0;overflow:auto;
+  background:transparent;           /* بدون حدود ولا لوحة خلفية */
+  border:0;border-radius:0;
+  padding:10px 2px 12px;            /* مسافة بسيطة داخليّة */
+  margin:0;                         /* ما تتأثر بالاستيج */
+}
+/* فقاعات الرسائل */
+.msg{
+  background:var(--bubble); border:0; border-radius:18px;
+  padding:10px 12px; margin:0 8px 10px; box-shadow:0 2px 0 rgba(255,255,255,.03) inset;
+}
+.msg:last-child{margin-bottom:0}
+.msg .from{display:none!important}
+.msg.system{opacity:.85;background:#181924}
 
-/* الاستيج نافذة بفاصل واضح */
-.stage-panel{
-  margin:8px 10px 6px;            /* مسافة من الأعلى وتحتها */
+/* نخفي عمود الأعضاء */
+.users{display:none}
+
+/* ===== شريط الكتابة أسفل ===== */
+.input-bar{
+  position:sticky;bottom:0;z-index:5;background:transparent;
+  padding:0 10px 12px; display:flex;gap:10px;align-items:center;
 }
-.stage-panel.closed .stage{display:none}
+.input-bar .chat-input{
+  flex:1;font-size:18px;padding:14px 16px;border-radius:12px;border:1px solid #2a2a3e;background:#0f1120;color:#fff;
+}
+.input-bar .send{width:auto;min-width:84px;padding:10px 14px;border-radius:10px;font-weight:700;font-size:15px}
+
+/* ===== الاستيج Overlay ثابت لا يحرّك الرسائل ===== */
+.stage-panel{
+  position:fixed; z-index:7;
+  top:calc(var(--topbarH) + 6px); left:10px; right:10px;
+  display:block;
+}
+.stage-panel.closed{display:none}
 .stage{
   background:linear-gradient(180deg,#242533,#1b1c28);
   border-radius:16px; box-shadow:0 10px 24px rgba(0,0,0,.3);
   padding:12px;
 }
-.stage-header{display:flex;justify-content:space-between;align-items:center;margin:0 10px 8px}
-.stage-header .badge{display:none}    /* نخفي الكتابة */
+.stage-header{display:flex;justify-content:flex-end;align-items:center;margin-bottom:8px}
+.stage-header .badge{display:none}
 .slots{display:flex;gap:14px;justify-content:space-between}
-.slot{
-  flex:1; min-height:70px; border-radius:14px; background:transparent; cursor:pointer; position:relative;
-  display:flex; align-items:center; justify-content:center;
-}
+.slot{flex:1;min-height:70px;border-radius:14px;background:transparent;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center}
 .slot .mic{
   width:56px;height:56px;border-radius:50%;
   background:radial-gradient(ellipse at 50% 35%, #0c0d14 0%, #0c0d14 60%, #000 100%);
@@ -80,61 +112,13 @@ body.login-page{display:flex;min-height:100dvh;align-items:center;justify-conten
 .slot.filled .mic{border-color:#7b74ff;box-shadow:0 0 18px rgba(155,135,255,.35), inset 0 2px 10px rgba(255,255,255,.06)}
 .slot .name,.slot .rolechip{display:none!important}
 
-/* المساحة الوسطى: الرسائل فقط وتتمدّد */
-.main{
-  flex:1;                   /* أهم سطر: يخليها تاخذ كل المتبقي */
-  min-height:0;             /* يمنع قصّ السايز */
-  display:flex;             /* عمود واحد */
-  flex-direction:column;
-  padding:0 10px;           /* يمين ويسار بس */
-  gap:0;
+/* زر مايك طافي لفتح الاستيج */
+#stageFab{
+  position:fixed; z-index:6;
+  top:calc(var(--topbarH) + 8px); right:12px;
+  width:var(--fabSize); height:var(--fabSize); border-radius:12px;
+  background:#23233a; border:0; color:#cfd3ff;
+  display:none; align-items:center; justify-content:center;
+  box-shadow:0 8px 18px rgba(0,0,0,.35);
 }
-
-/* الرسائل تأخذ كامل الارتفاع الباقي وبينها وبين العناصر فوق/تحت فراغ واضح */
-.msgs{
-  flex:1;                    /* تتمدد للآخر */
-  min-height:0;
-  background:var(--pane);
-  border:0; border-radius:18px;
-  padding:12px;
-  overflow:auto;
-  margin-bottom:10px;        /* مسافة فوق شريط الكتابة */
-}
-/* فقاعات الرسائل */
-.msg{
-  background:var(--bubble); border:0; border-radius:18px;
-  padding:10px 12px; box-shadow:0 2px 0 rgba(255,255,255,.03) inset;
-  margin:0 0 10px;
-}
-.msg:last-child{margin-bottom:0}
-.msg .from{display:none!important}  /* بدون أسماء */
-.msg.system{opacity:.85;background:#181924}
-
-/* نخفي عمود الأعضاء بالكامل */
-.users{display:none}
-
-/* منيو الأوامر (كما هي) */
-.action-menu{
-  position:fixed;inset:auto 12px calc(70px + env(safe-area-inset-bottom)) 12px;
-  background:#1a1a26;border:1px solid #2a2a3e;border-radius:14px;padding:8px;display:none;z-index:20
-}
-.action-menu.show{display:block}
-.action-menu .title{padding:6px 8px;font-weight:700;color:#9aa0a6}
-.action-menu .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.action-menu .grid button{padding:10px;border-radius:10px;border:1px solid #2a2a3e;background:#23233a;color:#fff}
-
-/* ===== شريط الكتابة أسفل —— بفاصل ثابت وما يلتصق ===== */
-.input-bar{
-  position:sticky; bottom:0; z-index:10;
-  background:transparent;          /* بدون خلفية لاصقة */
-  margin:0 10px 12px;              /* فراغ عن الرسائل وعن الحافة */
-  padding:0;
-  display:flex; gap:10px; align-items:center;
-}
-.input-bar .chat-input{
-  flex:1; font-size:18px; padding:14px 16px;
-  border-radius:12px; border:1px solid #2a2a3e; background:#0f1120; color:#fff;
-}
-.input-bar .send{
-  width:auto; min-width:84px; padding:10px 14px; border-radius:10px; font-weight:700; font-size:15px
-}
+#stageFab svg{width:24px;height:24px;display:block}
