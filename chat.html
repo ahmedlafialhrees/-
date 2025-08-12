@@ -3,112 +3,63 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>الروم | Wolf-style</title>
+<title>الروم</title>
 <style>
   :root{
-    --bg:#0b0f16; --panel:#0f1420; --line:#1d2840;
-    --bubble:#121827; --bubbleMe:#0f1f38; --text:#e8ecf3; --muted:#98a0b3;
-    --accent:#f5c84c; --accent2:#ffb300; --radius:16px; --barH:56px; --safeB:env(safe-area-inset-bottom,0px);
+    --bg:#0b0f16; --panel:#0f1420; --line:#1d2840; --text:#e8ecf3; --muted:#98a0b3;
+    --bubble:#121827; --bubbleMe:#0f1f38; --accent:#f5c84c; --accent2:#ffb300;
+    --barH:56px; --radius:16px; --safeB:env(safe-area-inset-bottom,0px)
   }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0}
-  body{
-    background:radial-gradient(1200px 600px at 50% -10%, #1a2132 0%, #0b0f16 60%), var(--bg);
-    color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
-  }
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  body{background:radial-gradient(1200px 600px at 50% -10%, #1a2132 0%, #0b0f16 60%);
+       color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 
   /* Topbar */
-  .topbar{
-    position:sticky; top:0; z-index:90; height:var(--barH);
-    display:flex; align-items:center; justify-content:space-between;
-    padding:8px 12px; border-bottom:1px solid var(--line);
-    background:linear-gradient(180deg,#121a2a,#0f1420)
-  }
-  .roomTitle{display:flex; align-items:center; gap:10px; font-weight:700}
-  .menu{position:relative}
-  .menuBtn{padding:10px 12px; border:0; border-radius:12px; cursor:pointer;
-    color:#161616; font-weight:700; background:linear-gradient(135deg,var(--accent),var(--accent2))}
-  .dropdown{
-    position:absolute; top:calc(100% + 8px); right:0; min-width:180px;
-    background:linear-gradient(180deg,#111827,#0e1420); border:1px solid var(--line);
-    border-radius:12px; overflow:hidden; box-shadow:0 12px 36px rgba(0,0,0,.35)
-  }
-  .dropdown a{display:block; padding:10px 12px; text-decoration:none; color:var(--text)}
-  .dropdown a:hover{background:#121a2a}
+  .topbar{position:sticky;top:0;z-index:90;height:var(--barH);display:flex;align-items:center;justify-content:space-between;
+    padding:8px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#121a2a,#0f1420)}
+  .left,.right{display:flex;align-items:center;gap:8px}
+  .title{font-weight:700}
+  .openBtn{padding:10px 12px;border:0;border-radius:12px;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+
+  /* Layout ثابت أثناء الكتابة */
+  .wrap{height:100dvh;display:flex;flex-direction:column}
+  .messages{flex:1;overflow:auto;padding:12px 12px calc(112px + var(--safeB));background:linear-gradient(180deg,#0f1420,#0b0f16)}
+  .msg{background:var(--bubble);border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin:10px 0;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
+  .msg.me{background:var(--bubbleMe);border-color:#203c6e}
+  .meta{color:var(--muted);font-size:12px;margin-bottom:4px}
+
+  .composer{position:fixed;left:0;right:0;bottom:0;z-index:100;background:linear-gradient(180deg,#0f1420,#0c111b);
+    border-top:1px solid var(--line);padding:8px 10px calc(8px + var(--safeB))}
+  .as{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .row{display:flex;gap:8px;align-items:center;position:relative}
+  .row input[type="text"]{flex:1;padding:12px;border:1px solid var(--line);background:#0c1220;color:var(--text);border-radius:14px;outline:none}
+  .sendBtn{padding:12px 14px;border:0;border-radius:12px;font-weight:700;cursor:pointer;color:#161616;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .emojiBtn{padding:12px;border-radius:12px;border:1px solid var(--line);background:#0c1220;color:var(--text);cursor:pointer}
+  .emojiPanel{position:absolute;bottom:58px;right:54px;background:#0f1420;border:1px solid var(--line);border-radius:12px;padding:8px;display:grid;grid-template-columns:repeat(8,28px);gap:6px;box-shadow:0 10px 24px rgba(0,0,0,.3);z-index:95}
+  .emoji{cursor:pointer;font-size:20px;line-height:28px;text-align:center}
   .hidden{display:none!important}
 
-  /* Layout */
-  .wrap{height:100dvh; display:flex; flex-direction:column}
-  .messages{
-    flex:1; overflow:auto;
-    padding:12px 12px calc(112px + var(--safeB));
-    background:linear-gradient(180deg,#0f1420,#0b0f16)
-  }
-  .msg{
-    background:var(--bubble); border:1px solid var(--line); border-radius:16px;
-    padding:10px 12px; margin:10px 0; white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere
-  }
-  .msg.me{background:var(--bubbleMe); border-color:#203c6e}
-  .meta{color:var(--muted); font-size:12px; margin-bottom:4px}
-  .name.owner{
-    font-weight:800;
-    background:linear-gradient(90deg,#ffe07a,#fff1b0,#ffe07a);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    animation:shine 2.5s linear infinite
-  }
-  @keyframes shine{0%{background-position:0%}100%{background-position:200%}}
-
-  /* Composer */
-  .composer{
-    position:fixed; left:0; right:0; bottom:0; z-index:100;
-    background:linear-gradient(180deg,#0f1420,#0c111b);
-    border-top:1px solid var(--line);
-    padding:8px 10px calc(8px + var(--safeB))
-  }
-  .as{font-size:12px; color:var(--muted); margin-bottom:6px}
-  .row{display:flex; gap:8px; align-items:center; position:relative}
-  .row input[type="text"]{flex:1; padding:12px; border:1px solid var(--line); background:#0c1220; color:var(--text); border-radius:14px; outline:none}
-  .sendBtn{padding:12px 14px; border:0; border-radius:12px; font-weight:700; cursor:pointer;
-    color:#161616; background:linear-gradient(135deg,var(--accent),var(--accent2))}
-  .emojiBtn{padding:12px; border-radius:12px; border:1px solid var(--line); background:#0c1220; color:var(--text); cursor:pointer}
-  .emojiPanel{
-    position:absolute; bottom:58px; right:54px; background:#0f1420; border:1px solid var(--line);
-    border-radius:12px; padding:8px; display:grid; grid-template-columns:repeat(8,28px); gap:6px;
-    box-shadow:0 10px 24px rgba(0,0,0,.3); z-index:95
-  }
-  .emoji{cursor:pointer; font-size:20px; line-height:28px; text-align:center}
-
-  /* Stage Overlay */
-  .stageOverlay{
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    z-index:120; backdrop-filter:blur(2px); background:rgba(0,0,0,.45)
-  }
-  .stage{
-    width:min(520px,92%); background:linear-gradient(180deg,#111827,#0f1420);
-    border:1px solid var(--line); border-radius:16px; padding:14px
-  }
-  .stage h3{margin:0 0 10px}
-  .slots{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
-  .slot{border:1px dashed var(--line); background:#0e1420; border-radius:14px; padding:16px; text-align:center; cursor:pointer}
-  .slot.me{border-color:#2e5cff; box-shadow:0 0 0 2px rgba(46,92,255,.15) inset}
-  .hint{font-size:12px; color:var(--muted); margin-top:8px; text-align:center}
+  /* Bottom Sheet (افتح) */
+  .sheetBack{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:110;display:none}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:120;transform:translateY(100%);transition:transform .28s ease;
+         background:linear-gradient(180deg,#111827,#0f1420);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:14px}
+  .sheet.open{transform:translateY(0)}
+  .sheetBack.show{display:block}
+  .sheet h3{margin:0 0 10px}
+  .sheet .row{margin-bottom:10px}
+  .pill{display:inline-block;padding:6px 10px;border:1px solid var(--line);border-radius:999px;margin:4px 6px 0 0;font-size:12px}
+  .xBtn{float:left;background:#151b2a;border:1px solid var(--line);color:#e8ecf3}
+  .logoutBtn{background:#ffb300;color:#161616;font-weight:800}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <div class="roomTitle">
-        <div style="width:10px;height:10px;border-radius:50%;background:radial-gradient(#38f,#0cf);box-shadow:0 0 12px rgba(56,136,255,.8)"></div>
-        <div>الروم العام</div>
+      <div class="left">
+        <button id="openBtn" class="openBtn">افتح</button>
       </div>
-      <div class="menu">
-        <button class="menuBtn" id="menuBtn">⋯</button>
-        <div class="dropdown hidden" id="dropdown">
-          <a id="controlLink" class="hidden" href="owner.html">لوحة التحكم</a>
-          <a id="toggleStage">🎤 فتح الاستيج</a>
-          <a id="logoutLink">تسجيل خروج</a>
-        </div>
-      </div>
+      <div class="title">الروم العام</div>
+      <div class="right"></div>
     </div>
 
     <div id="messages" class="messages"></div>
@@ -116,7 +67,7 @@
     <div class="composer">
       <div id="asLine" class="as">ترسل كـ: -</div>
       <div class="row">
-        <button id="emojiBtn" class="emojiBtn" title="إيموجي">🙂</button>
+        <button id="emojiBtn" class="emojiBtn">🙂</button>
         <input id="msgInput" type="text" placeholder="اكتب رسالتك..."/>
         <button id="sendBtn" class="sendBtn">إرسال</button>
         <div id="emojiPanel" class="emojiPanel hidden" role="dialog" aria-label="الإيموجي">
@@ -129,14 +80,37 @@
     </div>
   </div>
 
-  <!-- Stage Overlay -->
-  <div id="stageOverlay" class="stageOverlay" role="dialog" aria-label="الاستيج">
-    <div class="stage">
-      <h3>🎤 الاستيج — اضغط خانة للصعود/النزول</h3>
-      <div id="slots" class="slots"></div>
-      <div class="hint">إذا سكّرت الاستيج وأنت فوق، ننزّلك تلقائيًا.</div>
-      <div style="text-align:center;margin-top:12px">
-        <button id="closeStage" class="sendBtn">إغلاق</button>
+  <!-- Bottom Sheet -->
+  <div id="sheetBack" class="sheetBack"></div>
+  <div id="sheet" class="sheet" role="dialog" aria-label="الخيارات">
+    <button id="closeSheet" class="xBtn">إغلاق</button>
+    <h3>الخيارات</h3>
+
+    <!-- يظهر للجميع -->
+    <div class="row">
+      <button id="logoutBtn" class="sendBtn logoutBtn">خروج</button>
+    </div>
+
+    <!-- لوحة التحكم للأونر الرئيسي فقط -->
+    <div id="ownerPanel" class="hidden">
+      <h3>لوحة التحكم (أونر)</h3>
+      <div class="row">
+        <input id="roleName" type="text" placeholder="اسم المستخدم" style="flex:2;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0c1220;color:#e8ecf3"/>
+        <select id="roleType" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0c1220;color:#e8ecf3">
+          <option value="admin">أدمن</option>
+          <option value="owner">أونر</option>
+        </select>
+      </div>
+      <div class="row">
+        <input id="rolePass" type="text" placeholder="كلمة السر للمستخدم المختار" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0c1220;color:#e8ecf3"/>
+      </div>
+      <div class="row">
+        <button id="grantBtn" class="sendBtn">منح الصلاحية</button>
+        <button id="revokeBtn" class="emojiBtn">إزالة الصلاحية</button>
+        <button id="refreshRoles" class="emojiBtn">تحديث القائمة</button>
+      </div>
+      <div class="row">
+        <div id="rolesList"></div>
       </div>
     </div>
   </div>
