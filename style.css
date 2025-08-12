@@ -1,59 +1,190 @@
+/* =========================
+   Theme
+   ========================= */
 :root{
   --bg:#0b0c10;
+  --bg-soft:#0e0f15;
   --card:#14151f;
   --text:#e7e7f6;
   --muted:#9aa0a6;
-  --accent:#9b87ff;   /* بنفسجي نفس الصورة */
-  --accent-2:#b6a9ff;
+  --accent:#9b87ff;        /* بنفسجي أساسي */
+  --accent-2:#b6a9ff;      /* هوفر */
   --border:#26273a;
+  --danger:#ff4d4d;
+  --gold:#ffd166;
 }
 
-/* ===== صفحة الدخول الجديدة ===== */
-.login-page{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto}
-.login-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
-.login-card{
-  width:min(560px,94vw);
-  background:linear-gradient(180deg,#14151f,rgba(20,21,31,.96));
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;display:block}
+
+/* Scrollbar لطيف */
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:#2a2b3e;border-radius:8px}
+*::-webkit-scrollbar-thumb:hover{background:#343656}
+
+/* =========================
+   Utilities
+   ========================= */
+.container{max-width:1100px;margin:0 auto;padding:16px}
+.card{
+  background:linear-gradient(180deg,var(--card),rgba(20,21,31,.96));
   border:1px solid var(--border);
   border-radius:18px;
-  padding:22px 18px;
+  padding:16px;
   box-shadow:0 20px 50px rgba(0,0,0,.35);
 }
+.row{display:flex;gap:12px;align-items:center}
+.col{display:flex;flex-direction:column;gap:8px}
+.badge{
+  padding:4px 10px;border-radius:999px;
+  background:#1b1c28;border:1px solid var(--border);
+  color:var(--muted);font-size:12px;display:inline-flex;align-items:center;gap:6px
+}
+
+/* Buttons */
+.btn{
+  background:var(--accent); color:#0d0d14; border:none;
+  border-radius:12px; padding:12px 16px; font-weight:800;
+  cursor:pointer; transition:background .15s ease,opacity .15s ease;
+  display:inline-flex; align-items:center; gap:8px
+}
+.btn.big{width:100%; padding:14px 18px; font-size:16px}
+.btn:hover{background:var(--accent-2)}
+.btn.ghost{
+  background:#1b1c28; color:var(--text); border:1px solid var(--border)
+}
+.btn.ghost:hover{opacity:.9}
+.btn.red{background:var(--danger); color:#fff}
+
+/* Inputs */
+.input{
+  width:100%;
+  background:#0f1120; color:var(--text);
+  border:1px solid var(--border); border-radius:12px;
+  padding:13px 14px; outline:none;
+}
+.input::placeholder{color:#7f8294}
+.input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(155,135,255,.18)}
+
+/* =========================
+   Login page
+   ========================= */
+.login-page{background:linear-gradient(180deg,var(--bg),var(--bg-soft))}
+.login-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{width:min(560px,94vw)}
 .login-title{margin:2px 0 4px;font-size:26px;font-weight:800;letter-spacing:.2px}
 .login-sub{margin:0 0 14px;color:var(--muted);font-size:14px}
-
 .login-fields{display:flex;flex-direction:column;gap:10px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:520px){.row2{grid-template-columns:1fr}}
 
-.input-wrap{position:relative}
-.input{
-  width:100%; background:#0f1120; color:var(--text);
-  border:1px solid var(--border); border-radius:12px;
-  padding:13px 14px 13px 42px; outline:none;
-}
-.input::placeholder{color:#788;}
-.input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(155,135,255,.18)}
-.ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.8}
-
-.btn{
-  background:var(--accent); color:#0d0d14; border:none; border-radius:12px;
-  padding:12px 16px; font-weight:800; cursor:pointer
-}
-.btn.big{width:100%; margin-top:10px; padding:14px 18px; font-size:16px}
-.btn:hover{background:var(--accent-2)}
-
-.links-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
-.link{color:var(--accent);text-decoration:none}
-.link:hover{text-decoration:underline}
-.muted{color:var(--muted)}
-
-/* ===== بقية الستايل القديم (الشات/الاستيج/المنيو) يظل كما هو ===== */
-
-/* لو عندك أقسام ثانية في الملف خليه بعدها بدون تغيير */
-
-/* overrides لصفحة الدخول — حقول بدون أيقونات */
-.login-card .input{
-  padding: 13px 14px; /* بدل 13px 14px 13px 42px */
+/* =========================
+   Top bar (chat/owner)
+   ========================= */
+.topbar{
+  position:sticky; top:0; z-index:6;
+  background:#13131b; border-bottom:1px solid var(--border);
+  padding:8px 10px; display:flex; justify-content:space-between; align-items:center
 }
 
+/* =========================
+   Chat layout
+   ========================= */
+.chat-page{background:linear-gradient(180deg,var(--bg),var(--bg-soft))}
+.chat-wrap{position:relative;max-width:1100px;margin:0 auto}
+
+/* Stage */
+.stage{
+  position:sticky; top:48px; z-index:5;
+  padding:10px 10px 6px; border-bottom:1px solid var(--border)
+}
+.stage .slots{display:flex;gap:12px;justify-content:space-between}
+.slot{
+  flex:1; min-height:64px; background:#1f2030; border-radius:12px;
+  border:1px dashed #3a3a58; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; position:relative; padding:8px 10px
+}
+.slot.filled{border:1px solid #6d6dd8; background:rgba(160,139,255,.08)}
+.mic{width:18px;height:26px;border:2px solid var(--accent);border-radius:10px;margin-inline:6px}
+.slot .name{font-weight:700}
+.pin{position:absolute;top:6px;right:8px;font-size:11px;color:var(--muted)}
+.rolechip{
+  font-size:11px;padding:2px 6px;border-radius:999px;border:1px solid #333;margin-right:6px
+}
+.rolechip.owner{color:var(--gold);border-color:#a88}
+.rolechip.admin{color:#ff5d5d;border-color:#a55}
+
+/* Main columns */
+.main{display:grid;grid-template-columns:1fr 280px;gap:12px;padding:10px}
+@media(max-width:900px){.main{grid-template-columns:1fr}}
+
+/* Messages */
+.msgs{
+  background:#12121a;border:1px solid #2a2a3e;border-radius:14px;
+  padding:10px;display:flex;flex-direction:column;gap:10px;
+  height:calc(100dvh - 250px);overflow:auto
+}
+.msg{background:#1a1a26;border:1px solid #2a2a3e;padding:8px 10px;border-radius:10px}
+.msg .from{font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.msg.system{opacity:.85;border-style:dashed}
+
+/* Users list */
+.users{
+  background:#12121a;border:1px solid #2a2a3e;border-radius:14px;
+  padding:10px;height:calc(100dvh - 250px);overflow:auto
+}
+.user{
+  display:flex;justify-content:space-between;align-items:center;
+  background:#191927;border:1px solid #2a2a3e;padding:8px 10px;border-radius:10px;
+  margin-bottom:8px;cursor:pointer
+}
+.user .r{display:flex;gap:6px;align-items:center}
+.role{font-size:11px}
+.role.owner{color:var(--gold)}
+.role.admin{color:#ff5d5d}
+
+/* Action menu */
+.action-menu{
+  position:fixed; inset:auto 12px 90px 12px; z-index:20;
+  background:#1a1a26;border:1px solid #2a2a3e;border-radius:14px;padding:8px;display:none
+}
+.action-menu.show{display:block}
+.action-menu .title{padding:6px 8px;font-weight:700;color:var(--muted)}
+.action-menu .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.action-menu .grid button{
+  padding:10px;border-radius:10px;border:1px solid #2a2a3e;background:#23233a;color:#fff
+}
+
+/* Input bar */
+.input-bar{
+  position:sticky; bottom:0;
+  background:linear-gradient(0deg,#11121a,rgba(17,18,26,.9));
+  padding:10px;border-top:1px solid var(--border);display:flex;gap:10px
+}
+.input-bar input{flex:1}
+
+/* =========================
+   Owner Panel list rows
+   ========================= */
+.owner-list-row{
+  display:flex;justify-content:space-between;align-items:center;
+  border:1px solid #2a2a3e;border-radius:10px;padding:10px
+}
+
+/* =========================
+   Helpers
+   ========================= */
+.hide{display:none !important}
+.center{display:flex;align-items:center;justify-content:center}
