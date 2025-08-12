@@ -11,7 +11,6 @@
     <h1 class="login-title">دخول المستخدم</h1>
 
     <div class="login-fields">
-      <!-- اسم المستخدم -->
       <div class="input-wrap">
         <span class="ico">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -21,7 +20,6 @@
         <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
       </div>
 
-      <!-- اختيار الدور -->
       <div class="select-wrap">
         <span class="ico" id="roleIcon">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill:#adb1c7">
@@ -35,7 +33,6 @@
         </select>
       </div>
 
-      <!-- كلمة السر حسب الدور -->
       <div class="input-wrap">
         <span class="ico" id="passIcon">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill:#adb1c7">
@@ -50,47 +47,32 @@
   </div>
 
   <script>
-    // تبديل أيقونة التاج وحقل الباس حسب الدور
-    const roleSel  = document.getElementById('roleSelect');
-    const roleIcon = document.getElementById('roleIcon');
-    const passIcon = document.getElementById('passIcon');
-    const rolePass = document.getElementById('rolePass');
-
+    const roleSel=document.getElementById('roleSelect');
+    const roleIcon=document.getElementById('roleIcon');
+    const passIcon=document.getElementById('passIcon');
+    const rolePass=document.getElementById('rolePass');
     function setCrown(role){
-      let color = "#adb1c7", glow = "", ph = "كلمة السر (اختياري)";
-      if(role === "admin"){ color = "#ff5d5d"; glow = "drop-shadow(0 0 8px rgba(255,93,93,.9))";  ph = "كلمة سر الأدمن (اختياري)"; }
-      if(role === "owner"){ color = "#ffd166"; glow = "drop-shadow(0 0 8px rgba(255,209,102,.95))"; ph = "كلمة سر الأونر (اختياري)"; }
-
-      const svg = `<svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-                        style="display:block;fill:${color};filter:${glow}">
-                      <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-                   </svg>`;
-      roleIcon.innerHTML = svg; passIcon.innerHTML = svg; rolePass.placeholder = ph;
+      let color="#adb1c7", glow="", ph="كلمة السر (اختياري)";
+      if(role==="admin"){color="#ff5d5d";glow="drop-shadow(0 0 8px rgba(255,93,93,.9))";ph="كلمة سر الأدمن (اختياري)";}
+      if(role==="owner"){color="#ffd166";glow="drop-shadow(0 0 8px rgba(255,209,102,.95))";ph="كلمة سر الأونر (اختياري)";}
+      const svg=`<svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block;fill:${color};filter:${glow}"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>`;
+      roleIcon.innerHTML=svg; passIcon.innerHTML=svg; rolePass.placeholder=ph;
     }
-    roleSel.addEventListener('change', ()=> setCrown(roleSel.value)); setCrown("");
+    roleSel.addEventListener('change', ()=>setCrown(roleSel.value)); setCrown("");
 
-    // الدخول
-    document.getElementById('enter').onclick = () => {
-      const name = document.getElementById('name').value.trim();
-      const role = roleSel.value;
-      const pass = document.getElementById('rolePass').value.trim();
+    document.getElementById('enter').onclick=()=>{
+      const name=document.getElementById('name').value.trim();
+      const role=roleSel.value;
+      const pass=document.getElementById('rolePass').value.trim();
       if(!name){ alert("اكتب اسمك"); return; }
-      sessionStorage.setItem("loginName", name);
-      sessionStorage.setItem("adminPass", role === "admin" ? pass : "");
-      sessionStorage.setItem("ownerPass", role === "owner" ? pass : "");
-      location.href = "chat.html";
+      sessionStorage.setItem("loginName",name);
+      sessionStorage.setItem("adminPass", role==="admin"?pass:"");
+      sessionStorage.setItem("ownerPass", role==="owner"?pass:"");
+      location.href="chat.html";
     };
 
-    // منع الزووم/الدبل تاب في iOS
-    (function(){
-      let last = 0;
-      document.addEventListener('touchend', e=>{
-        const now = Date.now();
-        if(now-last<=300 && e.cancelable) e.preventDefault();
-        last = now;
-      }, {passive:false});
-      document.addEventListener('gesturestart', e=>e.preventDefault(), {passive:false});
-    })();
+    // منع تكبير/دبل تاب
+    (function(){let last=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-last<=300&&e.cancelable)e.preventDefault();last=n;},{passive:false});document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});})();
   </script>
 </body>
 </html>
