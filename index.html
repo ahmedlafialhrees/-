@@ -12,20 +12,12 @@
 
     <div class="login-fields">
       <div class="input-wrap">
-        <span class="ico">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0v1H4z"/>
-          </svg>
-        </span>
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0v1H4z"/></svg></span>
         <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
       </div>
 
       <div class="select-wrap">
-        <span class="ico" id="roleIcon">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill:#adb1c7">
-            <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-          </svg>
-        </span>
+        <span class="ico" id="roleIcon"><svg viewBox="0 0 24 24"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></span>
         <select id="roleSelect" class="select">
           <option value="">— اختر الدور (اختياري) —</option>
           <option value="admin">أدمن</option>
@@ -34,11 +26,7 @@
       </div>
 
       <div class="input-wrap">
-        <span class="ico" id="passIcon">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill:#adb1c7">
-            <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-          </svg>
-        </span>
+        <span class="ico" id="passIcon"><svg viewBox="0 0 24 24"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></span>
         <input id="rolePass" class="input" placeholder="كلمة السر (اختياري)" autocomplete="current-password"/>
       </div>
     </div>
@@ -52,26 +40,26 @@
     const passIcon=document.getElementById('passIcon');
     const rolePass=document.getElementById('rolePass');
     function setCrown(role){
-      let color="#adb1c7", glow="", ph="كلمة السر (اختياري)";
+      let color="#adb1c7",glow="",ph="كلمة السر (اختياري)";
       if(role==="admin"){color="#ff5d5d";glow="drop-shadow(0 0 8px rgba(255,93,93,.9))";ph="كلمة سر الأدمن (اختياري)";}
       if(role==="owner"){color="#ffd166";glow="drop-shadow(0 0 8px rgba(255,209,102,.95))";ph="كلمة سر الأونر (اختياري)";}
-      const svg=`<svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block;fill:${color};filter:${glow}"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>`;
+      const svg=`<svg width="22" height="22" viewBox="0 0 24 24" style="display:block;fill:${color};filter:${glow}"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>`;
       roleIcon.innerHTML=svg; passIcon.innerHTML=svg; rolePass.placeholder=ph;
     }
-    roleSel.addEventListener('change', ()=>setCrown(roleSel.value)); setCrown("");
+    roleSel.addEventListener('change',()=>setCrown(roleSel.value)); setCrown("");
 
     document.getElementById('enter').onclick=()=>{
       const name=document.getElementById('name').value.trim();
       const role=roleSel.value;
       const pass=document.getElementById('rolePass').value.trim();
-      if(!name){ alert("اكتب اسمك"); return; }
+      if(!name){alert("اكتب اسمك");return;}
       sessionStorage.setItem("loginName",name);
       sessionStorage.setItem("adminPass", role==="admin"?pass:"");
       sessionStorage.setItem("ownerPass", role==="owner"?pass:"");
       location.href="chat.html";
     };
 
-    // منع تكبير/دبل تاب
+    // منع الزووم/الدبل تاب في iOS
     (function(){let last=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-last<=300&&e.cancelable)e.preventDefault();last=n;},{passive:false});document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});})();
   </script>
 </body>
