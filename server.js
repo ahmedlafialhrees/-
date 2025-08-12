@@ -1,144 +1,149 @@
-import express from "express";
-import http from "http";
-import { Server } from "socket.io";
-import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const OWNER_PASS = process.env.OWNER_PASS || "owner123";
-const ADMIN_PASS = process.env.ADMIN_PASS || "admin123";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import 'dotenv/config';
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
 
 const app = express();
 app.use(cors());
-app.use(express.static(".")); // يخدم index.html والملفات
+app.get('/', (req,res)=> res.send('OK'));
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, {
+  cors: { origin: '*', methods: ['GET','POST'] }
+});
 
-// ===== بيانات بسيطة في الذاكرة =====
-const users = new Map();           // socketId -> {id,name,role}
-let stage = [null, null, null, null];
-let nextId = 1;
-const bannedByName = new Map();    // name -> timestamp (لطرد ساعتين)
+// إعدادات كلمات السر والأونر
+const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
+const OWNER_PASS = process.env.OWNER_PASS || 'owner123';
+const MAIN_OWNER_NAME = process.env.MAIN_OWNER_NAME || ''; // اختياري
 
-const pub = (u) => ({ id: u.id, name: u.name, role: u.role });
-const sendUsers = () => io.emit("users:list", [...users.values()].map(pub));
-const sendStage = () =>
-  io.emit("stage:update", stage.map(sid => sid && users.get(sid) ? pub(users.get(sid)) : null));
+// ذاكرات
+const users = new Map(); // id -> {id,name,role,ip}
+const bans = new Map();  // ip -> ts
+const stage = [null,null,null,null];
 
-io.on("connection", (socket) => {
-  socket.on("auth:login", ({ name, ownerPass, adminPass }) => {
-    name = (name || "").trim().slice(0, 20);
-    if (!name) return socket.emit("auth:error", "الاسم مطلوب");
+function ipOf(socket){
+  const xf = socket.handshake.headers['x-forwarded-for'];
+  return (xf ? xf.split(',')[0].trim() : socket.handshake.address) || socket.id;
+}
+function broadcastUsers(){
+  const list = [...users.values()].map(u=>({id:u.id, name:u.name, role:u.role}));
+  io.emit('users:list', list);
+}
+function emitStage(){
+  const view = stage.map(sid => sid && users.get(sid) ? ({id:sid, name:users.get(sid).name, role:users.get(sid).role}) : null);
+  io.emit('stage:update', view);
+}
+function onStage(socketId){
+  const idx = stage.findIndex(s=>s===socketId);
+  return idx;
+}
 
-    const ban = bannedByName.get(name);
-    if (ban && Date.now() < ban) {
-      const m = Math.ceil((ban - Date.now()) / 60000);
-      return socket.emit("auth:error", `محظور مؤقتًا (${m} دقيقة متبقية)`);
-    }
+// اتصال
+io.on('connection', (socket)=>{
+  const ip = ipOf(socket);
 
-    let role = "user";
-    if (ownerPass && ownerPass === OWNER_PASS) role = "owner";
-    else if (adminPass && adminPass === ADMIN_PASS) role = "admin";
+  socket.on('auth:login', ({name='', adminPass='', ownerPass=''})=>{
+    name = String(name).slice(0,24).trim() || 'مستخدم';
 
-    const u = { id: nextId++, name, role, mutedUntil: 0 };
-    users.set(socket.id, u);
-    socket.join("room");
-
-    socket.emit("auth:ok", { me: pub(u) });
-    io.to("room").emit("chat:system", `${u.name} دخل الدردشة`);
-    sendUsers(); sendStage();
-  });
-
-  socket.on("chat:msg", (text) => {
-    const u = users.get(socket.id);
-    if (!u) return;
-    text = (text || "").toString().slice(0, 500).trim();
-    if (!text) return;
-    io.to("room").emit("chat:msg", { from: pub(u), text, ts: Date.now() });
-  });
-
-  socket.on("stage:toggle", () => {
-    const u = users.get(socket.id);
-    if (!u) return;
-    const on = stage.findIndex(sid => sid === socket.id);
-    if (on !== -1) { stage[on] = null; sendStage(); return; }
-    const idx = stage.findIndex(sid => sid === null);
-    if (idx !== -1) { stage[idx] = socket.id; sendStage(); }
-  });
-
-  socket.on("user:action", ({ targetId, action, payload }) => {
-    const actor = users.get(socket.id);
-    if (!actor) return;
-    const entry = [...users.entries()].find(([sid, u]) => u.id === targetId);
-    if (!entry) return;
-    const [tSid, target] = entry;
-    const isOwner = actor.role === "owner";
-    const isAdmin = actor.role === "admin";
-
-    if (action === "rename") {
-      if (!(isOwner || isAdmin || actor.id === target.id)) return;
-      const newName = (payload?.name || "").trim().slice(0, 20);
-      if (!newName) return;
-      target.name = newName;
-      io.emit("chat:system", `تم تغيير الاسم إلى ${newName}`);
-      sendUsers(); sendStage(); return;
-    }
-
-    if (action === "removeFromStage") {
-      if (!(isOwner || isAdmin)) return;
-      const idx = stage.findIndex((sid) => sid === tSid);
-      if (idx !== -1) { stage[idx] = null; sendStage(); }
+    const bannedUntil = bans.get(ip) || 0;
+    if (Date.now() < bannedUntil){
+      const mins = Math.ceil((bannedUntil-Date.now())/60000);
+      socket.emit('auth:error', `محظور لمدة ${mins} دقيقة`);
+      socket.disconnect(true);
       return;
     }
 
-    if (action === "kick") {
-      if (!(isOwner || isAdmin)) return;
-      io.to(tSid).emit("auth:kicked", "تم طردك من الغرفة");
-      const idx = stage.findIndex((sid) => sid === tSid);
-      if (idx !== -1) stage[idx] = null;
-      users.delete(tSid);
-      io.sockets.sockets.get(tSid)?.disconnect(true);
-      sendUsers(); sendStage(); return;
-    }
+    let role = 'user';
+    if (ownerPass && ownerPass === OWNER_PASS) role = 'owner';
+    else if (adminPass && adminPass === ADMIN_PASS) role = 'admin';
 
-    if (action === "tempban2h") {
-      if (!(isOwner || isAdmin)) return;
-      bannedByName.set(target.name, Date.now() + 2 * 60 * 60 * 1000);
-      io.to(tSid).emit("auth:kicked", "تم طردك ساعتين");
-      const idx = stage.findIndex((sid) => sid === tSid);
-      if (idx !== -1) stage[idx] = null;
-      users.delete(tSid);
-      io.sockets.sockets.get(tSid)?.disconnect(true);
-      sendUsers(); sendStage(); return;
-    }
-
-    // ترقيات أونر فقط
-    if (!isOwner) return;
-    if (action === "grantAdmin")  { target.role = "admin"; io.emit("chat:system", `${target.name} أصبح أدمن`); sendUsers(); return; }
-    if (action === "grantOwner")  { target.role = "owner"; io.emit("chat:system", `${target.name} أصبح أونر`); sendUsers(); return; }
-    if (action === "revokeAdmin" && target.role === "admin") { target.role = "user"; io.emit("chat:system", `${target.name} أزيل من الأدمن`); sendUsers(); return; }
-    if (action === "revokeOwner" && target.role === "owner") { target.role = "user"; io.emit("chat:system", `${target.name} أزيل من الأونر`); sendUsers(); return; }
+    users.set(socket.id, { id: socket.id, name, role, ip });
+    socket.emit('auth:ok', { me: { id: socket.id, name, role } });
+    broadcastUsers();
+    emitStage();
   });
 
-  socket.on("disconnect", () => {
+  socket.on('chat:msg', (txt='')=>{
     const u = users.get(socket.id);
-    if (!u) return;
-    const idx = stage.findIndex((sid) => sid === socket.id);
-    if (idx !== -1) stage[idx] = null;
+    if(!u) return;
+    const text = String(txt).slice(0, 2000).trim();
+    if(!text) return;
+    io.emit('chat:msg', { text, from: { id:u.id, name:u.name } });
+  });
+
+  socket.on('stage:toggle', ()=>{
+    const u = users.get(socket.id); if(!u) return;
+    const i = onStage(socket.id);
+    if (i >= 0) { stage[i] = null; emitStage(); return; }
+    const free = stage.findIndex(s=>!s);
+    if (free >= 0) { stage[free] = socket.id; emitStage(); }
+  });
+
+  socket.on('user:action', ({targetId, action, payload})=>{
+    const actor = users.get(socket.id); if(!actor) return;
+    const target = users.get(targetId);
+    const isOwner = actor.role === 'owner';
+    const isAdmin = actor.role === 'admin';
+    const isMainOwner = isOwner && (!MAIN_OWNER_NAME || actor.name === MAIN_OWNER_NAME);
+    if(!target && action!=='renameSelf') return;
+
+    const doRename = (u,newName)=>{
+      u.name = String(newName||'').slice(0,24).trim() || u.name;
+    };
+
+    switch(action){
+      case 'rename':
+        if (!(isAdmin || isOwner)) return;
+        doRename(target, payload?.name);
+        broadcastUsers(); break;
+
+      case 'removeFromStage':
+        if (!(isAdmin || isOwner)) return;
+        const idx = onStage(targetId);
+        if (idx>=0){ stage[idx]=null; emitStage(); }
+        break;
+
+      case 'kick':
+        if (!(isAdmin || isOwner)) return;
+        io.to(targetId).emit('auth:kicked','تم طردك');
+        io.sockets.sockets.get(targetId)?.disconnect(true);
+        break;
+
+      case 'tempban2h':
+        if (!(isAdmin || isOwner)) return;
+        bans.set(target.ip, Date.now()+2*60*60*1000);
+        io.to(targetId).emit('auth:kicked','تم حظرك ساعتين');
+        io.sockets.sockets.get(targetId)?.disconnect(true);
+        break;
+
+      case 'grantAdmin':
+        if (!(isOwner)) return;
+        target.role = 'admin'; broadcastUsers(); break;
+      case 'revokeAdmin':
+        if (!(isOwner)) return;
+        if (target.role==='admin'){ target.role = 'user'; broadcastUsers(); }
+        break;
+
+      case 'grantOwner':
+        if (!isMainOwner) return;
+        target.role = 'owner'; broadcastUsers(); break;
+      case 'revokeOwner':
+        if (!isMainOwner) return;
+        if (target.role==='owner'){ target.role = 'user'; broadcastUsers(); }
+        break;
+    }
+  });
+
+  socket.on('disconnect', ()=>{
+    const idx = onStage(socket.id);
+    if (idx>=0) stage[idx]=null;
     users.delete(socket.id);
-    io.emit("chat:system", `${u.name} خرج`);
-    sendUsers(); sendStage();
+    broadcastUsers();
+    emitStage();
   });
 });
 
-// صفحات
-app.get("/", (_, res) => res.sendFile(path.join(__dirname, "index.html")));
-app.get("/chat", (_, res) => res.sendFile(path.join(__dirname, "chat.html")));
-app.get("/owner", (_, res) => res.sendFile(path.join(__dirname, "owner.html")));
-
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("Server running on http://localhost:" + PORT));
+server.listen(PORT, ()=> console.log('Server on :'+PORT));
