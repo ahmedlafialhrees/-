@@ -2,51 +2,65 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>الشات</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+  <title>دخول المستخدم</title>
   <link rel="stylesheet" href="style.css"/>
-  <script src="config.js"></script>
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
-<body class="chat-page">
-  <div class="topbar">
-    <a class="btn ghost back" id="exitBtn">خروج</a>
-    <span></span>
-    <a class="btn ghost" id="ownerPanel" href="owner.html" style="display:none">لوحة التحكم</a>
-  </div>
+<body class="login-page">
+  <div class="login-card">
+    <h1 class="login-title">دخول المستخدم</h1>
 
-  <!-- زر مايك ثابت أعلى اليمين لفتح/قفل الاستيج -->
-  <button id="stageFab" aria-label="فتح/إقفال الاستيج" style="display:inline-flex">
-    <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
-  </button>
+    <div class="login-fields">
+      <div class="input-wrap">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0v1H4z"/></svg></span>
+        <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
+      </div>
 
-  <div class="chat-wrap">
-    <!-- الاستيج Overlay: ما يحرّك الرسائل -->
-    <div class="stage-panel open" id="stagePanel">
-      <div class="stage">
-        <!-- شلت العنوان وخلّيت slots بس -->
-        <div class="slots">
-          <div class="slot" data-idx="0"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
-          <div class="slot" data-idx="1"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
-          <div class="slot" data-idx="2"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
-          <div class="slot" data-idx="3"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
-        </div>
+      <div class="select-wrap">
+        <span class="ico" id="roleIcon"><svg viewBox="0 0 24 24"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></span>
+        <select id="roleSelect" class="select">
+          <option value="">— اختر الدور (اختياري) —</option>
+          <option value="admin">أدمن</option>
+          <option value="owner">أونر</option>
+        </select>
+      </div>
+
+      <div class="input-wrap">
+        <span class="ico" id="passIcon"><svg viewBox="0 0 24 24"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></span>
+        <input id="rolePass" class="input" placeholder="كلمة السر (اختياري)" autocomplete="current-password"/>
       </div>
     </div>
 
-    <!-- الرسائل (ثابتة وكاملة) -->
-    <div class="main">
-      <div class="msgs" id="msgs"></div>
-      <!-- شلنا منيو الأوامر بالكامل -->
-    </div>
-
-    <!-- شريط الإدخال -->
-    <div class="input-bar">
-      <input class="input chat-input" id="text" placeholder="...اكتب رسالة"/>
-      <button class="btn send" id="send">إرسال</button>
-    </div>
+    <button id="enter" class="btn big">دخول</button>
   </div>
 
-  <script src="chat.js"></script>
+  <script>
+    const roleSel=document.getElementById('roleSelect');
+    const roleIcon=document.getElementById('roleIcon');
+    const passIcon=document.getElementById('passIcon');
+    const rolePass=document.getElementById('rolePass');
+    function setCrown(role){
+      let color="#adb1c7",glow="",ph="كلمة السر (اختياري)";
+      if(role==="admin"){color="#ff5d5d";glow="drop-shadow(0 0 8px rgba(255,93,93,.9))";ph="كلمة سر الأدمن (اختياري)";}
+      if(role==="owner"){color="#ffd166";glow="drop-shadow(0 0 8px rgba(255,209,102,.95))";ph="كلمة سر الأونر (اختياري)";}
+      const svg=`<svg width="22" height="22" viewBox="0 0 24 24" style="display:block;fill:${color};filter:${glow}"><path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>`;
+      roleIcon.innerHTML=svg; passIcon.innerHTML=svg; rolePass.placeholder=ph;
+    }
+    roleSel.addEventListener('change',()=>setCrown(roleSel.value)); setCrown("");
+
+    document.getElementById('enter').onclick=()=>{
+      const name=document.getElementById('name').value.trim();
+      const role=roleSel.value;
+      const pass=document.getElementById('rolePass').value.trim();
+      if(!name){alert("اكتب اسمك");return;}
+      sessionStorage.setItem("loginName",name);
+      sessionStorage.setItem("adminPass", role==="admin"?pass:"");
+      sessionStorage.setItem("ownerPass", role==="owner"?pass:"");
+      location.href="chat.html";
+    };
+
+    // منع الزووم/الدبل تاب في iOS
+    (function(){let last=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-last<=300&&e.cancelable)e.preventDefault();last=n;},{passive:false});document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});})();
+  </script>
 </body>
 </html>
