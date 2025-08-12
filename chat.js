@@ -1,4 +1,4 @@
-// اتصال Socket.IO باستخدام السيرفر المحدد في config.js
+// اتصال Socket.IO
 const socket = io(window.SERVER_URL, { transports: ['websocket'] });
 
 // الحالة العامة
@@ -10,21 +10,19 @@ let meOnStage = false;
 const qs  = (s, r=document) => r.querySelector(s);
 const qsa = (s, r=document) => [...r.querySelectorAll(s)];
 
-/* ======================== توب بار ======================== */
-// خروج ← يرجع لواجهة الدخول
+// خروج → صفحة الدخول
 qs("#exitBtn").onclick = () => location.href = "index.html";
 
-// زر المايك (أقصى اليمين) لفتح/قفل الاستيج
+// زر المايك (يمين) لفتح/قفل الاستيج
 const stagePanel = qs("#stagePanel");
 const stageFab   = qs("#stageFab");
 stageFab.addEventListener("click", () => {
   const closing = !stagePanel.classList.contains("closed");
-  // لو كنت فوق الاستيج وراح أسكّر اللوحة، نزّلني
-  if (closing && meOnStage) socket.emit("stage:toggle");
+  if (closing && meOnStage) socket.emit("stage:toggle"); // نزّلني لو أنا فوق
   stagePanel.classList.toggle("closed");
 });
 
-/* ======================== دخول الشات ======================== */
+/* ===== دخول الشات ===== */
 (function initAuth(){
   const name = sessionStorage.getItem("loginName") || "";
   const adminPass = sessionStorage.getItem("adminPass") || "";
@@ -37,32 +35,31 @@ stageFab.addEventListener("click", () => {
 socket.on("auth:ok", ({ me: my }) => {
   me = my;
 
-  // اسم المرسِل فوق خانة الكتابة
+  // اسم المُرسل
   const comp = qs("#composerName");
   if (comp) comp.textContent = `ترسل كـ: ${me.name}`;
 
-  // ✅ لوحة التحكم: للأونر الرئيسي فقط (اسم الدخول يطابق MAIN_OWNER_NAME)
+  // لوحة التحكم: تظهر للأونر الرئيسي فقط (الاسم = MAIN_OWNER_NAME)
   const op = qs("#ownerPanel");
   if (op) {
-    const isOwner = me.role === "owner";
+    const isOwner    = me.role === "owner";
     const loginName  = (me.name || "").trim();
     const mainOwner  = (window.MAIN_OWNER_NAME || "").trim(); // من config.js
     const isMainOwner = isOwner && !!mainOwner && loginName === mainOwner;
 
-    // نُظهرها بالنص للأونر الرئيسي فقط
-    op.style.display       = "inline-flex";     // دايمًا محجوزة بالنص
+    // نخلي مكانها محفوظ بالنص دايمًا، ونكشفها فقط للأونر الرئيسي
+    op.style.display       = "inline-flex";                 // يحجز الوسط دائمًا
     op.style.visibility    = isMainOwner ? "visible" : "hidden";
     op.style.pointerEvents = isMainOwner ? "auto" : "none";
 
-    // Debug للمطور: افحص المطابقة بالكونسول
-    console.debug("[ownerPanel]", { role: me.role, loginName, mainOwner, isMainOwner });
+    console.debug("[ownerPanel]", {role: me.role, loginName, mainOwner, isMainOwner});
   }
 });
 
 socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="index.html"; });
 socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="index.html"; });
 
-/* ======================== الرسائل ======================== */
+/* ===== الرسائل ===== */
 function addMsgBox(text){
   const msgs = qs("#msgs");
   const box = document.createElement("div");
@@ -80,7 +77,6 @@ function addSystem(t){
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-// استقبال
 socket.on("chat:msg", (payload)=>{
   const text = typeof payload === "string" ? payload : (payload?.text || "");
   if (text) addMsgBox(text);
@@ -91,15 +87,14 @@ function sendNow(){
   const t = qs("#text");
   const v = (t.value||"").trim();
   if(!v) return;
-  addMsgBox(v);              // عرض فوري
+  addMsgBox(v);
   socket.emit("chat:msg", v);
   t.value = "";
 }
 qs("#send").addEventListener("click", sendNow);
 qs("#text").addEventListener("keydown", e=>{ if(e.key==="Enter") sendNow(); });
 
-/* ======================== الاستيج ======================== */
-// الصعود/النزول بالضغط على أي خانة (إذا اللوحة مفتوحة)
+/* ===== الاستيج ===== */
 qsa(".slot").forEach(el=>{
   el.addEventListener("click", ()=>{
     if (stagePanel.classList.contains("closed")) return;
@@ -112,11 +107,11 @@ socket.on("stage:update", (view)=>{
   qsa(".slot").forEach((el,idx)=> el.classList.toggle("filled", !!stage[idx]));
 });
 
-/* ======================== حالة الاتصال ======================== */
+/* ===== حالة الاتصال ===== */
 socket.on("connect_error", ()=> addSystem("⚠️ غير متصل بالسيرفر"));
 socket.on("connect",      ()=> addSystem("✅ تم الاتصال بالسيرفر"));
 
-/* ======================== إيموجي بسيط ======================== */
+/* ===== إيموجي بسيط ===== */
 const emojiBtn   = qs("#emojiBtn");
 const emojiPanel = qs("#emojiPanel");
 const textInput  = qs("#text");
