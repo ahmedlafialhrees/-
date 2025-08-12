@@ -1,4 +1,4 @@
-import { SERVER_URL, OWNER_NAME } from "./config.js?v=9";
+import { SERVER_URL, OWNER_NAME } from "./config.js?v=11";
 
 /* تثبيت الارتفاع للجوال */
 const setVh = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
@@ -29,15 +29,15 @@ document.addEventListener("click",(e)=>{
   if(!emojiBtn.contains(e.target) && !emojiPanel.contains(e.target)) emojiPanel.classList.add("hidden");
 });
 
-/* منيو «افتح» */
-const openBtn = document.getElementById("openBtn");
-const menuDrop = document.getElementById("menuDrop");
-const ownerLink = document.getElementById("ownerLink");
+/* ميك يسار: يفتح القائمة (لوحة التحكم/خروج) باتجاه اليمين */
+const micLeftBtn = document.getElementById("micLeftBtn");
+const menuDrop   = document.getElementById("menuDrop");
+const ownerLink  = document.getElementById("ownerLink");
 const logoutLink = document.getElementById("logoutLink");
 if (isOwnerMain) ownerLink.classList.remove("hidden");
-openBtn.addEventListener("click", ()=> menuDrop.classList.toggle("hidden"));
+micLeftBtn.addEventListener("click", ()=> menuDrop.classList.toggle("hidden"));
 document.addEventListener("click",(e)=>{
-  if(!openBtn.contains(e.target) && !menuDrop.contains(e.target)) menuDrop.classList.add("hidden");
+  if(!micLeftBtn.contains(e.target) && !menuDrop.contains(e.target)) menuDrop.classList.add("hidden");
 });
 logoutLink.addEventListener("click", ()=>{ localStorage.clear(); location.href="index.html"; });
 
@@ -70,8 +70,8 @@ function addMessage({ name:n, text, ts }, mine=false){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* الاستيج: ٤ خانات مايك — فتح/إغلاق بالمايك */
-const micBtn = document.getElementById("micBtn");
+/* ميك يمين: يفتح/يقفل الاستيج */
+const micRightBtn = document.getElementById("micRightBtn");
 const stageOverlay = document.getElementById("stageOverlay");
 const slotsEl = document.getElementById("slots");
 let stageVisible = false;
@@ -82,7 +82,7 @@ const toggleStage = ()=>{
   stageOverlay.style.display = stageVisible ? "flex" : "none";
   if (stageVisible) socket.emit("stage:request");
 };
-micBtn.addEventListener("click", toggleStage);
+micRightBtn.addEventListener("click", toggleStage);
 
 socket.on("stage:update",(stage)=> renderStage(stage));
 
