@@ -3,22 +3,79 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>لوحة الأونر</title>
-  <link rel="stylesheet" href="/styles.css"/>
+  <title>لوحة تحكم الأونر</title>
+  <link rel="stylesheet" href="/style.css"/>
 </head>
 <body>
-  <div class="container" style="padding-top:20px">
+  <div class="topbar">
+    <div class="badge">لوحة الأونر</div>
+    <a class="btn ghost" href="/chat">رجوع للشات</a>
+  </div>
+
+  <div class="container" style="padding-top:14px">
     <div class="card">
-      <h2 style="margin-top:0">لوحة تحكم الأونر</h2>
-      <div class="badge">هذه الصفحة معلومات فقط — كل الأوامر من صفحة الشات بالضغط على العضو</div>
-      <p>لتدخل كأونر ادخل من صفحة <a href="/">الدخول</a> وحط <b>اسمك</b> و <b>كلمة سر الأونر</b>. بعدين روح إلى الشات.</p>
-      <hr style="opacity:.1"/>
-      <div>نصائح:</div>
-      <ul>
-        <li>اضغط على أي عضو في قائمة الأعضاء تظهر لك المنيو (طرد، طرد ساعتين، تغيير الاسم، إعطاء أدمن، إنزال من الاستيج).</li>
-        <li>الصعود/النزول للاستيج بالزر أعلى الشات أو الضغط على خانة الاستيج الفارغة.</li>
-      </ul>
+      <h3 style="margin:0 0 10px">التحكم في الأعضاء</h3>
+      <div id="warn" class="badge" style="display:none"></div>
+      <div id="list" class="col" style="margin-top:10px"></div>
     </div>
   </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const name = sessionStorage.getItem("loginName") || "";
+    const adminPass = sessionStorage.getItem("adminPass") || "";
+    const ownerPass = sessionStorage.getItem("ownerPass") || "";
+    socket.emit("auth:login", { name, adminPass, ownerPass });
+
+    let me = null;
+    socket.on("auth:ok", ({me: my})=>{
+      me = my;
+      if (me.role !== "owner"){
+        document.getElementById('warn').style.display = "inline-flex";
+        document.getElementById('warn').textContent = "هذه الصفحة للأونر فقط";
+      }
+    });
+    socket.on("auth:error", ()=> location.href="/");
+
+    const list = document.getElementById("list");
+    socket.on("users:list", (users)=>{
+      list.innerHTML = "";
+      users.forEach(u=>{
+        const row = document.createElement("div");
+        row.className = "row";
+        row.style.justifyContent = "space-between";
+        row.style.border = "1px solid #2a2a3e";
+        row.style.borderRadius = "10px";
+        row.style.padding = "10px";
+
+        const left = document.createElement("div");
+        left.innerHTML = `${u.name} ${
+          u.role==="owner" ? '<span class="rolechip owner">اونر</span>' :
+          u.role==="admin" ? '<span class="rolechip admin">ادمن</span>' : ''
+        }`;
+
+        const right = document.createElement("div");
+        right.className = "row";
+
+        const mkAdmin = btn("إعطاء أدمن", ()=> act(u.id,"grantAdmin"));
+        const rmAdmin = btn("إزالة أدمن", ()=> act(u.id,"revokeAdmin"));
+        const mkOwner = btn("إعطاء أونر", ()=> act(u.id,"grantOwner"));
+        const rmOwner = btn("إزالة أونر", ()=> act(u.id,"revokeOwner"));
+
+        // ترتيب أزرار حسب حالته
+        if (u.role !== "admin") right.appendChild(mkAdmin);
+        if (u.role === "admin") right.appendChild(rmAdmin);
+        if (u.role !== "owner") right.appendChild(mkOwner);
+        if (u.role === "owner") right.appendChild(rmOwner);
+
+        row.appendChild(left); row.appendChild(right);
+        list.appendChild(row);
+      });
+    });
+
+    function btn(t, fn){ const b=document.createElement("button"); b.className="btn ghost"; b.textContent=t; b.onclick=fn; return b; }
+    function act(targetId, action){ socket.emit("user:action", { targetId, action }); }
+  </script>
 </body>
 </html>
