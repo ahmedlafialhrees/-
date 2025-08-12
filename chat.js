@@ -1,4 +1,4 @@
-import { SERVER_URL, OWNER_NAME } from "./config.js?v=3";
+import { SERVER_URL, OWNER_NAME } from "./config.js?v=9";
 
 /* تثبيت الارتفاع للجوال */
 const setVh = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
@@ -48,17 +48,18 @@ socket.on("connect", ()=>{
   socket.emit("stage:request");
 });
 
-/* رسائل */
+/* رسائل (إرسال متفائل) */
 socket.on("message", (p)=> addMessage(p, p.name===name));
 function send(){
   const text = (msgInput.value||"").trim();
   if(!text) return;
-  addMessage({ name, text, ts: Date.now() }, true); // متفائل
+  addMessage({ name, text, ts: Date.now() }, true);
   try { socket.emit("message",{ text }); } catch(e){}
   msgInput.value=""; msgInput.focus();
 }
 sendBtn.addEventListener("click", send);
 msgInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
+
 function addMessage({ name:n, text, ts }, mine=false){
   const div = document.createElement("div");
   div.className = "msg" + (mine?" me":"");
@@ -69,23 +70,19 @@ function addMessage({ name:n, text, ts }, mine=false){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* الاستيج */
+/* الاستيج: ٤ خانات مايك — فتح/إغلاق بالمايك */
 const micBtn = document.getElementById("micBtn");
 const stageOverlay = document.getElementById("stageOverlay");
-const closeStage = document.getElementById("closeStage");
 const slotsEl = document.getElementById("slots");
+let stageVisible = false;
 let lastStage = { slots:[null,null,null,null] };
 
-micBtn.addEventListener("click", ()=>{
-  stageOverlay.style.display = "flex";
-  socket.emit("stage:request");
-});
-closeStage.addEventListener("click", ()=>{
-  // نزول تلقائي لو كنت فوق
-  const myIndex = (lastStage.slots||[]).findIndex(x=>x && x.name===name);
-  if (myIndex!==-1) socket.emit("stage:toggle",{ index: myIndex, forceDown:true });
-  stageOverlay.style.display = "none";
-});
+const toggleStage = ()=>{
+  stageVisible = !stageVisible;
+  stageOverlay.style.display = stageVisible ? "flex" : "none";
+  if (stageVisible) socket.emit("stage:request");
+};
+micBtn.addEventListener("click", toggleStage);
 
 socket.on("stage:update",(stage)=> renderStage(stage));
 
@@ -93,11 +90,15 @@ function renderStage(stage){
   lastStage = stage || lastStage;
   slotsEl.innerHTML = "";
   lastStage.slots.forEach((slot, i)=>{
-    const d = document.createElement("div");
     const isMe = slot && slot.name===name;
-    d.className = "slot"+(isMe?" me":"");
-    d.textContent = slot ? `🎤 ${slot.name}` : "— فارغ —";
-    d.title = isMe ? "اضغط للنزول" : "اضغط للصعود";
+    const state = slot ? (isMe ? "me" : "on") : "off";
+    const d = document.createElement("div");
+    d.className = `slot ${state}`;
+    d.innerHTML = `
+      <div class="micCircle">🎙️</div>
+      <div class="name">${slot ? esc(slot.name) : "فارغ"}</div>
+    `;
+    d.title = slot ? (isMe ? "اضغط للنزول" : "اضغط لتبديل مقعدك") : "اضغط للصعود";
     d.addEventListener("click", ()=> socket.emit("stage:toggle",{ index:i }));
     slotsEl.appendChild(d);
   });
