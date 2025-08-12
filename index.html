@@ -12,57 +12,45 @@
       <h1 class="login-title">دخول المستخدم</h1>
 
       <div class="login-fields">
-        <!-- العضو: اسم + أيقونة شخص -->
+
+        <!-- اسم العضو + أيقونة شخص -->
         <div class="input-wrap user-ico">
           <span class="ico">
-            <!-- أيقونة شخص -->
+            <!-- شخص -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <circle cx="12" cy="8" r="4"/>
               <path d="M4 20a8 8 0 0116 0v1H4z"/>
             </svg>
           </span>
-        <input id="name" class="input" placeholder="اكتب اسمك"/>
+          <input id="name" class="input" placeholder="اكتب اسمك"/>
         </div>
 
-        <!-- الأدمن: اسم + كلمة مرور (تاج أحمر) -->
-        <div class="row2">
-          <div class="input-wrap admin-ico">
-            <span class="ico">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-              </svg>
-            </span>
-            <input id="adminUser" class="input" placeholder="اسم الأدمن"/>
-          </div>
-          <div class="input-wrap admin-ico">
-            <span class="ico">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-              </svg>
-            </span>
-            <input id="adminPass" class="input" placeholder="كلمة مرور الأدمن (اختياري)"/>
-          </div>
+        <!-- اختيار الدور: عضو/أدمن/أونر (خانة واحدة تنزل) -->
+        <div class="select-wrap crown-ico">
+          <span class="ico" id="roleIcon">
+            <!-- تاج افتراضي رمادي -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
+              <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+            </svg>
+          </span>
+          <select id="roleSelect" class="select">
+            <option value="">— الدور (اختياري) —</option>
+            <option value="admin">أدمن</option>
+            <option value="owner">أونر</option>
+          </select>
         </div>
 
-        <!-- الأونر: اسم + كلمة مرور (تاج ذهبي) -->
-        <div class="row2">
-          <div class="input-wrap owner-ico">
-            <span class="ico">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M3 7l4 3 3-5 3 5 3-5 3 5 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-              </svg>
-            </span>
-            <input id="ownerUser" class="input" placeholder="اسم الأونر"/>
-          </div>
-          <div class="input-wrap owner-ico">
-            <span class="ico">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M3 7l4 3 3-5 3 5 3-5 3 5 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-              </svg>
-            </span>
-            <input id="ownerPass" class="input" placeholder="كلمة مرور الأونر (اختياري)"/>
-          </div>
+        <!-- كلمة السر للدور المختار (واحدة) -->
+        <div class="input-wrap crown-ico">
+          <span class="ico" id="passIcon">
+            <!-- نفس التاج يتبدل حسب الاختيار -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
+              <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+            </svg>
+          </span>
+          <input id="rolePass" class="input" placeholder="كلمة السر (اختياري)"/>
         </div>
+
       </div>
 
       <button id="enter" class="btn big">دخول</button>
@@ -70,19 +58,38 @@
   </div>
 
   <script>
-    // نفس التخزين السابق للاستفادة بالشات
+    // تغيير الأيقونة والنص حسب الدور
+    const roleSel = document.getElementById('roleSelect');
+    const roleIcon = document.getElementById('roleIcon');
+    const passIcon = document.getElementById('passIcon');
+    const rolePass = document.getElementById('rolePass');
+
+    function setCrown(role){
+      let color = "#adb1c7"; // افتراضي
+      let glow  = "";
+      if(role === "admin"){ color = "#ff5d5d"; glow = "drop-shadow(0 0 8px rgba(255,93,93,.9))"; rolePass.placeholder = "كلمة سر الأدمن (اختياري)"; }
+      else if(role === "owner"){ color = "#ffd166"; glow = "drop-shadow(0 0 8px rgba(255,209,102,.95))"; rolePass.placeholder = "كلمة سر الأونر (اختياري)"; }
+      else { rolePass.placeholder = "كلمة السر (اختياري)"; }
+
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style='fill:${color};filter:${glow}'><path d='M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z'/></svg>`;
+      roleIcon.innerHTML = svg;
+      passIcon.innerHTML = svg;
+    }
+    roleSel.addEventListener('change', ()=> setCrown(roleSel.value));
+    setCrown(""); // مبدئياً
+
+    // الدخول
     document.getElementById('enter').onclick = () => {
-      const n  = document.getElementById('name').value.trim();
-      const au = (document.getElementById('adminUser')||{}).value?.trim() || "";
-      const ap = (document.getElementById('adminPass')||{}).value?.trim() || "";
-      const ou = (document.getElementById('ownerUser')||{}).value?.trim() || "";
-      const op = (document.getElementById('ownerPass')||{}).value?.trim() || "";
-      if(!n){ alert("اكتب اسمك"); return; }
-      sessionStorage.setItem("loginName", n);
-      sessionStorage.setItem("adminUser", au);
-      sessionStorage.setItem("adminPass", ap);
-      sessionStorage.setItem("ownerUser", ou);
-      sessionStorage.setItem("ownerPass", op);
+      const name = document.getElementById('name').value.trim();
+      const role = roleSel.value;
+      const pass = rolePass.value.trim();
+      if(!name){ alert("اكتب اسمك"); return; }
+
+      sessionStorage.setItem("loginName", name);
+      // نخزن كلمة السر حسب الدور المختار (متوافقة مع server.js)
+      sessionStorage.setItem("adminPass", role === "admin" ? pass : "");
+      sessionStorage.setItem("ownerPass", role === "owner" ? pass : "");
+
       location.href = "/chat";
     }
   </script>
