@@ -9,26 +9,24 @@ let actionMenuOpenFor = null;
   const name = sessionStorage.getItem("loginName") || "";
   const adminPass = sessionStorage.getItem("adminPass") || "";
   const ownerPass = sessionStorage.getItem("ownerPass") || "";
+  if (!name) { alert("ادخل اسمك أول"); location.href="/"; return; }
   socket.emit("auth:login", { name, adminPass, ownerPass });
 })();
 
 socket.on("auth:ok", ({me: my}) => {
   me = my;
-  // زر دخول التحكم يظهر للأونر فقط
   if (me.role === "owner") document.getElementById("ownerPanel").style.display = "inline-flex";
   addSystem(`مرحباً ${me.name} — دورك: ${me.role}`);
 });
-socket.on("auth:error", (m)=>{ alert(m); location.href="/"; });
+socket.on("auth:error", (m)=>{ alert(m||"خطأ في الدخول"); location.href="/"; });
 socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="/"; });
 
-// شارة الدور
 function roleChip(role){
   if (role === "owner") return `<span class="rolechip owner">اونر</span>`;
   if (role === "admin") return `<span class="rolechip admin">ادمن</span>`;
   return "";
 }
 
-// رسائل
 function addSystem(t){
   const msgs = document.getElementById("msgs");
   const div = document.createElement("div");
