@@ -84,7 +84,7 @@ io.on("connection",(socket)=>{
     broadcastStage();
   });
 
-  // إدارة — للأونر فقط (نتحقق طرف السيرفر بأن المرسل مسجل كـ ownerMain)
+  // إدارة — للأونر فقط
   function isOwnerMainSocket(sock){
     const u = users.get(sock.id);
     return u && u.role==="ownerMain";
