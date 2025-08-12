@@ -72,25 +72,30 @@ socket.on("banned",(untilTs)=>{
   localStorage.clear(); location.href="index.html";
 });
 
-// إرسال
+// إرسال — “إرسال متفائل”
 function send(){
   const text = (msgInput.value||"").trim();
   if(!text) return;
-  socket.emit("message",{ text });
-  msgInput.value="";
+
+  // اعرض الرسالة فورًا
+  addMessage({ name, text, ts: Date.now() }, true);
+
+  // أرسل للسيرفر (لو تعذّر الاتصال، تبقى رسالتك ظاهرة عندك)
+  try { socket.emit("message",{ text }); } catch(e) {}
+
+  msgInput.value=""; msgInput.focus();
 }
 sendBtn.addEventListener("click",send);
 msgInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter") send(); });
 
 // إضافة رسالة
-function addMessage({ name:n, text, ts, role:r }, mine=false){
+function addMessage({ name:n, text, ts }, mine=false){
   const div = document.createElement("div");
   div.className = "msg" + (mine?" me":"");
-  const isOwner = n===OWNER_NAME;
-  const metaName = `<span class="name ${isOwner?'owner':''}">${escape(n)}</span>`;
   const when = ts ? new Date(ts) : new Date();
-  const time = when.toLocaleTimeString();
-  div.innerHTML = `<div class="meta">${metaName} • ${time}</div>${escape(text)}`;
+  const isOwner = n === OWNER_NAME;
+  const metaName = `<span class="name ${isOwner?'owner':''}">${escape(n)}</span>`;
+  div.innerHTML = `<div class="meta">${metaName} • ${when.toLocaleTimeString()}</div>${escape(text)}`;
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
