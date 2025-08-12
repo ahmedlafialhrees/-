@@ -4,7 +4,7 @@ let users = [];
 let stage = [null,null,null,null];
 let actionMenuOpenFor = null;
 
-// login تلقائي من sessionStorage
+// دخول تلقائي من sessionStorage
 (function(){
   const name = sessionStorage.getItem("loginName") || "";
   const adminPass = sessionStorage.getItem("adminPass") || "";
@@ -14,19 +14,21 @@ let actionMenuOpenFor = null;
 
 socket.on("auth:ok", ({me: my}) => {
   me = my;
-  // زر لوحة التحكم يظهر للأونر
+  // زر دخول التحكم يظهر للأونر فقط
   if (me.role === "owner") document.getElementById("ownerPanel").style.display = "inline-flex";
   addSystem(`مرحباً ${me.name} — دورك: ${me.role}`);
 });
 socket.on("auth:error", (m)=>{ alert(m); location.href="/"; });
 socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="/"; });
 
+// شارة الدور
 function roleChip(role){
   if (role === "owner") return `<span class="rolechip owner">اونر</span>`;
   if (role === "admin") return `<span class="rolechip admin">ادمن</span>`;
   return "";
 }
 
+// رسائل
 function addSystem(t){
   const msgs = document.getElementById("msgs");
   const div = document.createElement("div");
@@ -91,7 +93,7 @@ socket.on("stage:update", (view)=>{
   });
 });
 
-// لستة الأعضاء
+// قائمة الأعضاء + المنيو
 socket.on("users:list", (list)=>{
   users = list;
   const wrap = document.getElementById("users");
@@ -114,18 +116,13 @@ socket.on("users:list", (list)=>{
     row.appendChild(l); row.appendChild(r);
     wrap.appendChild(row);
 
-    // فتح/إغلاق منيو الأوامر بالضغط
     row.addEventListener("click", ()=>{
-      if (actionMenuOpenFor === u.id){
-        hideActionMenu();
-      } else {
-        showActionMenuFor(u);
-      }
+      if (actionMenuOpenFor === u.id) hideActionMenu();
+      else showActionMenuFor(u);
     });
   });
 });
 
-// منيو أوامر العضو
 const am = document.getElementById("actionMenu");
 function hideActionMenu(){ am.classList.remove("show"); actionMenuOpenFor = null; }
 function showActionMenuFor(u){
@@ -169,7 +166,5 @@ function act(targetId, action, payload){
   socket.emit("user:action", { targetId, action, payload });
 }
 document.addEventListener("click", (e)=>{
-  if (actionMenuOpenFor && !e.target.closest(".action-menu") && !e.target.closest(".user")) {
-    hideActionMenu();
-  }
+  if (actionMenuOpenFor && !e.target.closest(".action-menu") && !e.target.closest(".user")) hideActionMenu();
 });
