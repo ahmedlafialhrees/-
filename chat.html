@@ -11,6 +11,7 @@
 
   <style>
     .composer-name{margin:8px 12px 4px;opacity:.75;font-weight:700;font-size:14px}
+    /* لفّ الرسالة داخل الفقاعة وكسر الكلمات الطويلة */
     .msgs{overflow-y:auto;-webkit-overflow-scrolling:touch}
     .msg{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
 
@@ -25,17 +26,17 @@
 </head>
 <body class="chat-page">
 
-  <!-- LTR عشان اليسار/اليمين تكون فعلية -->
+  <!-- LTR عشان يسار/يمين تكون فعلية -->
   <div class="topbar" dir="ltr"
        style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;width:100%;">
-    <!-- يسار -->
+    <!-- يسار فعلياً -->
     <a class="btn ghost back" id="exitBtn" style="justify-self:start">خروج</a>
 
-    <!-- المنتصف: مكان محفوظ دائمًا — نكشفه فقط للأونر الرئيسي -->
+    <!-- المنتصف: مكان محفوظ دايم — نكشفه فقط للأونر الرئيسي -->
     <a class="btn ghost" id="ownerPanel" href="owner.html"
-       style="justify-self:center;opacity:0;visibility:hidden;pointer-events:none">لوحة التحكم</a>
+       style="justify-self:center;display:inline-flex;visibility:hidden;pointer-events:none">لوحة التحكم</a>
 
-    <!-- يمين -->
+    <!-- يمين فعلياً: زر المايك -->
     <button id="stageFab" aria-label="فتح/إقفال الاستيج"
             style="justify-self:end;position:static;width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">
       <svg viewBox="0 0 24 24" width="22" height="22">
@@ -60,6 +61,7 @@
     <!-- الرسائل -->
     <div class="main"><div class="msgs" id="msgs"></div></div>
 
+    <!-- اسم المُرسل -->
     <div id="composerName" class="composer-name"></div>
 
     <!-- الإدخال -->
