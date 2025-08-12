@@ -24,7 +24,7 @@
   .menu{position:relative}
   .openBtn{padding:10px 12px;border:0;border-radius:12px;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2))}
   .iconBtn{width:44px;height:44px;border-radius:12px;border:0;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,#ffd86b,#ffb300)}
-  .dropdown{position:absolute;top:calc(100% + 8px);left:0; /* القائمة تنزل يسار الزر */
+  .dropdown{position:absolute;top:calc(100% + 8px);left:0;
     min-width:180px;background:linear-gradient(180deg,#111827,#0e1420);border:1px solid var(--line);
     border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.35)}
   .dropdown a{display:block; padding:10px 12px; text-decoration:none; color:var(--text); cursor:pointer}
@@ -53,20 +53,20 @@
   .stage{width:min(520px,92%);background:linear-gradient(180deg,#111827,#0f1420);border:1px solid var(--line);border-radius:16px;padding:14px}
   .stage h3{margin:0 0 10px}
   .slots{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-  .slot{border:1px dashed var(--line);background:#0e1420;border-radius:14px;padding:16px;text-align:center;cursor:pointer}
-  .slot.me{border-color:#2e5cff;box-shadow:0 0 0 2px rgba(46,92,255,.15) inset}
-  .hint{font-size:12px;color:var(--muted);margin-top:8px;text-align:center}
+  .slot{border:1px solid var(--line);background:#0e1420;border-radius:14px;padding:14px;text-align:center;cursor:pointer}
+  .slot.me{border-color:#2e5cff; box-shadow:0 0 0 2px rgba(46,92,255,.15) inset}
+  .slot.on{border-color:#f5c84c; box-shadow:0 0 0 2px rgba(245,200,76,.15) inset}
+  .micCircle{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:28px;margin:0 auto 8px;
+             background:#0c1220;border:1px solid var(--line)}
+  .slot.me .micCircle{border-color:#2e5cff}
+  .slot.on .micCircle{border-color:#f5c84c}
+  .name{font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <!-- المايك أقصى اليسار -->
       <div class="left">
-        <button id="micBtn" class="iconBtn" title="الاستيج">🎤</button>
-      </div>
-      <!-- «افتح» أقصى اليمين + منيو تنزل يسار -->
-      <div class="right">
         <div class="menu">
           <button id="openBtn" class="openBtn">افتح ▾</button>
           <div id="menuDrop" class="dropdown hidden">
@@ -74,6 +74,9 @@
             <a id="logoutLink">خروج</a>
           </div>
         </div>
+      </div>
+      <div class="right">
+        <button id="micBtn" class="iconBtn" title="الاستيج">🎤</button>
       </div>
     </div>
 
@@ -100,14 +103,11 @@
     <div class="stage">
       <h3>🎤 الاستيج</h3>
       <div id="slots" class="slots"></div>
-      <div class="hint">اضغط خانة للصعود/النزول</div>
-      <div style="text-align:center;margin-top:12px">
-        <button id="closeStage" class="emojiBtn">إغلاق</button>
-      </div>
+      <!-- يغلق/يفتح بالمايك فقط -->
     </div>
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script type="module" src="./chat.js?v=7"></script>
+  <script type="module" src="./chat.js?v=9"></script>
 </body>
 </html>
