@@ -24,7 +24,7 @@
   .menu{position:relative}
   .openBtn{padding:10px 12px;border:0;border-radius:12px;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2))}
   .iconBtn{width:44px;height:44px;border-radius:12px;border:0;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,#ffd86b,#ffb300)}
-  .dropdown{position:absolute;top:calc(100% + 8px);left:0; /* تنزل يمين من الزر */
+  .dropdown{position:absolute;top:calc(100% + 8px);left:0; /* القائمة تنزل يسار الزر */
     min-width:180px;background:linear-gradient(180deg,#111827,#0e1420);border:1px solid var(--line);
     border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.35)}
   .dropdown a{display:block; padding:10px 12px; text-decoration:none; color:var(--text); cursor:pointer}
@@ -61,7 +61,12 @@
 <body>
   <div class="wrap">
     <div class="topbar">
+      <!-- المايك أقصى اليسار -->
       <div class="left">
+        <button id="micBtn" class="iconBtn" title="الاستيج">🎤</button>
+      </div>
+      <!-- «افتح» أقصى اليمين + منيو تنزل يسار -->
+      <div class="right">
         <div class="menu">
           <button id="openBtn" class="openBtn">افتح ▾</button>
           <div id="menuDrop" class="dropdown hidden">
@@ -69,9 +74,6 @@
             <a id="logoutLink">خروج</a>
           </div>
         </div>
-      </div>
-      <div class="right">
-        <button id="micBtn" class="iconBtn" title="الاستيج">🎤</button>
       </div>
     </div>
 
@@ -106,6 +108,6 @@
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script type="module" src="./chat.js?v=6"></script>
+  <script type="module" src="./chat.js?v=7"></script>
 </body>
 </html>
