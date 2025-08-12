@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>لوحة تحكم الأونر</title>
-  <link rel="stylesheet" href="/style.css"/>
+  <title>لوحة التحكم</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
-<body>
+<body class="chat-page">
   <div class="topbar">
-    <div class="badge">لوحة الأونر</div>
+    <div class="badge">لوحة التحكم</div>
     <a class="btn ghost" href="/chat">رجوع للشات</a>
   </div>
 
-  <div class="container" style="padding-top:14px">
+  <div class="container" style="padding-top:12px">
     <div class="card">
-      <h3 style="margin:0 0 10px">التحكم في الأعضاء</h3>
+      <h3 style="margin:0 0 10px">إدارة الصلاحيات</h3>
       <div id="warn" class="badge" style="display:none"></div>
       <div id="list" class="col" style="margin-top:10px"></div>
     </div>
@@ -63,7 +63,6 @@
         const mkOwner = btn("إعطاء أونر", ()=> act(u.id,"grantOwner"));
         const rmOwner = btn("إزالة أونر", ()=> act(u.id,"revokeOwner"));
 
-        // ترتيب أزرار حسب حالته
         if (u.role !== "admin") right.appendChild(mkAdmin);
         if (u.role === "admin") right.appendChild(rmAdmin);
         if (u.role !== "owner") right.appendChild(mkOwner);
