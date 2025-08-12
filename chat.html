@@ -5,15 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>الشات</title>
   <link rel="stylesheet" href="style.css"/>
+  <script src="config.js"></script>
+  <!-- Socket.IO من CDN (لأن Pages ما يخدم /socket.io) -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body class="chat-page">
   <div class="topbar">
     <div class="badge">الغرفة العامة</div>
-    <a class="btn ghost" id="ownerPanel" href="/owner" style="display:none">دخول التحكم</a>
+    <a class="btn ghost" id="ownerPanel" href="owner.html" style="display:none">دخول التحكم</a>
   </div>
 
   <div class="chat-wrap">
-    <!-- الاستيج -->
     <div class="stage card">
       <div class="row" style="justify-content:space-between;margin-bottom:6px">
         <div class="badge">الاستيج</div>
@@ -27,26 +29,22 @@
       </div>
     </div>
 
-    <!-- الرسائل + قائمة الأعضاء -->
     <div class="main">
       <div class="msgs" id="msgs"></div>
       <div class="users" id="users"></div>
     </div>
 
-    <!-- منيو الأوامر -->
     <div class="action-menu" id="actionMenu">
       <div class="title" id="amTitle">أوامر</div>
       <div class="grid" id="amBtns"></div>
     </div>
 
-    <!-- الإدخال -->
     <div class="input-bar">
       <input class="input" id="text" placeholder="...اكتب رسالة"/>
       <button class="btn" id="send">إرسال</button>
     </div>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
   <script src="chat.js"></script>
 </body>
 </html>
