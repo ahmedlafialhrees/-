@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <!-- يمنع التقريب والسكيل على iOS -->
+  <!-- يمنع التقريب والسحب للتحديث على iOS قدر الإمكان -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>دخول المستخدم</title>
   <link rel="stylesheet" href="style.css"/>
@@ -25,7 +25,7 @@
           <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
         </div>
 
-        <!-- اختيار الدور (أدمن/أونر) في خانة وحدة -->
+        <!-- اختيار الدور (Dropdown واحد) -->
         <div class="select-wrap crown-ico">
           <span class="ico" id="roleIcon">
             <!-- تاج رمادي افتراضي -->
@@ -74,11 +74,11 @@
     roleSel.addEventListener('change', ()=> setCrown(roleSel.value));
     setCrown(""); // افتراضي
 
-    // الدخول
+    // دخول
     document.getElementById('enter').onclick = () => {
       const name = document.getElementById('name').value.trim();
       const role = roleSel.value;
-      const pass = rolePass.value.trim();
+      const pass = document.getElementById('rolePass').value.trim();
       if(!name){ alert("اكتب اسمك"); return; }
       sessionStorage.setItem("loginName", name);
       sessionStorage.setItem("adminPass", role === "admin" ? pass : "");
@@ -86,22 +86,15 @@
       location.href = "/chat";
     };
 
-    // ====== منع التقريب والـ pull-to-refresh على iOS ======
+    // منع التقريب/الدبل تاب/السحب للتحديث قدر الإمكان على iOS
     (function(){
-      // منع Double-Tap Zoom
       let lastTouchEnd = 0;
       document.addEventListener('touchend', function (e) {
         const now = Date.now();
-        if (now - lastTouchEnd <= 300) {
-          if (e.cancelable) e.preventDefault();
-        }
+        if (now - lastTouchEnd <= 300) { if (e.cancelable) e.preventDefault(); }
         lastTouchEnd = now;
       }, {passive:false});
-
-      // منع Pinch Zoom
       document.addEventListener('gesturestart', (e)=>{ e.preventDefault(); }, {passive:false});
-
-      // منع السحب للتحديث (الباونس) أعلى/أسفل الصفحة
       let startY = 0;
       document.addEventListener('touchstart', (e)=>{ startY = e.touches[0].clientY; }, {passive:true});
       document.addEventListener('touchmove', (e)=>{
@@ -109,11 +102,7 @@
         const y  = e.touches[0].clientY;
         const atTop    = el.scrollTop <= 0;
         const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
-        const pullingDown = y > startY;
-        const pullingUp   = y < startY;
-        if ((atTop && pullingDown) || (atBottom && pullingUp)) {
-          if (e.cancelable) e.preventDefault();
-        }
+        if ((atTop && y > startY) || (atBottom && y < startY)) { if (e.cancelable) e.preventDefault(); }
       }, {passive:false});
     })();
   </script>
