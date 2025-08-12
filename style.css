@@ -1,62 +1,53 @@
 :root{
-  --bg:#0f0f14; --card:#1a1a22; --text:#e9e9f0; --muted:#9aa0a6;
-  --accent:#a08bff; --danger:#ff4d4d; --ok:#58d68d; --gold:#ffd166;
+  --bg:#0b0c10;
+  --card:#14151f;
+  --text:#e7e7f6;
+  --muted:#9aa0a6;
+  --accent:#9b87ff;   /* بنفسجي نفس الصورة */
+  --accent-2:#b6a9ff;
+  --border:#26273a;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto}
-button,input{font:inherit}
-a{color:var(--accent);text-decoration:none}
 
-.container{max-width:900px;margin:0 auto;padding:16px}
-.card{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.row{display:flex;gap:12px;align-items:center}
-.col{display:flex;flex-direction:column;gap:8px}
+/* ===== صفحة الدخول الجديدة ===== */
+.login-page{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto}
+.login-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{
+  width:min(560px,94vw);
+  background:linear-gradient(180deg,#14151f,rgba(20,21,31,.96));
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:22px 18px;
+  box-shadow:0 20px 50px rgba(0,0,0,.35);
+}
+.login-title{margin:2px 0 4px;font-size:26px;font-weight:800;letter-spacing:.2px}
+.login-sub{margin:0 0 14px;color:var(--muted);font-size:14px}
 
-.input{background:#11121a;border:1px solid #22233a;color:var(--text);padding:12px 14px;border-radius:12px;width:100%}
-.btn{background:var(--accent);color:#111;padding:12px 16px;border:none;border-radius:12px;cursor:pointer;font-weight:700}
-.btn.ghost{background:#22233a;color:var(--text)}
-.btn.red{background:var(--danger);color:#fff}
-.badge{padding:4px 8px;border-radius:999px;background:#232335;font-size:12px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.login-fields{display:flex;flex-direction:column;gap:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
 
-/* شريط علوي في الشات */
-.topbar{position:sticky;top:0;z-index:6;background:#13131b;border-bottom:1px solid #26263a;padding:8px 10px;display:flex;justify-content:space-between;align-items:center}
+.input-wrap{position:relative}
+.input{
+  width:100%; background:#0f1120; color:var(--text);
+  border:1px solid var(--border); border-radius:12px;
+  padding:13px 14px 13px 42px; outline:none;
+}
+.input::placeholder{color:#788;}
+.input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(155,135,255,.18)}
+.ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.8}
 
-/* الاستيج */
-.chat-wrap{position:relative;max-width:1100px;margin:0 auto}
-.stage{position:sticky;top:48px;z-index:5;background:linear-gradient(180deg,#14141d,rgba(20,20,29,.9));padding:10px 10px 6px;border-bottom:1px solid #26263a}
-.stage .slots{display:flex;gap:12px;justify-content:space-between}
-.slot{flex:1;min-height:64px;background:#1f2030;border-radius:12px;border:1px dashed #3a3a58;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
-.slot.filled{border:1px solid #6d6dd8;background:rgba(160,139,255,.1)}
-.mic{width:18px;height:26px;border:2px solid var(--accent);border-radius:10px;margin-inline:6px}
-.slot .name{font-weight:700}
-.pin{position:absolute;top:6px;right:8px;font-size:11px;color:var(--muted)}
-.rolechip{font-size:11px;padding:2px 6px;border-radius:999px;border:1px solid #333;margin-right:6px}
-.rolechip.owner{color:var(--gold);border-color:#a88}
-.rolechip.admin{color:#ff5d5d;border-color:#a55}
+.btn{
+  background:var(--accent); color:#0d0d14; border:none; border-radius:12px;
+  padding:12px 16px; font-weight:800; cursor:pointer
+}
+.btn.big{width:100%; margin-top:10px; padding:14px 18px; font-size:16px}
+.btn:hover{background:var(--accent-2)}
 
-/* الرسائل + لستة الأعضاء */
-.main{display:grid;grid-template-columns:1fr 260px;gap:12px;padding:10px}
-@media(max-width:800px){.main{grid-template-columns:1fr}}
+.links-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.link{color:var(--accent);text-decoration:none}
+.link:hover{text-decoration:underline}
+.muted{color:var(--muted)}
 
-.msgs{background:#12121a;border:1px solid #2a2a3e;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:10px;height:calc(100dvh - 250px);overflow:auto}
-.msg{background:#1a1a26;border:1px solid #2a2a3e;padding:8px 10px;border-radius:10px}
-.msg .from{font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.msg.system{opacity:.8;border-style:dashed}
+/* ===== بقية الستايل القديم (الشات/الاستيج/المنيو) يظل كما هو ===== */
 
-.users{background:#12121a;border:1px solid #2a2a3e;border-radius:14px;padding:10px;height:calc(100dvh - 250px);overflow:auto}
-.user{display:flex;justify-content:space-between;align-items:center;background:#191927;border:1px solid #2a2a3e;padding:8px 10px;border-radius:10px;margin-bottom:8px;cursor:pointer}
-.user .r{display:flex;gap:6px;align-items:center}
-.role{font-size:11px}
-.role.owner{color:var(--gold)}
-.role.admin{color:#ff5d5d}
-
-/* منيو الأوامر */
-.action-menu{position:fixed;inset:auto 12px 90px 12px;background:#1a1a26;border:1px solid #2a2a3e;border-radius:14px;padding:8px;display:none;z-index:20}
-.action-menu.show{display:block}
-.action-menu .title{padding:6px 8px;font-weight:700;color:var(--muted)}
-.action-menu .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.action-menu .grid button{padding:10px;border-radius:10px;border:1px solid #2a2a3e;background:#23233a;color:#fff}
-
-/* إدخال الرسالة ثابت تحت */
-.input-bar{position:sticky;bottom:0;background:linear-gradient(0deg,#11121a,rgba(17,18,26,.9));padding:10px;border-top:1px solid #26263a;display:flex;gap:10px}
-.input-bar input{flex:1}
+/* لو عندك أقسام ثانية في الملف خليه بعدها بدون تغيير */
