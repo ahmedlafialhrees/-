@@ -1,210 +1,140 @@
-/* =========================
-   المتغيرات والأساسيات
-   ========================= */
+/* ===== المتغيرات ===== */
 :root{
   --bg:#0b0c10; --bg2:#0e0f15;
-  --card:#14151f; --card2:#12121a;
   --text:#e7e7f6; --muted:#9aa0a6;
   --accent:#9b87ff; --accent2:#b6a9ff;
-  --border:#26273a;
-  --gold:#ffd166; --danger:#ff5d5d;
 
-  /* ألوان الشات بدون حدود */
-  --pane:#1b1c29;   /* مثل خانات الاستيج */
+  --pane:#1b1c29;     /* خلفية الرسائل والاستيج */
+  --bubble:#1a1b23;   /* فقاعات الرسائل */
 }
 
-/* أساس */
+/* ===== أساس ===== */
 *{box-sizing:border-box}
-html,body{height:100%}
-html,body{overscroll-behavior:none; overscroll-behavior-y:none}
+html,body{height:100%;overscroll-behavior:none}
 body{
-  margin:0; color:var(--text);
+  margin:0;color:var(--text);
   background:linear-gradient(180deg,var(--bg),var(--bg2));
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-  -webkit-text-size-adjust:100%;
-  touch-action:manipulation;
+  -webkit-text-size-adjust:100%;touch-action:manipulation;
 }
 
-/* أدوات */
-.container{max-width:1100px;margin:0 auto;padding:10px}
-.row{display:flex;gap:10px;align-items:center}
-.col{display:flex;flex-direction:column;gap:10px}
-.card{background:var(--card2);border:1px solid var(--border);border-radius:14px}
-.badge{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 10px;border-radius:999px;border:1px solid #2a2a3e;
-  background:#191a24;color:#d7d7ee;font-weight:700;font-size:12px;
-}
-
-/* =========================
-   الأزرار
-   ========================= */
-.btn{
-  background:var(--accent); color:#0d0d14; border:none;
-  border-radius:12px; padding:14px 18px; font-weight:800;
-  cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
-  font-size:16px; text-decoration:none;
-}
-.btn:hover{background:var(--accent2)}
-.btn.ghost{background:#23233a;color:#fff;border:1px solid #2a2a3e}
-.btn.small{padding:8px 12px;font-size:13px;border-radius:10px}
-
-/* =========================
-   صفحة الدخول (لا تغييرات جذرية)
-   ========================= */
+/* ===== صفحة الدخول (كما هي) ===== */
 body.login-page{display:flex;min-height:100dvh;align-items:center;justify-content:center;padding:24px}
 .login-card{
-  width:min(520px,94vw);
-  background:linear-gradient(180deg,var(--card),rgba(20,21,31,.96));
-  border:1px solid var(--border); border-radius:18px;
-  padding:22px 18px; box-shadow:0 20px 50px rgba(0,0,0,.35);
-  position:relative; overflow:hidden;
+  width:min(520px,94vw);background:linear-gradient(180deg,#14151f,rgba(20,21,31,.96));
+  border:1px solid #26273a;border-radius:18px;padding:22px 18px;box-shadow:0 20px 50px rgba(0,0,0,.35);position:relative;overflow:hidden
 }
-.login-title{margin:6px 0 16px;text-align:center;font-size:26px;font-weight:800;color:var(--text)}
+.login-title{margin:6px 0 16px;text-align:center;font-size:26px;font-weight:800}
 .login-fields{display:flex;flex-direction:column;gap:12px}
-
 .input-wrap,.select-wrap{position:relative}
-.ico{
-  position:absolute; left:12px; top:50%; transform:translateY(-50%);
-  width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
-}
+.ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center}
 .login-card .ico svg{width:22px;height:22px;max-width:22px;max-height:22px;display:block}
-
-.input,.select{
-  width:100%; background:#0f1120; color:var(--text);
-  border:1px solid var(--border); border-radius:12px;
-  padding:13px 14px 13px 48px; outline:none; -webkit-appearance:none;
-  font-size:16px; line-height:1.3;
-}
+.input,.select{width:100%;background:#0f1120;color:var(--text);border:1px solid #26273a;border-radius:12px;padding:13px 14px 13px 48px;outline:none;-webkit-appearance:none;font-size:16px}
 .input::placeholder{color:#7f8294}
-.input:focus,.select:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(155,135,255,.18)}
-.select{appearance:none; background-image:none}
-.select-wrap::after{
-  content:"▾"; position:absolute; right:12px; top:50%; transform:translateY(-50%);
-  color:#8b8ea6; font-size:14px; pointer-events:none;
-}
+.input:focus,.select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(155,135,255,.18)}
+.select{appearance:none;background-image:none}
+.select-wrap::after{content:"▾";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#8b8ea6;font-size:14px;pointer-events:none}
+.btn{background:var(--accent);color:#0d0d14;border:none;border-radius:12px;padding:14px 18px;font-weight:800;cursor:pointer;font-size:16px}
+.btn:hover{background:var(--accent2)}
 .btn.big{width:100%}
 
-/* =========================
-   الشريط العلوي (بدون حدود)
-   ========================= */
+/* ===== الشريط العلوي ===== */
 .topbar{
-  position:sticky; top:0; z-index:6;
-  background:#13131b;
-  /* إزالة الحد */
-  border-bottom:0;
-  padding:8px 10px; display:flex; justify-content:space-between; align-items:center;
+  position:sticky;top:0;z-index:6;background:#13131b; /* بدون حدود */
+  padding:8px 10px;display:flex;align-items:center;gap:10px
 }
-/* زر خروج بدون حدود */
-.btn.ghost{border-color:transparent}
+.btn.ghost{background:transparent;color:#dfe0ff;border:0}
+.back{margin-inline-start:auto}   /* يخلي "خروج" يسار في RTL */
 
-/* إخفاء حدود أي بادجات في الأعلى */
-.topbar .badge,
-.stage-header .badge{
-  border:0;
-  background:transparent;
-  padding:0;
+/* ===== تخطيط الشات —— كله بفليكس علشان الرسائل تتمدد للنهاية ===== */
+.chat-wrap{
+  min-height:100dvh;
+  display:flex; flex-direction:column;
+  max-width:1100px; margin:0 auto;
 }
 
-/* =========================
-   الشات (الرسائل بعرض كامل)
-   ========================= */
-.chat-wrap{min-height:100dvh; display:flex; flex-direction:column; max-width:1100px; margin:0 auto}
-
-/* عمود الأعضاء مخفي، الرسائل تاخذ العرض كله */
-.main{
-  flex:1; min-height:0; display:grid;
-  grid-template-columns:1fr;   /* عرض كامل */
-  gap:12px; padding:10px;
-}
-.users{display:none}          /* إخفاء عمود الأعضاء */
-
-/* خانة الرسائل كاملة وبدون حدود، نفس لون الاستيج */
-.msgs{
-  background:var(--pane);      /* مثل خانات الاستيج */
-  border:0;                    /* بدون حدود */
-  border-radius:14px;
-  padding:10px;
-  display:flex; flex-direction:column; gap:10px;
-  min-height:0; overflow:auto;
-}
-.msg{background:#1a1a26;border:1px solid #2a2a3e;padding:8px 10px;border-radius:10px}
-.msg .from{font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.msg.system{opacity:.85;border-style:dashed}
-
-/* الرتب بجانب الأسماء */
-.rolechip{font-size:11px;padding:2px 6px;border-radius:999px;border:1px solid #333}
-.rolechip.owner{color:var(--gold);border-color:#a88}
-.rolechip.admin{color:var(--danger);border-color:#a55}
-
-/* =========================
-   الاستيج نافذة قابلة للإظهار/الإخفاء
-   (بدون حدود)
-   ========================= */
+/* الاستيج نافذة بفاصل واضح */
 .stage-panel{
-  /* إزالة الحد */
-  border-bottom:0;
+  margin:8px 10px 6px;            /* مسافة من الأعلى وتحتها */
 }
-.stage-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px}
 .stage-panel.closed .stage{display:none}
-
-/* جسم الاستيج */
 .stage{
-  padding:6px 10px 10px;
+  background:linear-gradient(180deg,#242533,#1b1c28);
+  border-radius:16px; box-shadow:0 10px 24px rgba(0,0,0,.3);
+  padding:12px;
 }
-
-/* 4 خانات، كلها بدون حدود وبنفس الخلفية */
-.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stage-header{display:flex;justify-content:space-between;align-items:center;margin:0 10px 8px}
+.stage-header .badge{display:none}    /* نخفي الكتابة */
+.slots{display:flex;gap:14px;justify-content:space-between}
 .slot{
-  position:relative;min-height:78px;
-  background:var(--pane);     /* نفس لون الرسائل */
-  border:0;                   /* بدون حدود */
-  border-radius:14px;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s
+  flex:1; min-height:70px; border-radius:14px; background:transparent; cursor:pointer; position:relative;
+  display:flex; align-items:center; justify-content:center;
 }
-.slot:hover{box-shadow:0 0 0 1px rgba(124,115,255,0.25) inset}
 .slot .mic{
-  width:54px;height:54px;border-radius:14px;background:linear-gradient(180deg,#22243a,#171827);
-  display:flex;align-items:center;justify-content:center;border:1px solid #35365a;
-  box-shadow:inset 0 2px 10px rgba(0,0,0,.35)
+  width:56px;height:56px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 35%, #0c0d14 0%, #0c0d14 60%, #000 100%);
+  border:3px solid #26283f; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 12px 16px rgba(0,0,0,.5), inset 0 2px 10px rgba(255,255,255,.06)
 }
-.slot .mic svg{width:26px;height:26px;fill:#a9b0ff;opacity:.9}
-.slot.filled{box-shadow:0 0 12px rgba(155,135,255,.35) inset}
-.slot .name{position:absolute;bottom:6px;right:0;left:0;margin:auto;text-align:center;font-size:12px;opacity:.95}
+.slot .mic svg{width:26px;height:26px;fill:#c7cbff;opacity:.95}
+.slot.filled .mic{border-color:#7b74ff;box-shadow:0 0 18px rgba(155,135,255,.35), inset 0 2px 10px rgba(255,255,255,.06)}
+.slot .name,.slot .rolechip{display:none!important}
 
-/* =========================
-   منيو الأوامر
-   ========================= */
+/* المساحة الوسطى: الرسائل فقط وتتمدّد */
+.main{
+  flex:1;                   /* أهم سطر: يخليها تاخذ كل المتبقي */
+  min-height:0;             /* يمنع قصّ السايز */
+  display:flex;             /* عمود واحد */
+  flex-direction:column;
+  padding:0 10px;           /* يمين ويسار بس */
+  gap:0;
+}
+
+/* الرسائل تأخذ كامل الارتفاع الباقي وبينها وبين العناصر فوق/تحت فراغ واضح */
+.msgs{
+  flex:1;                    /* تتمدد للآخر */
+  min-height:0;
+  background:var(--pane);
+  border:0; border-radius:18px;
+  padding:12px;
+  overflow:auto;
+  margin-bottom:10px;        /* مسافة فوق شريط الكتابة */
+}
+/* فقاعات الرسائل */
+.msg{
+  background:var(--bubble); border:0; border-radius:18px;
+  padding:10px 12px; box-shadow:0 2px 0 rgba(255,255,255,.03) inset;
+  margin:0 0 10px;
+}
+.msg:last-child{margin-bottom:0}
+.msg .from{display:none!important}  /* بدون أسماء */
+.msg.system{opacity:.85;background:#181924}
+
+/* نخفي عمود الأعضاء بالكامل */
+.users{display:none}
+
+/* منيو الأوامر (كما هي) */
 .action-menu{
-  position:fixed; inset:auto 12px calc(70px + env(safe-area-inset-bottom)) 12px;
-  background:#1a1a26; border:1px solid #2a2a3e; border-radius:14px; padding:8px; display:none; z-index:20
+  position:fixed;inset:auto 12px calc(70px + env(safe-area-inset-bottom)) 12px;
+  background:#1a1a26;border:1px solid #2a2a3e;border-radius:14px;padding:8px;display:none;z-index:20
 }
 .action-menu.show{display:block}
 .action-menu .title{padding:6px 8px;font-weight:700;color:#9aa0a6}
 .action-menu .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .action-menu .grid button{padding:10px;border-radius:10px;border:1px solid #2a2a3e;background:#23233a;color:#fff}
 
-/* =========================
-   شريط الإدخال أسفل (ظاهر وواضح)
-   ========================= */
+/* ===== شريط الكتابة أسفل —— بفاصل ثابت وما يلتصق ===== */
 .input-bar{
   position:sticky; bottom:0; z-index:10;
-  background:linear-gradient(0deg,#11121a,rgba(17,18,26,.92));
-  padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-  /* بدون حدود عليا صار شكل أنظف مع كامل البانلز */
-  border-top:0;
-  display:flex; gap:10px;
+  background:transparent;          /* بدون خلفية لاصقة */
+  margin:0 10px 12px;              /* فراغ عن الرسائل وعن الحافة */
+  padding:0;
+  display:flex; gap:10px; align-items:center;
 }
 .input-bar .chat-input{
   flex:1; font-size:18px; padding:14px 16px;
   border-radius:12px; border:1px solid #2a2a3e; background:#0f1120; color:#fff;
 }
-.input-bar .send{width:auto; min-width:84px; padding:10px 14px; border-radius:10px; font-weight:700; font-size:15px}
-
-/* =========================
-   لوحة التحكم (إن وجدت)
-   ========================= */
-.owner-list-row{
-  display:flex;justify-content:space-between;align-items:center;
-  border:1px solid #2a2a3e;border-radius:10px;padding:10px;background:#191927;
+.input-bar .send{
+  width:auto; min-width:84px; padding:10px 14px; border-radius:10px; font-weight:700; font-size:15px
 }
