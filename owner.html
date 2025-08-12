@@ -60,7 +60,7 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script type="module">
-    import { SERVER_URL, OWNER_NAME } from "./config.js?v=6";
+    import { SERVER_URL, OWNER_NAME } from "./config.js?v=7";
 
     // حماية الصفحة
     const role = localStorage.getItem("role");
@@ -86,12 +86,15 @@
       socket.emit("roles:request");
     });
 
+    // حفظ (يدعم السيرفر القديم والجديد)
     save.onclick = ()=>{
       const target=(uName.value||"").trim();
       const pass=(uPass.value||"").trim();
       const role=uRole.value;
       if(!target || !pass){ flash("اكتب الاسم وكلمة السر", false); return; }
-      socket.emit("roles:save", { target, role, pass });
+      const payload = { target, role, pass };
+      socket.emit("roles:save", payload);   // للسيرفر الجديد
+      socket.emit("roles:grant", payload);  // توافق مع السيرفر القديم
       uPass.value="";
       setTimeout(()=> socket.emit("roles:request"), 150);
       flash("تم الحفظ");
@@ -109,6 +112,7 @@
       });
     });
 
+    // حدّث القائمة بشكل دوري
     setInterval(()=> socket.emit("roles:request"), 4000);
   </script>
 </body>
