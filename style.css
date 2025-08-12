@@ -1,26 +1,89 @@
-/* ===== أيقونات الحقول (شخص/تاج) ===== */
+/* ===== Theme ===== */
+:root{
+  --bg:#0b0c10; --bg2:#0e0f15; --card:#14151f; --text:#e7e7f6; --muted:#9aa0a6;
+  --accent:#9b87ff; --accent2:#b6a9ff; --border:#26273a; --gold:#ffd166; --danger:#ff5d5d;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--text);
+  background:linear-gradient(180deg,var(--bg),var(--bg2));
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+}
+
+/* ===== Login ===== */
+.login-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{
+  width:min(560px,94vw);
+  background:linear-gradient(180deg,var(--card),rgba(20,21,31,.96));
+  border:1px solid var(--border); border-radius:18px; padding:20px;
+  box-shadow:0 20px 50px rgba(0,0,0,.35);
+}
+.login-title{margin:2px 0 16px;text-align:center;font-size:26px;font-weight:800}
+.login-fields{display:flex;flex-direction:column;gap:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+
 .input-wrap{position:relative}
-.with-ico .input{padding:13px 14px 13px 44px}
-.input-wrap .ico{
+.input{
+  width:100%; background:#0f1120; color:var(--text);
+  border:1px solid var(--border); border-radius:12px;
+  padding:13px 14px 13px 48px; outline:none; -webkit-appearance:none;
+}
+.input::placeholder{color:#7f8294}
+.input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(155,135,255,.18)}
+
+/* أيقونة داخل الحقل — يسار */
+.ico{
   position:absolute; left:12px; top:50%; transform:translateY(-50%);
-  width:22px; height:22px; background-repeat:no-repeat; background-size:contain;
+  width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
 }
+.ico svg{width:22px;height:22px;display:block}
 
-/* أيقونة المستخدم (شخص) */
-.user-ico .ico{
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a8b2ff'><circle cx='12' cy='8' r='4'/><path d='M4 20a8 8 0 0116 0z'/></svg>");
-}
+/* وميض للتاج */
+@keyframes glowRed{0%{filter:none}50%{filter:drop-shadow(0 0 8px rgba(255,93,93,.9))}100%{filter:none}}
+@keyframes glowGold{0%{filter:none}50%{filter:drop-shadow(0 0 8px rgba(255,209,102,.95))}100%{filter:none}}
+.user-ico  .ico svg{fill:#a8b2ff}
+.admin-ico .ico svg{fill:var(--danger);animation:glowRed 2s infinite ease-in-out}
+.owner-ico .ico svg{fill:var(--gold);animation:glowGold 2s infinite ease-in-out}
 
-/* أيقونة تاج أحمر مع وميض للأدمن */
-@keyframes glowRed{0%{filter:drop-shadow(0 0 0 rgba(255,93,93,0))}50%{filter:drop-shadow(0 0 8px rgba(255,93,93,.8))}100%{filter:drop-shadow(0 0 0 rgba(255,93,93,0))}}
-.admin-ico .ico{
-  animation:glowRed 2s infinite ease-in-out;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff5d5d'><path d='M2 8l4 3 3-4 3 4 3-4 3 4 4-3v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8z'/></svg>");
+/* Buttons */
+.btn{
+  background:var(--accent); color:#0d0d14; border:none;
+  border-radius:12px; padding:14px 18px; font-weight:800; cursor:pointer;
+  display:inline-block; width:100%;
 }
+.btn:hover{background:var(--accent2)}
 
-/* أيقونة تاج ذهبي مع وميض للأونر */
-@keyframes glowGold{0%{filter:drop-shadow(0 0 0 rgba(255,209,102,0))}50%{filter:drop-shadow(0 0 8px rgba(255,209,102,.9))}100%{filter:drop-shadow(0 0 0 rgba(255,209,102,0))}}
-.owner-ico .ico{
-  animation:glowGold 2s infinite ease-in-out;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffd166'><path d='M2 8l4 3 3-5 3 5 3-5 3 5 4-3v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8z'/></svg>");
-}
+/* ===== (اختياري) أجزاء الشات ولوحة التحكم — تقدر تتركها أو تستفيد منها لاحقاً ===== */
+.topbar{position:sticky;top:0;z-index:6;background:#13131b;border-bottom:1px solid var(--border);padding:8px 10px;display:flex;justify-content:space-between;align-items:center}
+.chat-wrap{position:relative;max-width:1100px;margin:0 auto}
+.stage{position:sticky;top:48px;z-index:5;padding:10px 10px 6px;border-bottom:1px solid var(--border)}
+.stage .slots{display:flex;gap:12px;justify-content:space-between}
+.slot{flex:1;min-height:64px;background:#1f2030;border-radius:12px;border:1px dashed #3a3a58;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;padding:8px 10px}
+.slot.filled{border:1px solid #6d6dd8;background:rgba(160,139,255,.08)}
+.mic{width:18px;height:26px;border:2px solid var(--accent);border-radius:10px;margin-inline:6px}
+.slot .name{font-weight:700}
+.pin{position:absolute;top:6px;right:8px;font-size:11px;color:var(--muted)}
+.rolechip{font-size:11px;padding:2px 6px;border-radius:999px;border:1px solid #333;margin-right:6px}
+.rolechip.owner{color:var(--gold);border-color:#a88}
+.rolechip.admin{color:var(--danger);border-color:#a55}
+.main{display:grid;grid-template-columns:1fr 280px;gap:12px;padding:10px}
+@media(max-width:900px){.main{grid-template-columns:1fr}}
+.msgs{background:#12121a;border:1px solid #2a2a3e;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:10px;height:calc(100dvh - 250px);overflow:auto}
+.msg{background:#1a1a26;border:1px solid #2a2a3e;padding:8px 10px;border-radius:10px}
+.msg .from{font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.msg.system{opacity:.85;border-style:dashed}
+.users{background:#12121a;border:1px solid #2a2a3e;border-radius:14px;padding:10px;height:calc(100dvh - 250px);overflow:auto}
+.user{display:flex;justify-content:space-between;align-items:center;background:#191927;border:1px solid #2a2a3e;padding:8px 10px;border-radius:10px;margin-bottom:8px;cursor:pointer}
+.user .r{display:flex;gap:6px;align-items:center}
+.role{font-size:11px}
+.role.owner{color:var(--gold)}
+.role.admin{color:var(--danger)}
+.action-menu{position:fixed;inset:auto 12px 90px 12px;background:#1a1a26;border:1px solid #2a2a3e;border-radius:14px;padding:8px;display:none;z-index:20}
+.action-menu.show{display:block}
+.action-menu .title{padding:6px 8px;font-weight:700;color:#9aa0a6}
+.action-menu .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.action-menu .grid button{padding:10px;border-radius:10px;border:1px solid #2a2a3e;background:#23233a;color:#fff}
+.input-bar{position:sticky;bottom:0;background:linear-gradient(0deg,#11121a,rgba(17,18,26,.9));padding:10px;border-top:1px solid var(--border);display:flex;gap:10px}
+.input-bar input{flex:1}
