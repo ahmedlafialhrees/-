@@ -1,10 +1,16 @@
-// يتصل بالسيرفر الخارجي
+// اتصال بالسيرفر
 const socket = io(window.SERVER_URL, {transports:['websocket']});
 
 let me = null;
 let users = [];
 let stage = [null,null,null,null];
+let meOnStage = false;
 let actionMenuOpenFor = null;
+
+// خروج يرجّع للواجهة
+document.getElementById("exitBtn").onclick = () => {
+  location.href = "index.html";
+};
 
 // دخول تلقائي
 (function(){
@@ -17,7 +23,7 @@ let actionMenuOpenFor = null;
 
 socket.on("auth:ok", ({me: my}) => {
   me = my;
-  // لوحة التحكم تظهر للأونر الرئيسي فقط
+  // لوحة التحكم للمالك الرئيسي فقط
   if (me.role === "owner" && (!window.MAIN_OWNER_NAME || me.name === window.MAIN_OWNER_NAME)) {
     document.getElementById("ownerPanel").style.display = "inline-flex";
   }
@@ -68,13 +74,20 @@ document.getElementById("text").addEventListener("keydown",(e)=>{
   if(e.key==="Enter") document.getElementById("send").click();
 });
 
-// الاستيج: طق على أي خانة = صعود/نزول
+// الاستيج: الضغط على أي خانة = صعود/نزول
 document.querySelectorAll(".slot").forEach(el=>{
-  el.addEventListener("click", ()=> socket.emit("stage:toggle"));
+  el.addEventListener("click", ()=> {
+    // لو الإستيج مخفي ما نسوي شيء
+    if (document.getElementById("stagePanel").classList.contains("closed")) return;
+    socket.emit("stage:toggle");
+  });
 });
 
+// تحديث الاستيج
 socket.on("stage:update", (view)=>{
   stage = view;
+  meOnStage = !!stage.find(s => s && me && s.id === me.id);
+
   document.querySelectorAll(".slot").forEach((el,idx)=>{
     const s = stage[idx];
     const nameEl = el.querySelector(".name");
@@ -93,6 +106,20 @@ socket.on("stage:update", (view)=>{
       chipEl.style.display = "none";
     }
   });
+});
+
+// فتح/إغلاق نافذة الاستيج
+const stagePanel = document.getElementById("stagePanel");
+const stageToggleBtn = document.getElementById("stageToggleBtn");
+stageToggleBtn.addEventListener("click", ()=>{
+  const closing = !stagePanel.classList.contains("closed") && stagePanel.classList.contains("open");
+  if (closing && meOnStage) {
+    // لو كنت فوق وانغلقت، نزّلني
+    socket.emit("stage:toggle");
+  }
+  stagePanel.classList.toggle("closed");
+  stagePanel.classList.toggle("open");
+  stageToggleBtn.textContent = stagePanel.classList.contains("closed") ? "إظهار" : "إخفاء";
 });
 
 // قائمة الأعضاء + المنيو
