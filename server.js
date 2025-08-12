@@ -1,4 +1,4 @@
-// server.js — Single Room + Roles control page
+// server.js — Single Room + Stage + Roles control
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -19,6 +19,10 @@ const bans  = new Map(); // name -> untilTs
 
 // صلاحيات مخزّنة بالذاكرة: name -> {role:"admin"|"owner", pass:""}
 const allowed = new Map();
+
+// الاستيج (4 خانات)
+const stage = { slots: [null,null,null,null] };
+const broadcastStage = ()=> io.emit("stage:update", stage);
 
 function isBanned(name){ const u=bans.get(name); if(!u) return false; if(Date.now()>u){bans.delete(name);return false;} return true; }
 function isOwnerMainSocket(sock){ const u = users.get(sock.id); return u && u.role==="ownerMain" && u.name===OWNER_NAME; }
@@ -44,15 +48,39 @@ io.on("connection", (socket)=>{
 
     users.set(socket.id, { name, role });
     socket.data.name = name;
+    socket.emit("stage:update", stage);
   });
 
+  // رسائل
   socket.on("message", ({ text })=>{
     const u = users.get(socket.id); if(!u) return;
     const t = String(text||"").trim(); if(!t) return;
     io.emit("message", { name: u.name, role: u.role, text: t, ts: Date.now() });
   });
 
-  // لوحة التحكم
+  // Stage
+  socket.on("stage:request", ()=> socket.emit("stage:update", stage));
+  socket.on("stage:toggle", ({ index, forceDown })=>{
+    const u = users.get(socket.id); if(!u) return;
+    if (typeof index!=="number" || index<0 || index>3) return;
+
+    if (forceDown){
+      const myIdx = stage.slots.findIndex(s=>s && s.name===u.name);
+      if (myIdx!==-1) stage.slots[myIdx] = null;
+      return broadcastStage();
+    }
+
+    if (stage.slots[index] && stage.slots[index].name===u.name){
+      stage.slots[index]=null; return broadcastStage();
+    }
+    const exists = stage.slots.findIndex(s=>s && s.name===u.name);
+    if (exists!==-1) stage.slots[exists]=null;
+
+    if (!stage.slots[index]) stage.slots[index] = { name: u.name };
+    broadcastStage();
+  });
+
+  // لوحة التحكم (roles)
   socket.on("roles:request", ()=>{
     if (!isOwnerMainSocket(socket)) return;
     socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
@@ -82,30 +110,15 @@ io.on("connection", (socket)=>{
     socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
   });
 
-  // (اختياري) طرد/حظر
-  socket.on("admin:kick", ({ target, reason })=>{
-    if (!isOwnerMainSocket(socket)) return;
-    for (const [id,u] of users.entries()){
-      if (u.name===target){
-        const s = io.sockets.sockets.get(id);
-        if (s){ s.emit("kicked", reason||""); s.disconnect(true); }
-      }
+  socket.on("disconnect", ()=>{
+    const u = users.get(socket.id);
+    if (u){
+      const idx = stage.slots.findIndex(s=>s && s.name===u.name);
+      if (idx!==-1) stage.slots[idx] = null;
     }
+    users.delete(socket.id);
+    broadcastStage();
   });
-
-  socket.on("admin:tempban2h", ({ target })=>{
-    if (!isOwnerMainSocket(socket)) return;
-    const until = Date.now()+2*60*60*1000;
-    bans.set(target, until);
-    for (const [id,u] of users.entries()){
-      if (u.name===target){
-        const s = io.sockets.sockets.get(id);
-        if (s){ s.emit("banned", until); s.disconnect(true); }
-      }
-    }
-  });
-
-  socket.on("disconnect", ()=> { users.delete(socket.id); });
 });
 
 const PORT = process.env.PORT || 3000;
