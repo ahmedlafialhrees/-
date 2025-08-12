@@ -41,7 +41,7 @@ socket.on("auth:ok", ({ me: my }) => {
   const comp = qs("#composerName");
   if (comp) comp.textContent = `ترسل كـ: ${me.name}`;
 
-  // ✅ لوحة التحكم: تظهر للأونر الرئيسي فقط (اسم الدخول يطابق MAIN_OWNER_NAME)
+  // ✅ لوحة التحكم: للأونر الرئيسي فقط (اسم الدخول يطابق MAIN_OWNER_NAME)
   const op = qs("#ownerPanel");
   if (op) {
     const isOwner = me.role === "owner";
@@ -49,8 +49,13 @@ socket.on("auth:ok", ({ me: my }) => {
     const mainOwner  = (window.MAIN_OWNER_NAME || "").trim(); // من config.js
     const isMainOwner = isOwner && !!mainOwner && loginName === mainOwner;
 
-    // للأونر الرئيسي: نظهرها بالنص، لغيره نخفيها تماماً
-    op.style.display = isMainOwner ? "inline-flex" : "none";
+    // نُظهرها بالنص للأونر الرئيسي فقط
+    op.style.display       = "inline-flex";     // دايمًا محجوزة بالنص
+    op.style.visibility    = isMainOwner ? "visible" : "hidden";
+    op.style.pointerEvents = isMainOwner ? "auto" : "none";
+
+    // Debug للمطور: افحص المطابقة بالكونسول
+    console.debug("[ownerPanel]", { role: me.role, loginName, mainOwner, isMainOwner });
   }
 });
 
