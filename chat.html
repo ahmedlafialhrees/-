@@ -15,35 +15,21 @@
     <a class="btn ghost" id="ownerPanel" href="owner.html" style="display:none">لوحة التحكم</a>
   </div>
 
-  <!-- زر مايك لفتح الاستيج لما يكون مخفي (Overlay) -->
-  <button id="stageFab" aria-label="فتح الاستيج">
+  <!-- زر مايك ثابت أعلى اليمين لفتح/قفل الاستيج -->
+  <button id="stageFab" aria-label="فتح/إقفال الاستيج" style="display:inline-flex">
     <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg>
   </button>
 
   <div class="chat-wrap">
-    <!-- الاستيج Overlay: لا يحرّك الرسائل -->
+    <!-- الاستيج Overlay: ما يحرّك الرسائل -->
     <div class="stage-panel open" id="stagePanel">
       <div class="stage">
-        <div class="stage-header">
-          <button id="stageToggleBtn" class="btn ghost small">إخفاء</button>
-        </div>
+        <!-- شلت العنوان وخلّيت slots بس -->
         <div class="slots">
-          <div class="slot" data-idx="0">
-            <div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div>
-            <div class="name"></div><span class="rolechip" style="display:none"></span>
-          </div>
-          <div class="slot" data-idx="1">
-            <div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div>
-            <div class="name"></div><span class="rolechip" style="display:none"></span>
-          </div>
-          <div class="slot" data-idx="2">
-            <div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div>
-            <div class="name"></div><span class="rolechip" style="display:none"></span>
-          </div>
-          <div class="slot" data-idx="3">
-            <div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div>
-            <div class="name"></div><span class="rolechip" style="display:none"></span>
-          </div>
+          <div class="slot" data-idx="0"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
+          <div class="slot" data-idx="1"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
+          <div class="slot" data-idx="2"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
+          <div class="slot" data-idx="3"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm6-3a6 6 0 01-12 0H4a8 8 0 0016 0h-2zm-6 7a8.97 8.97 0 01-5-1.5v2a11 11 0 0010 0v-2A8.97 8.97 0 0112 18z"/></svg></div></div>
         </div>
       </div>
     </div>
@@ -51,16 +37,10 @@
     <!-- الرسائل (ثابتة وكاملة) -->
     <div class="main">
       <div class="msgs" id="msgs"></div>
-      <div class="users" id="users"></div>
+      <!-- شلنا منيو الأوامر بالكامل -->
     </div>
 
-    <!-- منيو الأوامر -->
-    <div class="action-menu" id="actionMenu">
-      <div class="title" id="amTitle">أوامر</div>
-      <div class="grid" id="amBtns"></div>
-    </div>
-
-    <!-- الإدخال أسفل -->
+    <!-- شريط الإدخال -->
     <div class="input-bar">
       <input class="input chat-input" id="text" placeholder="...اكتب رسالة"/>
       <button class="btn send" id="send">إرسال</button>
