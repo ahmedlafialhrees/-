@@ -2,80 +2,102 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <!-- يمنع التقريب على iOS -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>دخول المستخدم</title>
-
-  <!-- ستايلك الأساسي -->
   <link rel="stylesheet" href="style.css"/>
 
-  <!-- تصحيح حجم الأيقونات داخل كرت الدخول (منع التمدد) -->
+  <!-- تحسين واجهة الدخول فقط (مغطي كل مشاكل التمدد والأنماط) -->
   <style>
-    .login-card{position:relative;overflow:hidden}
+    :root{
+      --card:#14151f; --border:#26273a; --text:#e7e7f6; --muted:#9aa0a6;
+      --accent:#9b87ff; --accent2:#b6a9ff;
+    }
+    body.login-page{display:flex;min-height:100dvh;align-items:center;justify-content:center;padding:24px}
+    .login-card{
+      width:min(520px,94vw); background:linear-gradient(180deg,var(--card),rgba(20,21,31,.96));
+      border:1px solid var(--border); border-radius:18px; padding:22px 18px;
+      box-shadow:0 20px 50px rgba(0,0,0,.35); position:relative; overflow:hidden;
+    }
+    .login-title{margin:6px 0 16px;text-align:center;font-size:26px;font-weight:800;color:var(--text)}
+    .login-fields{display:flex;flex-direction:column;gap:12px}
+
     .input-wrap,.select-wrap{position:relative}
     .ico{
-      position:absolute;left:12px;top:50%;transform:translateY(-50%);
-      width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center
+      position:absolute; left:12px; top:50%; transform:translateY(-50%);
+      width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
     }
     .login-card .ico svg{width:22px;height:22px;max-width:22px;max-height:22px;display:block}
-    /* مسافة يسار للأيقونة + سهم القائمة */
-    .input,.select{padding:13px 14px 13px 48px}
+
+    .input,.select{
+      width:100%; background:#0f1120; color:var(--text);
+      border:1px solid var(--border); border-radius:12px;
+      padding:13px 14px 13px 48px; outline:none; -webkit-appearance:none;
+      font-size:16px; line-height:1.3;
+    }
+    .input::placeholder{color:#7f8294}
+    .input:focus,.select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(155,135,255,.18)}
     .select{appearance:none;background-image:none}
     .select-wrap::after{
-      content:"▾";position:absolute;right:12px;top:50%;transform:translateY(-50%);
-      color:#8b8ea6;font-size:14px;pointer-events:none
+      content:"▾"; position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      color:#8b8ea6; font-size:14px; pointer-events:none;
     }
+
+    .btn.big{
+      width:100%; background:var(--accent); color:#0d0d14; border:none;
+      border-radius:12px; padding:14px 18px; font-weight:800; font-size:16px; cursor:pointer;
+    }
+    .btn.big:hover{background:var(--accent2)}
+
+    /* تأمين منع انزلاق المحتوى في iOS */
+    html,body{overscroll-behavior:none}
   </style>
 </head>
 <body class="login-page">
-  <div class="login-wrap">
-    <div class="login-card">
-      <h1 class="login-title">دخول المستخدم</h1>
+  <div class="login-card">
+    <h1 class="login-title">دخول المستخدم</h1>
 
-      <div class="login-fields">
-        <!-- اسم المستخدم + أيقونة شخص -->
-        <div class="input-wrap user-ico">
-          <span class="ico">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20a8 8 0 0 1 16 0v1H4z"/>
-            </svg>
-          </span>
-          <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
-        </div>
-
-        <!-- اختيار الدور (أدمن/أونر) في خانة واحدة -->
-        <div class="select-wrap crown-ico">
-          <span class="ico" id="roleIcon">
-            <!-- تاج رمادي افتراضي -->
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
-              <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-            </svg>
-          </span>
-          <select id="roleSelect" class="select">
-            <option value="">— اختر الدور (اختياري) —</option>
-            <option value="admin">أدمن</option>
-            <option value="owner">أونر</option>
-          </select>
-        </div>
-
-        <!-- كلمة السر حسب الدور المختار (واحدة) -->
-        <div class="input-wrap crown-ico">
-          <span class="ico" id="passIcon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:#adb1c7">
-              <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-            </svg>
-          </span>
-          <input id="rolePass" class="input" placeholder="كلمة السر (اختياري)" autocomplete="current-password"/>
-        </div>
+    <div class="login-fields">
+      <!-- اسم المستخدم -->
+      <div class="input-wrap">
+        <span class="ico">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20a8 8 0 0 1 16 0v1H4z"/>
+          </svg>
+        </span>
+        <input id="name" class="input" placeholder="اكتب اسمك" autocomplete="username"/>
       </div>
 
-      <button id="enter" class="btn big">دخول</button>
+      <!-- الدور (أدمن/أونر) -->
+      <div class="select-wrap">
+        <span class="ico" id="roleIcon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill:#adb1c7">
+            <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+          </svg>
+        </span>
+        <select id="roleSelect" class="select">
+          <option value="">— اختر الدور (اختياري) —</option>
+          <option value="admin">أدمن</option>
+          <option value="owner">أونر</option>
+        </select>
+      </div>
+
+      <!-- كلمة السر للدور المختار -->
+      <div class="input-wrap">
+        <span class="ico" id="passIcon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill:#adb1c7">
+            <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+          </svg>
+        </span>
+        <input id="rolePass" class="input" placeholder="كلمة السر (اختياري)" autocomplete="current-password"/>
+      </div>
     </div>
+
+    <button id="enter" class="btn big">دخول</button>
   </div>
 
   <script>
-    // تبديل أيقونة/نص التاج حسب الدور (بحجم ثابت 22px)
+    // تبديل لون/وهج التاج وحقل الباس حسب الدور (بحجم 22px ثابت)
     const roleSel  = document.getElementById('roleSelect');
     const roleIcon = document.getElementById('roleIcon');
     const passIcon = document.getElementById('passIcon');
@@ -85,21 +107,19 @@
       let color = "#adb1c7", glow = "", ph = "كلمة السر (اختياري)";
       if(role === "admin"){ color = "#ff5d5d"; glow = "drop-shadow(0 0 8px rgba(255,93,93,.9))";  ph = "كلمة سر الأدمن (اختياري)"; }
       if(role === "owner"){ color = "#ffd166"; glow = "drop-shadow(0 0 8px rgba(255,209,102,.95))"; ph = "كلمة سر الأونر (اختياري)"; }
-
       const crownSvg =
         `<svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
               style="display:block;fill:${color};filter:${glow}">
            <path d="M3 7l4 3 3-4 3 4 3-4 3 4 4-3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
          </svg>`;
-
       roleIcon.innerHTML = crownSvg;
-      passIcon.innerHTML = crownSvg;
+      passIcon.innerHTML  = crownSvg;
       rolePass.placeholder = ph;
     }
     roleSel.addEventListener('change', ()=> setCrown(roleSel.value));
-    setCrown(""); // افتراضي
+    setCrown("");
 
-    // الدخول (روابط نسبية لصفحات GitHub Pages)
+    // تنقّل إلى صفحة الشات (روابط نسبية لـ GitHub Pages)
     document.getElementById('enter').onclick = () => {
       const name = document.getElementById('name').value.trim();
       const role = roleSel.value;
@@ -111,7 +131,7 @@
       location.href = "chat.html";
     };
 
-    // تقليل الدبل تاب/الزووم على iOS
+    // تقليل الدبل-تاب/الزووم على iOS
     (function(){
       let last = 0;
       document.addEventListener('touchend', e=>{
