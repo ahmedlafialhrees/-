@@ -180,3 +180,27 @@ body.login-page{display:flex;min-height:100dvh;align-items:center;justify-conten
   display:flex;justify-content:space-between;align-items:center;
   border:1px solid #2a2a3e;border-radius:10px;padding:10px;background:#191927;
 }
+
+/* ==== تعديلات حسب طلبك ==== */
+
+/* الرسائل بعرض كامل وإخفاء حدود */
+.main{ grid-template-columns: 1fr !important; }
+.users{ display:none !important; }            /* نخفي عمود الأعضاء */
+.msgs{
+  background:#1b1c29 !important;             /* نفس لون خانات الاستيج */
+  border:0 !important;
+  border-radius:14px !important;
+}
+
+/* شريط علوي وكلام فوق بدون حدود */
+.topbar{ border-bottom:0 !important; }
+.btn.ghost{ border-color:transparent !important; }   /* زر خروج بدون حد */
+.stage-panel{ border-bottom:0 !important; }
+.stage-header .badge{
+  border:0 !important;
+  background:transparent !important;
+  padding:0 !important;
+}
+
+/* خانات الاستيج بدون حدود (لو تبغى نفس الإحساس بالضبط) */
+.slot{ border:0 !important; }
