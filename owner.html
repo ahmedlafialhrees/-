@@ -1,37 +1,36 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>لوحة التحكم</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:20px;background:#fafafa}
-    .card{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;margin-bottom:16px}
-    input,button{padding:10px;border:1px solid #ddd;border-radius:10px;font-size:14px}
-    button{background:#111;color:#fff;border:none;cursor:pointer}
-    button:hover{opacity:.95}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid #eee;padding:8px;text-align:right}
-    .tag{display:inline-block;padding:2px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px;margin-inline-start:6px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>لوحة الأونر</title>
+<style>
+  :root{--bg:#0b0f16; --card:#111827; --line:#1d2840; --text:#e8ecf3; --accent:#f5c84c; --accent2:#ffb300}
+  body{margin:0;background:linear-gradient(180deg,#0e1420,#0b0f16);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:16px}
+  .card{background:linear-gradient(180deg,#111827,#0f1420); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px}
+  input,button{padding:10px;border-radius:10px;border:1px solid var(--line);background:#0c1220;color:var(--text)}
+  button{border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#161616;font-weight:700;cursor:pointer}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right}
+  .tag{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:999px;font-size:12px;margin-inline-start:6px}
+</style>
 </head>
 <body>
-  <h2>لوحة التحكم (الأونر الرئيسي)</h2>
+  <h2>لوحة تحكم الأونر (روم واحد)</h2>
 
   <div class="card">
     <div class="row">
-      <input id="targetName" type="text" placeholder="اسم المستخدم" />
-      <button id="grantAdminBtn">منح أدمن</button>
-      <button id="revokeAdminBtn">سحب أدمن</button>
-      <button id="kickBtn">طرد</button>
-      <button id="banBtn">حظر ساعتين</button>
+      <input id="targetName" type="text" placeholder="اسم المستخدم"/>
+      <button id="grantAdmin">منح أدمن</button>
+      <button id="revokeAdmin">سحب أدمن</button>
+      <button id="kick">طرد</button>
+      <button id="ban2h">حظر ساعتين</button>
     </div>
-    <div style="font-size:12px;color:#777;margin-top:6px">اختَر اسم المستخدم بالضبط.</div>
   </div>
 
   <div class="card">
-    <h3>المتصلين الآن</h3>
+    <h3>المتواجدون الآن</h3>
     <table>
       <thead><tr><th>الاسم</th><th>الدور</th><th>الحالة</th></tr></thead>
       <tbody id="usersBody"></tbody>
@@ -39,56 +38,45 @@
   </div>
 
   <div class="row">
-    <button onclick="location.href='chat.html'">رجوع للشات</button>
+    <button onclick="location.href='chat.html'">رجوع للروم</button>
   </div>
-
-  <script type="module">
-    import { OWNER_NAME } from "./config.js";
-    // حماية الصفحة
-    const role = localStorage.getItem("role");
-    const name = (localStorage.getItem("name") || "").trim();
-    if (!(role === "ownerMain" && name === OWNER_NAME)) {
-      alert("ممنوع — هذه الصفحة للأونر الرئيسي فقط");
-      window.location.href = "chat.html";
-    }
-  </script>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script type="module">
-    import { SERVER_URL } from "./config.js";
-    const socket = io(SERVER_URL, { transports:["websocket"] });
+    import { SERVER_URL, OWNER_NAME } from "./config.js";
+    const role = localStorage.getItem("role");
+    const name = (localStorage.getItem("name")||"").trim();
+    if(!(role==="ownerMain" && name===OWNER_NAME)){ alert("ممنوع — للأونر الرئيسي فقط"); location.href="chat.html"; }
 
+    const socket = io(SERVER_URL, { transports:["websocket"] });
     const usersBody = document.getElementById("usersBody");
     const targetName = document.getElementById("targetName");
-    const grantAdminBtn = document.getElementById("grantAdminBtn");
-    const revokeAdminBtn = document.getElementById("revokeAdminBtn");
-    const kickBtn = document.getElementById("kickBtn");
-    const banBtn = document.getElementById("banBtn");
+    const grantAdmin = document.getElementById("grantAdmin");
+    const revokeAdmin = document.getElementById("revokeAdmin");
+    const kick       = document.getElementById("kick");
+    const ban2h      = document.getElementById("ban2h");
 
-    socket.on("connect", () => {
-      // نعرّف نفسنا كأونر
-      socket.emit("join", { name: localStorage.getItem("name"), role: "ownerMain" });
+    socket.on("connect", ()=>{
+      socket.emit("join", { name, role: "ownerMain" });
       socket.emit("users:request");
     });
-
-    socket.on("users:list", (list) => {
-      usersBody.innerHTML = "";
-      list.forEach(u => {
+    socket.on("users:list",(list)=>{
+      usersBody.innerHTML="";
+      list.forEach(u=>{
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${esc(u.name)}</td><td>${esc(u.role)}</td><td>${u.onStage ? "<span class='tag'>فوق</span>":""}</td>`;
+        tr.innerHTML = `<td>${esc(u.name)}</td><td>${esc(u.role)}</td><td>${u.onStage ? "<span class='tag'>على الاستيج</span>":""}</td>`;
         usersBody.appendChild(tr);
       });
     });
 
-    function esc(s){ return (s||"").replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function esc(s){ return String(s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-    grantAdminBtn.onclick = () => socket.emit("admin:grant", { target: targetName.value.trim() });
-    revokeAdminBtn.onclick = () => socket.emit("admin:revoke", { target: targetName.value.trim() });
-    kickBtn.onclick = () => socket.emit("admin:kick", { target: targetName.value.trim(), reason:"بقرار الأونر" });
-    banBtn.onclick = () => socket.emit("admin:tempban2h", { target: targetName.value.trim() });
+    grantAdmin.onclick = ()=> socket.emit("admin:grant",{ target: targetName.value.trim() });
+    revokeAdmin.onclick= ()=> socket.emit("admin:revoke",{ target: targetName.value.trim() });
+    kick.onclick       = ()=> socket.emit("admin:kick",{ target: targetName.value.trim(), reason:"بقرار الأونر" });
+    ban2h.onclick      = ()=> socket.emit("admin:tempban2h",{ target: targetName.value.trim() });
 
-    // تحديث دوري لقائمة المستخدمين
-    setInterval(() => socket.emit("users:request"), 3000);
+    setInterval(()=> socket.emit("users:request"), 3000);
   </script>
 </body>
 </html>
