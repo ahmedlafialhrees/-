@@ -4,8 +4,8 @@ let users = [];
 let stage = [null,null,null,null];
 let actionMenuOpenFor = null;
 
-// ===== تسجيل الدخول تلقائي من sessionStorage =====
-(function autoLogin(){
+// login تلقائي من sessionStorage
+(function(){
   const name = sessionStorage.getItem("loginName") || "";
   const adminPass = sessionStorage.getItem("adminPass") || "";
   const ownerPass = sessionStorage.getItem("ownerPass") || "";
@@ -14,10 +14,18 @@ let actionMenuOpenFor = null;
 
 socket.on("auth:ok", ({me: my}) => {
   me = my;
+  // زر لوحة التحكم يظهر للأونر
+  if (me.role === "owner") document.getElementById("ownerPanel").style.display = "inline-flex";
   addSystem(`مرحباً ${me.name} — دورك: ${me.role}`);
 });
 socket.on("auth:error", (m)=>{ alert(m); location.href="/"; });
 socket.on("auth:kicked", (m)=>{ alert(m||"تم طردك"); location.href="/"; });
+
+function roleChip(role){
+  if (role === "owner") return `<span class="rolechip owner">اونر</span>`;
+  if (role === "admin") return `<span class="rolechip admin">ادمن</span>`;
+  return "";
+}
 
 function addSystem(t){
   const msgs = document.getElementById("msgs");
@@ -33,7 +41,7 @@ function addMsg({from, text}){
   box.className = "msg";
   const fromEl = document.createElement("div");
   fromEl.className = "from";
-  fromEl.textContent = `${from.name}${from.role!=="user" ? " • "+from.role : ""}`;
+  fromEl.innerHTML = `${from.name} ${roleChip(from.role)}`;
   const textEl = document.createElement("div");
   textEl.textContent = text;
   box.appendChild(fromEl); box.appendChild(textEl);
@@ -60,24 +68,30 @@ document.getElementById("toggleStage").onclick = ()=> socket.emit("stage:toggle"
 document.querySelectorAll(".slot").forEach(el=>{
   el.addEventListener("click", ()=> socket.emit("stage:toggle"));
 });
-
 socket.on("stage:update", (view)=>{
   stage = view;
   document.querySelectorAll(".slot").forEach((el,idx)=>{
     const s = stage[idx];
+    const nameEl = el.querySelector(".name");
+    const pinEl  = el.querySelector(".pin");
+    const chipEl = el.querySelector(".rolechip");
     if (s) {
       el.classList.add("filled");
-      el.querySelector(".name").textContent = s.name;
-      el.querySelector(".pin").style.display = "none";
+      nameEl.textContent = s.name;
+      pinEl.style.display = "none";
+      chipEl.style.display = "inline-flex";
+      chipEl.textContent = s.role==="owner"?"اونر":(s.role==="admin"?"ادمن":"");
+      chipEl.className = "rolechip " + (s.role==="owner"?"owner":(s.role==="admin"?"admin":""));
     } else {
       el.classList.remove("filled");
-      el.querySelector(".name").textContent = "فارغ";
-      el.querySelector(".pin").style.display = "inline";
+      nameEl.textContent = "فارغ";
+      pinEl.style.display = "inline";
+      chipEl.style.display = "none";
     }
   });
 });
 
-// قائمة الأعضاء
+// لستة الأعضاء
 socket.on("users:list", (list)=>{
   users = list;
   const wrap = document.getElementById("users");
@@ -88,7 +102,7 @@ socket.on("users:list", (list)=>{
     row.dataset.uid = u.id;
 
     const l = document.createElement("div");
-    l.textContent = u.name;
+    l.innerHTML = `${u.name} ${roleChip(u.role)}`;
 
     const r = document.createElement("div");
     r.className = "r";
@@ -111,7 +125,7 @@ socket.on("users:list", (list)=>{
   });
 });
 
-// منيو الأوامر
+// منيو أوامر العضو
 const am = document.getElementById("actionMenu");
 function hideActionMenu(){ am.classList.remove("show"); actionMenuOpenFor = null; }
 function showActionMenuFor(u){
@@ -124,7 +138,6 @@ function showActionMenuFor(u){
   const isAdmin = me?.role === "admin";
   const isSelf  = me?.id === u.id;
 
-  // تغيير اسم (للنفس أو للأدمن/الأونر)
   if (isSelf || isAdmin || isOwner){
     grid.appendChild(btn("تغيير الاسم", ()=>{
       const newName = prompt("الاسم الجديد؟", u.name);
@@ -132,21 +145,16 @@ function showActionMenuFor(u){
       act(u.id, "rename", {name:newName});
     }));
   }
-
-  // إنزال من الاستيج
   if (isOwner || isAdmin){
     grid.appendChild(btn("إنزال من الاستيج", ()=> act(u.id,"removeFromStage")));
-  }
-
-  // طرد عادي
-  if (isOwner || isAdmin){
     grid.appendChild(btn("طرد", ()=> act(u.id,"kick")));
     grid.appendChild(btn("طرد ساعتين", ()=> act(u.id,"tempban2h")));
   }
-
-  // إعطاء أدمن (أونر فقط)
   if (isOwner){
-    grid.appendChild(btn("إعطاء أدمن", ()=> act(u.id,"grantAdmin")));
+    if (u.role !== "admin") grid.appendChild(btn("إعطاء أدمن", ()=> act(u.id,"grantAdmin")));
+    if (u.role === "admin") grid.appendChild(btn("إزالة أدمن", ()=> act(u.id,"revokeAdmin")));
+    if (u.role !== "owner") grid.appendChild(btn("إعطاء أونر", ()=> act(u.id,"grantOwner")));
+    if (u.role === "owner") grid.appendChild(btn("إزالة أونر", ()=> act(u.id,"revokeOwner")));
   }
 
   am.classList.add("show");
