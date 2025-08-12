@@ -1,8 +1,15 @@
-// server.js — Single Room + Stage + Roles control
+// server.js — Single Room + Stage + Roles control (مع حفظ دائم roles.json)
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+const ROLES_PATH = path.join(__dirname, "roles.json");
 
 const OWNER_NAME = process.env.OWNER_NAME || "احمد";
 
@@ -17,12 +24,33 @@ const io = new Server(server, { cors:{ origin:"*", methods:["GET","POST"] } });
 const users = new Map(); // socket.id -> {name, role}
 const bans  = new Map(); // name -> untilTs
 
-// صلاحيات مخزّنة بالذاكرة: name -> {role:"admin"|"owner", pass:""}
+// صلاحيات مخزّنة: name -> {role:"admin"|"owner", pass:""}
 const allowed = new Map();
 
 // الاستيج (4 خانات)
 const stage = { slots: [null,null,null,null] };
 const broadcastStage = ()=> io.emit("stage:update", stage);
+
+// تحميل/حفظ الصلاحيات إلى ملف
+function loadRoles(){
+  try{
+    const raw = fs.readFileSync(ROLES_PATH, "utf8");
+    const obj = JSON.parse(raw);
+    allowed.clear();
+    Object.entries(obj).forEach(([name, rec])=>{
+      if(rec && (rec.role==="admin" || rec.role==="owner") && typeof rec.pass==="string"){
+        allowed.set(name, { role: rec.role, pass: rec.pass });
+      }
+    });
+    console.log("Loaded roles:", allowed.size);
+  }catch(e){ /* أول تشغيل بدون ملف */ }
+}
+function saveRoles(){
+  const obj = {};
+  for(const [name, rec] of allowed.entries()) obj[name] = rec;
+  fs.writeFile(ROLES_PATH, JSON.stringify(obj, null, 2), ()=>{});
+}
+loadRoles();
 
 function isBanned(name){ const u=bans.get(name); if(!u) return false; if(Date.now()>u){bans.delete(name);return false;} return true; }
 function isOwnerMainSocket(sock){ const u = users.get(sock.id); return u && u.role==="ownerMain" && u.name===OWNER_NAME; }
@@ -86,7 +114,8 @@ io.on("connection", (socket)=>{
     socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
   });
 
-  socket.on("roles:grant", ({ target, role, pass })=>{
+  // حفظ (alias للمنح السابق)
+  socket.on("roles:save", ({ target, role, pass })=>{
     if (!isOwnerMainSocket(socket)) return;
     target = String(target||"").trim();
     role   = (role==="owner") ? "owner" : "admin";
@@ -94,16 +123,25 @@ io.on("connection", (socket)=>{
     if (!target || !pass) return;
 
     allowed.set(target, { role, pass });
+    saveRoles();
+
+    // حدّث الدور لو المستخدم متصل
     for (const [id,u] of users.entries()){
       if (u.name === target) { u.role = role; users.set(id, u); }
     }
     socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
   });
 
+  // ما زلنا ندعم الحدث القديم للمتوافقية
+  socket.on("roles:grant", (payload)=> io.emit("noop") || socket.emit("roles:save", payload));
+
   socket.on("roles:revoke", ({ target })=>{
     if (!isOwnerMainSocket(socket)) return;
     target = String(target||"").trim(); if(!target) return;
+
     allowed.delete(target);
+    saveRoles();
+
     for (const [id,u] of users.entries()){
       if (u.name === target) { u.role = "user"; users.set(id, u); }
     }
