@@ -1,4 +1,4 @@
-import { SERVER_URL, OWNER_NAME } from "./config.js?v=2";
+import { SERVER_URL, OWNER_NAME } from "./config.js?v=3";
 
 /* تثبيت الارتفاع للجوال */
 const setVh = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
@@ -34,23 +34,22 @@ const openBtn = document.getElementById("openBtn");
 const menuDrop = document.getElementById("menuDrop");
 const ownerLink = document.getElementById("ownerLink");
 const logoutLink = document.getElementById("logoutLink");
-
 if (isOwnerMain) ownerLink.classList.remove("hidden");
 openBtn.addEventListener("click", ()=> menuDrop.classList.toggle("hidden"));
 document.addEventListener("click",(e)=>{
   if(!openBtn.contains(e.target) && !menuDrop.contains(e.target)) menuDrop.classList.add("hidden");
 });
-logoutLink.addEventListener("click", ()=>{
-  localStorage.clear(); location.href="index.html";
-});
+logoutLink.addEventListener("click", ()=>{ localStorage.clear(); location.href="index.html"; });
 
 /* Socket */
 const socket = io(SERVER_URL, { transports:["websocket"] });
-socket.on("connect", ()=> socket.emit("join", { name, role, pass }));
+socket.on("connect", ()=>{
+  socket.emit("join", { name, role, pass });
+  socket.emit("stage:request");
+});
 
 /* رسائل */
 socket.on("message", (p)=> addMessage(p, p.name===name));
-
 function send(){
   const text = (msgInput.value||"").trim();
   if(!text) return;
@@ -60,7 +59,6 @@ function send(){
 }
 sendBtn.addEventListener("click", send);
 msgInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
-
 function addMessage({ name:n, text, ts }, mine=false){
   const div = document.createElement("div");
   div.className = "msg" + (mine?" me":"");
@@ -70,3 +68,41 @@ function addMessage({ name:n, text, ts }, mine=false){
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* الاستيج */
+const micBtn = document.getElementById("micBtn");
+const stageOverlay = document.getElementById("stageOverlay");
+const closeStage = document.getElementById("closeStage");
+const slotsEl = document.getElementById("slots");
+let lastStage = { slots:[null,null,null,null] };
+
+micBtn.addEventListener("click", ()=>{
+  stageOverlay.style.display = "flex";
+  socket.emit("stage:request");
+});
+closeStage.addEventListener("click", ()=>{
+  // نزول تلقائي لو كنت فوق
+  const myIndex = (lastStage.slots||[]).findIndex(x=>x && x.name===name);
+  if (myIndex!==-1) socket.emit("stage:toggle",{ index: myIndex, forceDown:true });
+  stageOverlay.style.display = "none";
+});
+
+socket.on("stage:update",(stage)=> renderStage(stage));
+
+function renderStage(stage){
+  lastStage = stage || lastStage;
+  slotsEl.innerHTML = "";
+  lastStage.slots.forEach((slot, i)=>{
+    const d = document.createElement("div");
+    const isMe = slot && slot.name===name;
+    d.className = "slot"+(isMe?" me":"");
+    d.textContent = slot ? `🎤 ${slot.name}` : "— فارغ —";
+    d.title = isMe ? "اضغط للنزول" : "اضغط للصعود";
+    d.addEventListener("click", ()=> socket.emit("stage:toggle",{ index:i }));
+    slotsEl.appendChild(d);
+  });
+}
+
+/* طرد/حظر */
+socket.on("kicked", (reason)=> { alert(`تم طردك: ${reason||""}`); localStorage.clear(); location.href="index.html"; });
+socket.on("banned", (untilTs)=> { alert(`تم حظرك حتى ${new Date(untilTs).toLocaleString()}`); localStorage.clear(); location.href="index.html"; });
