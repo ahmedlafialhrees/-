@@ -10,15 +10,37 @@ let meOnStage = false;
 const qs  = (s, r=document) => r.querySelector(s);
 const qsa = (s, r=document) => [...r.querySelectorAll(s)];
 
-// خروج → صفحة الدخول
-qs("#exitBtn").onclick = () => location.href = "index.html";
+/* ===== قائمة "افتح" ===== */
+const menuToggle  = qs("#menuToggle");
+const dropdown    = qs("#dropdownMenu");
+const menuOwner   = qs("#menuOwner");
+const menuExit    = qs("#menuExit");
 
-// زر المايك (يمين) لفتح/قفل الاستيج
+// فتح/قفل القائمة
+menuToggle.addEventListener("click", ()=>{
+  const open = !dropdown.classList.contains("open");
+  dropdown.classList.toggle("open", open);
+  menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+});
+// إغلاق عند الضغط خارجها
+document.addEventListener("click", (e)=>{
+  if (!e.target.closest(".menu-wrap")) {
+    dropdown.classList.remove("open");
+    menuToggle.setAttribute("aria-expanded", "false");
+  }
+});
+// "خروج" من داخل القائمة
+menuExit.addEventListener("click", (e)=>{
+  e.preventDefault();
+  location.href = "index.html";
+});
+
+/* ===== زر المايك (يمين) لفتح/قفل الاستيج ===== */
 const stagePanel = qs("#stagePanel");
 const stageFab   = qs("#stageFab");
 stageFab.addEventListener("click", () => {
   const closing = !stagePanel.classList.contains("closed");
-  if (closing && meOnStage) socket.emit("stage:toggle"); // نزّلني لو أنا فوق
+  if (closing && meOnStage) socket.emit("stage:toggle");
   stagePanel.classList.toggle("closed");
 });
 
@@ -39,20 +61,13 @@ socket.on("auth:ok", ({ me: my }) => {
   const comp = qs("#composerName");
   if (comp) comp.textContent = `ترسل كـ: ${me.name}`;
 
-  // لوحة التحكم: تظهر للأونر الرئيسي فقط (الاسم = MAIN_OWNER_NAME)
-  const op = qs("#ownerPanel");
-  if (op) {
+  // ✅ “لوحة التحكم” تظهر في قائمة "افتح" فقط للأونر الرئيسي
+  if (menuOwner) {
     const isOwner    = me.role === "owner";
     const loginName  = (me.name || "").trim();
     const mainOwner  = (window.MAIN_OWNER_NAME || "").trim(); // من config.js
-    const isMainOwner = isOwner && !!mainOwner && loginName === mainOwner;
-
-    // نخلي مكانها محفوظ بالنص دايمًا، ونكشفها فقط للأونر الرئيسي
-    op.style.display       = "inline-flex";                 // يحجز الوسط دائمًا
-    op.style.visibility    = isMainOwner ? "visible" : "hidden";
-    op.style.pointerEvents = isMainOwner ? "auto" : "none";
-
-    console.debug("[ownerPanel]", {role: me.role, loginName, mainOwner, isMainOwner});
+    const isMainOwner = isOwner && (!!mainOwner ? loginName === mainOwner : true);
+    menuOwner.style.display = isMainOwner ? "flex" : "none";
   }
 });
 
