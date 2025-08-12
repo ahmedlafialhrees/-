@@ -16,26 +16,23 @@ const dropdown    = qs("#dropdownMenu");
 const menuOwner   = qs("#menuOwner");
 const menuExit    = qs("#menuExit");
 
-// فتح/قفل القائمة
 menuToggle.addEventListener("click", ()=>{
   const open = !dropdown.classList.contains("open");
   dropdown.classList.toggle("open", open);
   menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
 });
-// إغلاق عند الضغط خارجها
 document.addEventListener("click", (e)=>{
   if (!e.target.closest(".menu-wrap")) {
     dropdown.classList.remove("open");
     menuToggle.setAttribute("aria-expanded", "false");
   }
 });
-// "خروج" من داخل القائمة
 menuExit.addEventListener("click", (e)=>{
   e.preventDefault();
   location.href = "index.html";
 });
 
-/* ===== زر المايك (يمين) لفتح/قفل الاستيج ===== */
+/* ===== زر المايك (يمين) ===== */
 const stagePanel = qs("#stagePanel");
 const stageFab   = qs("#stageFab");
 stageFab.addEventListener("click", () => {
@@ -53,7 +50,6 @@ stageFab.addEventListener("click", () => {
   socket.emit("auth:login", { name, adminPass, ownerPass });
 })();
 
-// بعد التحقق
 socket.on("auth:ok", ({ me: my }) => {
   me = my;
 
@@ -61,13 +57,10 @@ socket.on("auth:ok", ({ me: my }) => {
   const comp = qs("#composerName");
   if (comp) comp.textContent = `ترسل كـ: ${me.name}`;
 
-  // ✅ “لوحة التحكم” تظهر في قائمة "افتح" فقط للأونر الرئيسي
+  // ✅ لوحة التحكم: تظهر لأي Owner (ما نستخدم MAIN_OWNER_NAME)
   if (menuOwner) {
-    const isOwner    = me.role === "owner";
-    const loginName  = (me.name || "").trim();
-    const mainOwner  = (window.MAIN_OWNER_NAME || "").trim(); // من config.js
-    const isMainOwner = isOwner && (!!mainOwner ? loginName === mainOwner : true);
-    menuOwner.style.display = isMainOwner ? "flex" : "none";
+    const isOwner = me.role === "owner";
+    menuOwner.style.display = isOwner ? "flex" : "none";
   }
 });
 
