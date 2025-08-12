@@ -85,7 +85,7 @@ socket.on("stage:update", (view)=>{
   document.querySelectorAll(".slot").forEach((el,idx)=> el.classList.toggle("filled", !!stage[idx]));
 });
 
-// زر المايك أعلى اليمين: فتح/قفل الاستيج
+// زر المايك (يمين): فتح/قفل الاستيج
 const stagePanel=document.getElementById("stagePanel");
 const stageFab=document.getElementById("stageFab");
 stageFab.addEventListener("click", ()=>{
