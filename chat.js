@@ -158,6 +158,7 @@ const Stage = (() => {
   const state = { open:false, slots:[null,null,null,null] };
   let overlay, slotsWrap, micBtn, slotEls;
 
+  // يبني ٤ خانات إذا ناقصة
   function buildSlotsIfNeeded() {
     if (!slotsWrap) return;
     if (slotsWrap.children.length >= 4) return;
@@ -178,28 +179,43 @@ const Stage = (() => {
     slotsWrap = $("#slots");
     micBtn    = $("#micBtn"); // مهم: id مطابق لصفحتك
     if (!overlay || !slotsWrap || !micBtn) return;
+
     buildSlotsIfNeeded();
     slotEls = $$(".slot", slotsWrap);
 
-    // فتح/قفل الاستيج (نستخدم display:flex لأن CSS عندك ما يشيّك على كلاس open)
+    // فتح/قفل الاستيج (نستخدم display:flex لأنه متوافق مع CSS الحالي)
     micBtn.addEventListener("click", () => {
       state.open ? close() : open();
     });
 
-    // الصعود/النزول
-    slotEls.forEach((el, idx) => {
-      el.addEventListener("click", () => {
-        const mine  = el.dataset.uid === window.myId;
-        const empty = !el.dataset.uid;
-        if (mine) leave();
-        else if (empty) join(idx);
-      });
+    // التبديل يكون فقط على "صورة المايك" داخل الخانة
+    slotsWrap.addEventListener("click", (e) => {
+      const micIcon = e.target.closest(".micCircle");
+      if (!micIcon) return;                    // تجاهل أي ضغط خارج الأيقونة
+      const slot = micIcon.closest(".slot");
+      if (!slot) return;
+      const idx = [...slotEls].indexOf(slot);
+      if (idx === -1) return;
+
+      const mine  = slot.dataset.uid === window.myId;
+      const empty = !slot.dataset.uid;
+
+      if (mine)       leave();
+      else if (empty) join(idx);
     });
+
     render();
   }
 
   function open(){ if (!overlay) return; overlay.style.display = "flex"; state.open = true; }
-  function close(){ if (!overlay) return; overlay.style.display = "none"; state.open = false; leave(); }
+  function close(){
+    if (!overlay) return;
+    overlay.style.display = "none";
+    state.open = false;
+    // نزّلني لو كنت فوق
+    const i = state.slots.indexOf(window.myId);
+    if (i > -1) leave();
+  }
 
   function render(){
     if (!slotEls) return;
