@@ -1,9 +1,8 @@
-/* chat.js — تموضع قاطع + اسم افتراضي + قوائم مضبوطة */
+/* chat.js — بدون باس تحت، فتح يسار، شاشة ثابتة، الاستيج بدون تغيير */
 
 const SERVER_URL = (window.SERVER_URL || "https://kwpooop.onrender.com");
 const OWNER_PASS = (window.OWNER_PASS || "6677") + "";
 
-/* هوية */
 const savedId = localStorage.getItem("myId");
 window.myId = savedId || ("u" + Math.random().toString(36).slice(2,10));
 if (!savedId) localStorage.setItem("myId", window.myId);
@@ -11,7 +10,6 @@ if (!savedId) localStorage.setItem("myId", window.myId);
 const qp = new URLSearchParams(location.search);
 window.roomId = window.roomId || qp.get("room") || "lobby";
 
-/* Helpers */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => root.querySelectorAll(sel);
 
@@ -19,8 +17,7 @@ function nowHHMM(){ return new Date().toLocaleTimeString([], {hour:"2-digit", mi
 function ensureDefaultName(){
   let n = localStorage.getItem("myName");
   if (!n || !n.trim()){
-    const suf = window.myId.slice(-4);
-    n = `عضو-${suf}`;
+    n = `عضو-${window.myId.slice(-4)}`;
     localStorage.setItem("myName", n);
   }
   return n;
@@ -41,13 +38,12 @@ function addMsg({from, text, me=false}){
   wrap.scrollTop = wrap.scrollHeight + 9999;
 }
 
-/* ====== الاستيج ====== */
+/* ====== Stage (بدون تعديل منطقي) ====== */
 const stage = { open:false, slots:[null,null,null,null], meOnStageIndex:null };
 function renderStage(){
   const p = $("#stagePanel");
   p.classList.toggle("show", stage.open);
   p.setAttribute("aria-hidden", String(!stage.open));
-
   $$("#slots .slot").forEach(el=>{
     const i = +el.dataset.i;
     const s = stage.slots[i];
@@ -58,8 +54,7 @@ function renderStage(){
 function tryJoinLeaveSlot(slotIndex){
   if (stage.meOnStageIndex !== null){
     const idx = stage.meOnStageIndex;
-    stage.slots[idx] = null;
-    stage.meOnStageIndex = null;
+    stage.slots[idx] = null; stage.meOnStageIndex = null;
     emitStageUpdate(); renderStage(); return;
   }
   const pick = (typeof slotIndex==="number" ? slotIndex : stage.slots.findIndex(s=>!s));
@@ -88,13 +83,16 @@ window.addEventListener("DOMContentLoaded", ()=>{
   const stagePanel= $("#stagePanel");
   const slotsRoot = $("#slots");
 
-  const passInput = $("#passInput");
   const msgInput  = $("#msgInput");
   const sendBtn   = $("#sendBtn");
   const emojiBtn  = $("#emojiBtn");
   const emojiPanel= $("#emojiPanel");
 
   ensureDefaultName(); updateAsLine();
+
+  // اظهار لوحة التحكم للأونر فقط (من الواجهة)
+  const isOwner = (localStorage.getItem("ownerOK") === "1") || (localStorage.getItem("role") === "owner");
+  if (!isOwner) menuOwner.classList.add("hidden");
 
   // Socket
   joinRoom();
@@ -117,12 +115,12 @@ window.addEventListener("DOMContentLoaded", ()=>{
     });
   }
 
-  /* ====== ضع قائمة فتح تحت زر فتح (يسار دايم) ====== */
+  /* ====== فتح يسار: القائمة تنزل تحت زر فتح ====== */
   function placeMenuUnderOpen(){
     const r = openBtn.getBoundingClientRect();
     openMenu.style.top  = (r.bottom + 6) + "px";
-    openMenu.style.left = (r.left) + "px";
-    openMenu.style.right= ""; // نتأكد ما فيه right
+    openMenu.style.left = r.left + "px";
+    openMenu.style.right= "";
   }
   function toggleMenu(){
     const willShow = !openMenu.classList.contains("show");
@@ -139,24 +137,14 @@ window.addEventListener("DOMContentLoaded", ()=>{
   // عناصر القائمة
   menuExit.addEventListener("click", ()=>{ window.location.href = "index.html"; });
   menuOwner.addEventListener("click", ()=>{
-    const ok = (passInput.value === OWNER_PASS);
-    if (!ok){ alert("لوحة التحكم للأونر فقط."); return; }
+    if (!isOwner){ alert("لوحة التحكم للأونر فقط."); return; }
     window.location.href = "owner.html";
   });
 
-  /* ====== الاستيج تحت زر المايك يمين ====== */
-  function placeStageRight(){
-    const r = micBtn.getBoundingClientRect();
-    stagePanel.style.top   = (r.bottom + 6) + "px";
-    stagePanel.style.right = "12px";
-    stagePanel.style.left  = ""; // تأكيد
-  }
+  /* ====== الاستيج: ما لمسنا مكانه/سلوكه ====== */
   function toggleStage(){
     const willShow = !stage.open;
-    if (willShow){
-      placeStageRight();
-      if (openMenu.classList.contains("show")){ openMenu.classList.remove("show"); openMenu.setAttribute("aria-hidden","true"); }
-    }else if (stage.meOnStageIndex !== null){
+    if (!willShow && stage.meOnStageIndex !== null){
       stage.slots[stage.meOnStageIndex] = null;
       stage.meOnStageIndex = null;
     }
@@ -165,9 +153,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     micBtn.setAttribute("aria-expanded", String(willShow));
   }
   micBtn.addEventListener("click", toggleStage);
-  window.addEventListener("resize", ()=>{ if (stage.open) placeStageRight(); });
 
-  // ضغط على خانة استيج
   slotsRoot.addEventListener("click", (e)=>{
     const s = e.target.closest(".slot"); if (!s) return;
     const idx = +s.dataset.i;
@@ -177,7 +163,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
   });
 
   /* ====== إرسال ====== */
-  passInput.addEventListener("input", ()=> localStorage.setItem("enteredPass", passInput.value));
   function send(){
     const text = msgInput.value.trim(); if (!text) return;
     const name = currentName();
@@ -189,11 +174,11 @@ window.addEventListener("DOMContentLoaded", ()=>{
   sendBtn.addEventListener("click", send);
   msgInput.addEventListener("keydown", (e)=>{ if (e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } });
 
-  /* ====== إيموجي (فوق الزر) ====== */
+  /* ====== إيموجي ====== */
   emojiBtn.addEventListener("click", ()=>{
     const r = emojiBtn.getBoundingClientRect();
-    const composerRect = document.querySelector(".composer").getBoundingClientRect();
-    const leftInside = Math.max(8, r.left - composerRect.left);
+    const comp = document.querySelector(".composer").getBoundingClientRect();
+    const leftInside = Math.max(8, r.left - comp.left);
     emojiPanel.style.left = leftInside + "px";
     emojiPanel.classList.toggle("show");
     emojiPanel.setAttribute("aria-hidden", String(!emojiPanel.classList.contains("show")));
