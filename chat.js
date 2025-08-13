@@ -1,14 +1,9 @@
-/* chat.js — تصميم جديد:
-   - زر فتح (يسار) يفتح قائمة فيها خروج + لوحة التحكم
-   - زر 🎙️ (يمين) يفتح نافذة الاستيج تسقط لتحت من اليمين (4 خانات)
-   - رسايل/كتابة/إيموجي طبيعية
-*/
+/* chat.js — ثابت + تحسين تموضع القوائم والإيموجي */
 
-/* ====== إعدادات عامة ====== */
 const SERVER_URL = (window.SERVER_URL || "https://kwpooop.onrender.com");
 const OWNER_PASS = (window.OWNER_PASS || "6677") + "";
 
-/* ====== هوية وروم ====== */
+/* هوية */
 const savedId = localStorage.getItem("myId");
 window.myId = savedId || ("u" + Math.random().toString(36).slice(2,10));
 if (!savedId) localStorage.setItem("myId", window.myId);
@@ -16,7 +11,7 @@ if (!savedId) localStorage.setItem("myId", window.myId);
 const qp = new URLSearchParams(location.search);
 window.roomId = window.roomId || qp.get("room") || "lobby";
 
-/* ====== Helpers ====== */
+/* Helpers */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => root.querySelectorAll(sel);
 
@@ -36,17 +31,15 @@ function addMsg({from, text, me=false}){
   wrap.appendChild(m);
   wrap.scrollTop = wrap.scrollHeight + 9999;
 }
+function currentName(){
+  return (localStorage.getItem("myName") || "مجهول");
+}
 function updateAsLine(){
-  const n = (localStorage.getItem("myName") || "مجهول");
-  $("#asLine").textContent = `ترسل كـ: ${n}`;
+  $("#asLine").textContent = `ترسل كـ: ${currentName()}`;
 }
 
-/* ====== حالة الاستيج ====== */
-const stage = {
-  open:false,
-  slots:[null,null,null,null],
-  meOnStageIndex:null,
-};
+/* ====== الاستيج ====== */
+const stage = { open:false, slots:[null,null,null,null], meOnStageIndex:null };
 function renderStage(){
   const p = $("#stagePanel");
   p.classList.toggle("show", stage.open);
@@ -68,7 +61,7 @@ function tryJoinLeaveSlot(slotIndex){
   }
   const pick = (typeof slotIndex==="number" ? slotIndex : stage.slots.findIndex(s=>!s));
   if (pick < 0) return;
-  stage.slots[pick] = { id:window.myId, name:(localStorage.getItem("myName")||"مجهول") };
+  stage.slots[pick] = { id:window.myId, name:currentName() };
   stage.meOnStageIndex = pick;
   emitStageUpdate(); renderStage();
 }
@@ -79,9 +72,8 @@ try{ ioClient = io(SERVER_URL, {transports:["websocket"], path:"/socket.io"}); }
 catch(e){ console.warn("Socket.IO غير متاح.", e); }
 
 function joinRoom(){
-  const name = (localStorage.getItem("myName") || "مجهول");
   if (ioClient){
-    ioClient.emit("room:join", { room:window.roomId, id:window.myId, name });
+    ioClient.emit("room:join", { room:window.roomId, id:window.myId, name:currentName() });
   }
 }
 function emitStageUpdate(){
@@ -92,7 +84,6 @@ function emitStageUpdate(){
 
 /* ====== UI ====== */
 window.addEventListener("DOMContentLoaded", ()=>{
-  // عناصر عامة
   const openBtn   = $("#openBtn");
   const openMenu  = $("#openMenu");
   const menuOwner = $("#menuOwner");
@@ -102,7 +93,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
   const stagePanel= $("#stagePanel");
   const slotsRoot = $("#slots");
 
-  const nameInput = $("#nameInput");
   const passInput = $("#passInput");
   const msgInput  = $("#msgInput");
   const sendBtn   = $("#sendBtn");
@@ -111,12 +101,11 @@ window.addEventListener("DOMContentLoaded", ()=>{
   const emojiBtn  = $("#emojiBtn");
   const emojiPanel= $("#emojiPanel");
 
-  // استعادة الاسم/الباس
-  nameInput.value = localStorage.getItem("myName") || "";
+  // استعادة الباس
   passInput.value = localStorage.getItem("enteredPass") || "";
   updateAsLine();
 
-  // دخول روم + Socket
+  // Socket
   joinRoom();
   if (ioClient){
     ioClient.on("connect", ()=> joinRoom());
@@ -143,15 +132,23 @@ window.addEventListener("DOMContentLoaded", ()=>{
     });
   }
 
-  /* ====== فتح (قائمة يسار) ====== */
+  /* ====== وضع قائمة فتح تحت زر فتح ====== */
+  function placeMenuUnderOpen(){
+    const r = openBtn.getBoundingClientRect();
+    openMenu.style.top  = (r.bottom + 6) + "px";
+    openMenu.style.left = (r.left) + "px";
+  }
   function toggleMenu(){
-    const show = !openMenu.classList.contains("show");
-    // اقفل الاستيج إذا فتحنا القائمة (تجنّب تداخل)
-    if (show && stage.open){ stage.open=false; renderStage(); emitStageUpdate(); micBtn.setAttribute("aria-expanded","false"); }
-    openMenu.classList.toggle("show", show);
-    openMenu.setAttribute("aria-hidden", String(!show));
+    const willShow = !openMenu.classList.contains("show");
+    if (willShow){
+      placeMenuUnderOpen();
+      if (stage.open){ stage.open=false; renderStage(); emitStageUpdate(); micBtn.setAttribute("aria-expanded","false"); }
+    }
+    openMenu.classList.toggle("show", willShow);
+    openMenu.setAttribute("aria-hidden", String(!willShow));
   }
   openBtn.addEventListener("click", toggleMenu);
+  window.addEventListener("resize", ()=>{ if (openMenu.classList.contains("show")) placeMenuUnderOpen(); });
 
   // عناصر القائمة
   menuExit.addEventListener("click", ()=>{ window.location.href = "index.html"; });
@@ -162,21 +159,31 @@ window.addEventListener("DOMContentLoaded", ()=>{
   });
 
   /* ====== الاستيج (يمين) ====== */
+  function placeStageRight(){
+    const r = micBtn.getBoundingClientRect();
+    // تحت التوب بار وباتجاه اليمين
+    stagePanel.style.top  = (r.bottom + 6) + "px";
+    stagePanel.style.right= "12px";
+  }
   function toggleStage(){
-    const show = !stage.open;
-    // اقفل القائمة إذا فتحنا الاستيج
-    if (show && openMenu.classList.contains("show")){ openMenu.classList.remove("show"); openMenu.setAttribute("aria-hidden","true"); }
-    stage.open = show;
-    if (!show && stage.meOnStageIndex !== null){
-      stage.slots[stage.meOnStageIndex] = null;
-      stage.meOnStageIndex = null;
+    const willShow = !stage.open;
+    if (willShow){
+      placeStageRight();
+      if (openMenu.classList.contains("show")){ openMenu.classList.remove("show"); openMenu.setAttribute("aria-hidden","true"); }
+    }else{
+      if (stage.meOnStageIndex !== null){
+        stage.slots[stage.meOnStageIndex] = null;
+        stage.meOnStageIndex = null;
+      }
     }
+    stage.open = willShow;
     renderStage(); emitStageUpdate();
-    micBtn.setAttribute("aria-expanded", String(show));
+    micBtn.setAttribute("aria-expanded", String(willShow));
   }
   micBtn.addEventListener("click", toggleStage);
+  window.addEventListener("resize", ()=>{ if (stage.open) placeStageRight(); });
 
-  // الضغط على خانة استيج
+  // ضغط على خانة استيج
   slotsRoot.addEventListener("click", (e)=>{
     const s = e.target.closest(".slot"); if (!s) return;
     const idx = +s.dataset.i;
@@ -185,19 +192,12 @@ window.addEventListener("DOMContentLoaded", ()=>{
     tryJoinLeaveSlot(idx);
   });
 
-  /* ====== الكتابة ====== */
-  nameInput.addEventListener("input", ()=>{
-    localStorage.setItem("myName", nameInput.value.trim());
-    updateAsLine();
-    if (ioClient) ioClient.emit("user:rename", { room:window.roomId, id:window.myId, name:nameInput.value.trim() || "مجهول" });
-  });
-  passInput.addEventListener("input", ()=>{
-    localStorage.setItem("enteredPass", passInput.value);
-  });
+  /* ====== إرسال ====== */
+  passInput.addEventListener("input", ()=> localStorage.setItem("enteredPass", passInput.value));
 
   function send(){
     const text = msgInput.value.trim(); if (!text) return;
-    const name = (localStorage.getItem("myName") || "مجهول");
+    const name = currentName();
     const payload = { room:window.roomId, id:window.myId, name, text };
     if (ioClient) ioClient.emit("chat:msg", payload);
     addMsg({ from:name, text, me:true });
@@ -210,6 +210,11 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
   /* ====== إيموجي ====== */
   emojiBtn.addEventListener("click", ()=>{
+    // تظهر فوق زر الإيموجي
+    const r = emojiBtn.getBoundingClientRect();
+    const composerRect = document.querySelector(".composer").getBoundingClientRect();
+    const leftInsideComposer = Math.max(8, r.left - composerRect.left);
+    emojiPanel.style.left = leftInsideComposer + "px";
     emojiPanel.classList.toggle("show");
     emojiPanel.setAttribute("aria-hidden", String(!emojiPanel.classList.contains("show")));
   });
@@ -224,35 +229,15 @@ window.addEventListener("DOMContentLoaded", ()=>{
     msgInput.focus(); msgInput.setSelectionRange(caret, caret);
   });
 
-  /* ====== إغلاق بالنقر خارج ====== */
+  /* ====== إغلاق خارجي ====== */
   document.addEventListener("click", (e)=>{
     const inMenu  = e.target.closest("#openMenu") || e.target.closest("#openBtn");
     const inStage = e.target.closest("#stagePanel") || e.target.closest("#micBtn");
+    const inEmoji = e.target.closest("#emojiPanel") || e.target.closest("#emojiBtn");
+
     if (!inMenu && openMenu.classList.contains("show")){
       openMenu.classList.remove("show"); openMenu.setAttribute("aria-hidden","true");
     }
     if (!inStage && stage.open){
       stage.open = false;
-      if (stage.meOnStageIndex !== null){ stage.slots[stage.meOnStageIndex] = null; stage.meOnStageIndex = null; }
-      renderStage(); emitStageUpdate(); micBtn.setAttribute("aria-expanded","false");
-    }
-  });
-});
-
-/* ====== مرجع أحداث للسيرفر ====== */
-/*
-io.on("connection",(s)=>{
-  s.on("room:join", ({room,id,name})=>{
-    s.join(room); s.data = {room,id,name};
-    const st = rooms[room]?.stage || {open:false, slots:[null,null,null,null]};
-    s.emit("stage:state", { room, ...st });
-  });
-  s.on("chat:msg", (p)=> io.to(p.room).emit("chat:msg", p));
-  s.on("user:rename", ({room,id,name})=>{});
-  s.on("stage:update", ({room,open,slots})=>{
-    rooms[room] = rooms[room] || {};
-    rooms[room].stage = {open, slots};
-    io.to(room).emit("stage:update", {room, open, slots});
-  });
-});
-*/
+      if (stage.meOnStageIndex !==
