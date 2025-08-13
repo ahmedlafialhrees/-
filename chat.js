@@ -1,4 +1,4 @@
-/* chat.js — بدون باس تحت، فتح يسار، شاشة ثابتة، الاستيج بدون تغيير */
+/* رسائل ولوحة تحكم تعمل + فتح يسار + الاستيج بدون تغيير */
 
 const SERVER_URL = (window.SERVER_URL || "https://kwpooop.onrender.com");
 const OWNER_PASS = (window.OWNER_PASS || "6677") + "";
@@ -16,10 +16,7 @@ const $$ = (sel, root=document) => root.querySelectorAll(sel);
 function nowHHMM(){ return new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
 function ensureDefaultName(){
   let n = localStorage.getItem("myName");
-  if (!n || !n.trim()){
-    n = `عضو-${window.myId.slice(-4)}`;
-    localStorage.setItem("myName", n);
-  }
+  if (!n || !n.trim()){ n = "عضو-" + window.myId.slice(-4); localStorage.setItem("myName", n); }
   return n;
 }
 function currentName(){ return localStorage.getItem("myName") || ensureDefaultName(); }
@@ -38,15 +35,14 @@ function addMsg({from, text, me=false}){
   wrap.scrollTop = wrap.scrollHeight + 9999;
 }
 
-/* ====== Stage (بدون تعديل منطقي) ====== */
+/* ====== Stage (كما هو) ====== */
 const stage = { open:false, slots:[null,null,null,null], meOnStageIndex:null };
 function renderStage(){
   const p = $("#stagePanel");
   p.classList.toggle("show", stage.open);
   p.setAttribute("aria-hidden", String(!stage.open));
   $$("#slots .slot").forEach(el=>{
-    const i = +el.dataset.i;
-    const s = stage.slots[i];
+    const i = +el.dataset.i, s = stage.slots[i];
     $(".name", el).textContent = s ? s.name : "فارغ";
     el.classList.toggle("active", !!s);
   });
@@ -90,32 +86,18 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
   ensureDefaultName(); updateAsLine();
 
-  // اظهار لوحة التحكم للأونر فقط (من الواجهة)
-  const isOwner = (localStorage.getItem("ownerOK") === "1") || (localStorage.getItem("role") === "owner");
-  if (!isOwner) menuOwner.classList.add("hidden");
-
-  // Socket
+  // Socket wiring
   joinRoom();
   if (ioClient){
     ioClient.on("connect", ()=> joinRoom());
     ioClient.on("chat:msg", (p)=>{ if (p.room===window.roomId) addMsg({ from:p.name||"عضو", text:p.text, me:(p.id===window.myId) }); });
-    ioClient.on("stage:state", (s)=>{
-      if (s.room !== window.roomId) return;
-      stage.open = !!s.open; stage.slots = Array.isArray(s.slots)? s.slots : [null,null,null,null];
-      const i = stage.slots.findIndex(x=> x && x.id === window.myId);
-      stage.meOnStageIndex = (i>=0? i : null);
-      renderStage();
-    });
-    ioClient.on("stage:update", (s)=>{
-      if (s.room !== window.roomId) return;
-      stage.open = !!s.open; stage.slots = s.slots;
-      const i = stage.slots.findIndex(x=> x && x.id === window.myId);
-      stage.meOnStageIndex = (i>=0? i : null);
-      renderStage();
-    });
+    ioClient.on("stage:state", (s)=>{ if (s.room===window.roomId){ stage.open=!!s.open; stage.slots=Array.isArray(s.slots)?s.slots:[null,null,null,null];
+      const i = stage.slots.findIndex(x=>x && x.id===window.myId); stage.meOnStageIndex = (i>=0? i:null); renderStage(); }});
+    ioClient.on("stage:update", (s)=>{ if (s.room===window.roomId){ stage.open=!!s.open; stage.slots=s.slots;
+      const i = stage.slots.findIndex(x=>x && x.id===window.myId); stage.meOnStageIndex = (i>=0? i:null); renderStage(); }});
   }
 
-  /* ====== فتح يسار: القائمة تنزل تحت زر فتح ====== */
+  /* فتح يسار */
   function placeMenuUnderOpen(){
     const r = openBtn.getBoundingClientRect();
     openMenu.style.top  = (r.bottom + 6) + "px";
@@ -136,33 +118,40 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
   // عناصر القائمة
   menuExit.addEventListener("click", ()=>{ window.location.href = "index.html"; });
+
+  // Unlock للأونر عند أول مرة
   menuOwner.addEventListener("click", ()=>{
-    if (!isOwner){ alert("لوحة التحكم للأونر فقط."); return; }
-    window.location.href = "owner.html";
+    if (localStorage.getItem("ownerOK") === "1"){
+      window.location.href = "owner.html"; return;
+    }
+    const p = prompt("كلمة سر الأونر:");
+    if (p === OWNER_PASS){
+      localStorage.setItem("ownerOK", "1");
+      window.location.href = "owner.html";
+    }else if (p !== null){
+      alert("غلط. لوحة التحكم للأونر فقط.");
+    }
   });
 
-  /* ====== الاستيج: ما لمسنا مكانه/سلوكه ====== */
+  /* الاستيج (ما تغير) */
   function toggleStage(){
     const willShow = !stage.open;
     if (!willShow && stage.meOnStageIndex !== null){
-      stage.slots[stage.meOnStageIndex] = null;
-      stage.meOnStageIndex = null;
+      stage.slots[stage.meOnStageIndex] = null; stage.meOnStageIndex = null;
     }
-    stage.open = willShow;
-    renderStage(); emitStageUpdate();
+    stage.open = willShow; renderStage(); emitStageUpdate();
     micBtn.setAttribute("aria-expanded", String(willShow));
   }
   micBtn.addEventListener("click", toggleStage);
 
   slotsRoot.addEventListener("click", (e)=>{
     const s = e.target.closest(".slot"); if (!s) return;
-    const idx = +s.dataset.i;
-    const current = stage.slots[idx];
+    const idx = +s.dataset.i; const current = stage.slots[idx];
     if (current && current.id !== window.myId) return;
     tryJoinLeaveSlot(idx);
   });
 
-  /* ====== إرسال ====== */
+  /* إرسال */
   function send(){
     const text = msgInput.value.trim(); if (!text) return;
     const name = currentName();
@@ -174,7 +163,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
   sendBtn.addEventListener("click", send);
   msgInput.addEventListener("keydown", (e)=>{ if (e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } });
 
-  /* ====== إيموجي ====== */
+  /* إيموجي */
   emojiBtn.addEventListener("click", ()=>{
     const r = emojiBtn.getBoundingClientRect();
     const comp = document.querySelector(".composer").getBoundingClientRect();
@@ -194,23 +183,15 @@ window.addEventListener("DOMContentLoaded", ()=>{
     msgInput.focus(); msgInput.setSelectionRange(caret, caret);
   });
 
-  /* ====== إغلاق خارجي ====== */
+  /* إغلاق خارجي */
   document.addEventListener("click", (e)=>{
     const inMenu  = e.target.closest("#openMenu") || e.target.closest("#openBtn");
     const inStage = e.target.closest("#stagePanel") || e.target.closest("#micBtn");
     const inEmoji = e.target.closest("#emojiPanel") || e.target.closest("#emojiBtn");
-
-    if (!inMenu && openMenu.classList.contains("show")){
-      openMenu.classList.remove("show"); openMenu.setAttribute("aria-hidden","true");
-    }
-    if (!inStage && stage.open){
-      stage.open = false;
-      if (stage.meOnStageIndex !== null){ stage.slots[stage.meOnStageIndex] = null; stage.meOnStageIndex = null; }
-      renderStage(); emitStageUpdate(); micBtn.setAttribute("aria-expanded","false");
-    }
-    if (!inEmoji && emojiPanel.classList.contains("show")){
-      emojiPanel.classList.remove("show"); emojiPanel.setAttribute("aria-hidden","true");
-    }
+    if (!inMenu && openMenu.classList.contains("show")){ openMenu.classList.remove("show"); openMenu.setAttribute("aria-hidden","true"); }
+    if (!inStage && stage.open){ stage.open=false; if (stage.meOnStageIndex!==null){ stage.slots[stage.meOnStageIndex]=null; stage.meOnStageIndex=null; }
+      renderStage(); emitStageUpdate(); micBtn.setAttribute("aria-expanded","false"); }
+    if (!inEmoji && emojiPanel.classList.contains("show")){ emojiPanel.classList.remove("show"); emojiPanel.setAttribute("aria-hidden","true"); }
   });
 
   updateAsLine();
