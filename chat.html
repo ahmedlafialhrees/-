@@ -1,116 +1,165 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"/>
-<title>الروم</title>
-<style>
-  :root{
-    --vh:1vh; --bg:#0b0f16; --panel:#0f1420; --line:#1d2840; --text:#e8ecf3; --muted:#98a0b3;
-    --bubble:#121827; --bubbleMe:#0f1f38; --accent:#f5c84c; --accent2:#ffb300;
-    --barH:56px; --radius:16px; --safeB:env(safe-area-inset-bottom,0px);
-  }
-  *{box-sizing:border-box} html,body{height:100%;margin:0}
-  body{
-    min-height:calc(var(--vh) * 100);
-    background:radial-gradient(1200px 600px at 50% -10%, #1a2132 0%, #0b0f16 60%);
-    color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    overscroll-behavior:contain;
-  }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>شات صوتي</title>
+  <style>
+    :root{
+      --bg:#0f1115; --card:#171a21; --muted:#7f8aa3; --text:#e9edf5; --accent:#4da3ff; --danger:#ff5d7a; --ok:#51d09d;
+      --bubble:#1d2230; --bubble-me:#23324a;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:linear-gradient(180deg,#0d1016 0%, #101522 50%, #0d1117 100%);
+      color:var(--text); font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* ====== Top Bar ====== */
+    .topbar{
+      position:sticky; top:0; inset-inline:0; z-index:30;
+      height:56px; display:flex; align-items:center; justify-content:space-between;
+      padding:0 12px; background:rgba(15,17,21,.86); backdrop-filter:saturate(130%) blur(10px); border-bottom:1px solid #1d2230;
+    }
+    .tb-left,.tb-center,.tb-right{display:flex; align-items:center; gap:8px}
+    .tb-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      height:36px; padding:0 12px; border-radius:10px; border:1px solid #2a3142; background:#151925; color:var(--text);
+      font-weight:600; cursor:pointer; user-select:none
+    }
+    .tb-btn.ghost{background:transparent}
+    .tb-title{font-weight:800; letter-spacing:.2px}
+    .owner-pill{
+      padding:.25rem .6rem; border:1px dashed #355; border-radius:999px; font-size:12px; color:#bde3ff; background:#0e1a2a;
+    }
 
-  .topbar{position:sticky;top:0;z-index:90;height:var(--barH);display:flex;align-items:center;justify-content:space-between;
-    padding:8px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#121a2a,#0f1420)}
-  .left,.right{display:flex;align-items:center;gap:8px}
-  .menu{position:relative}
-  .openBtn{padding:10px 12px;border:0;border-radius:12px;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2))}
-  .iconBtn{width:44px;height:44px;border-radius:12px;border:0;cursor:pointer;color:#161616;font-weight:700;background:linear-gradient(135deg,#ffd86b,#ffb300)}
-  /* القائمة تتدلّى بمحاذاة يمين الزر (لأن الزر على اليمين) */
-  .dropdown{position:absolute;top:calc(100% + 8px);right:0;left:auto;
-    min-width:180px;background:linear-gradient(180deg,#111827,#0e1420);border:1px solid var(--line);
-    border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.35)}
-  .dropdown a{display:block; padding:10px 12px; text-decoration:none; color:var(--text); cursor:pointer}
-  .dropdown a:hover{background:#121a2a}
-  .hidden{display:none!important}
+    /* ====== Messages ====== */
+    .wrap{
+      position:relative; height:calc(100% - 56px); display:flex; flex-direction:column;
+    }
+    .messages{
+      flex:1; overflow:auto; padding:14px 12px 10px; scroll-behavior:smooth;
+    }
+    .msg{
+      max-width:85%; margin:8px 0; padding:10px 12px; border-radius:14px;
+      background:var(--bubble); word-break:break-word; overflow-wrap:anywhere; white-space:pre-wrap;
+      box-shadow:0 4px 12px rgba(0,0,0,.15);
+    }
+    .me{ margin-inline-start:auto; background:var(--bubble-me); }
+    .meta{font-size:11px; color:var(--muted); margin:2px 2px 0}
+    .as-line{font-size:12px; color:#b7c7e6; padding:0 12px 6px}
 
-  .wrap{height:calc(var(--vh) * 100); display:flex; flex-direction:column}
-  @supports(height:100dvh){ .wrap{ height:100dvh; } }
-  .messages{flex:1;overflow:auto;padding:12px 12px calc(112px + var(--safeB));background:linear-gradient(180deg,#0f1420,#0b0f16)}
-  .msg{background:var(--bubble);border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin:10px 0;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
-  .msg.me{background:var(--bubbleMe);border-color:#203c6e}
-  .meta{color:var(--muted);font-size:12px;margin-bottom:4px}
+    /* ====== Input Area ====== */
+    .composer{
+      border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5;
+    }
+    .row{
+      display:flex; gap:6px;
+    }
+    .in{
+      flex:1; min-height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; color:var(--text);
+      padding:10px 12px; outline:none; font-size:15px;
+    }
+    .send{min-width:86px}
+    .emoji-btn{
+      width:44px; height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; font-size:20px; cursor:pointer;
+    }
+    .emoji-panel{
+      display:none; position:relative; margin-top:6px; background:#0b1220; border:1px solid #1f2740; border-radius:12px; padding:8px;
+      gap:6px; flex-wrap:wrap;
+    }
+    .emoji-panel.show{display:flex}
+    .emoji{cursor:pointer; font-size:22px; line-height:32px; padding:4px 6px; border-radius:8px}
+    .emoji:hover{background:#101a33}
 
-  .composer{position:fixed;left:0;right:0;bottom:0;z-index:100;background:linear-gradient(180deg,#0f1420,#0c111b);
-    border-top:1px solid var(--line);padding:8px 10px calc(8px + var(--safeB))}
-  .as{font-size:12px;color:var(--muted);margin-bottom:6px}
-  .row{display:flex;gap:8px;align-items:center;position:relative}
-  .row input[type="text"]{flex:1;padding:14px;border:1px solid var(--line);background:#0c1220;color:#e8ecf3;border-radius:14px;outline:none;font-size:16px}
-  .sendBtn{padding:12px 14px;border:0;border-radius:12px;font-weight:700;cursor:pointer;color:#161616;background:linear-gradient(135deg,var(--accent),var(--accent2))}
-  .emojiBtn{padding:12px;border-radius:12px;border:1px solid var(--line);background:#0c1220;color:#e8ecf3;cursor:pointer}
-  .emojiPanel{position:absolute;bottom:58px;right:54px;background:#0f1420;border:1px solid var(--line);border-radius:12px;padding:8px;display:grid;grid-template-columns:repeat(8,28px);gap:6px;box-shadow:0 10px 24px rgba(0,0,0,.3);z-index:95}
-  .emoji{cursor:pointer;font-size:20px;line-height:28px;text-align:center}
+    /* ====== Stage Overlay (4 mics) ====== */
+    .stageOverlay{
+      position:fixed; inset-inline:12px; bottom:84px; /* لا تحرك الرسائل */
+      z-index:20; display:none;
+      background:rgba(12,18,32,.9); border:1px solid #1e2a44; border-radius:16px; padding:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .stageOverlay.show{display:block}
+    .slots{
+      display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+    }
+    .slot{
+      border:1px solid #2a3142; border-radius:14px; padding:10px; text-align:center; cursor:pointer;
+      background:linear-gradient(180deg,#121a2b,#0d1422);
+      transition:.15s transform ease;
+    }
+    .slot:hover{transform:translateY(-2px)}
+    .micCircle{
+      width:44px; height:44px; border-radius:50%; margin:0 auto 6px; display:flex; align-items:center; justify-content:center;
+      border:2px solid #2a3142; font-size:20px; background:#0f1424;
+    }
+    .slot.active .micCircle{ border-color:var(--ok); box-shadow:0 0 0 3px rgba(81,208,157,.15) inset }
+    .name{font-size:13px; color:#cfe1ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
-  /* Stage Overlay */
-  .stageOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:120;backdrop-filter:blur(2px);background:rgba(0,0,0,.45)}
-  .stage{width:min(520px,92%);background:linear-gradient(180deg,#111827,#0f1420);border:1px solid var(--line);border-radius:16px;padding:14px}
-  .stage h3{margin:0 0 10px}
-  .slots{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-  .slot{border:1px solid var(--line);background:#0e1420;border-radius:14px;padding:14px;text-align:center;cursor:pointer}
-  .slot.me{border-color:#2e5cff; box-shadow:0 0 0 2px rgba(46,92,255,.15) inset}
-  .slot.on{border-color:#f5c84c; box-shadow:0 0 0 2px rgba(245,200,76,.15) inset}
-  .micCircle{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:28px;margin:0 auto 8px;
-             background:#0c1220;border:1px solid var(--line)}
-  .slot.me .micCircle{border-color:#2e5cff}
-  .slot.on .micCircle{border-color:#f5c84c}
-  .name{font-size:12px;color:var(--muted)}
-</style>
+    /* small screens */
+    @media (max-width:520px){
+      .slots{grid-template-columns:repeat(2,1fr)}
+      .stageOverlay{bottom:96px}
+      .send{min-width:70px}
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <!-- المايك بمكانه القديم: أقصى اليسار -->
-      <div class="left">
-        <button id="micBtn" class="iconBtn" title="الاستيج">🎤</button>
-      </div>
-      <!-- «افتح» بمكانه القديم: أقصى اليمين -->
-      <div class="right">
-        <div class="menu">
-          <button id="openBtn" class="openBtn">افتح ▾</button>
-          <div id="menuDrop" class="dropdown hidden">
-            <a id="ownerLink" class="hidden" href="owner.html">لوحة التحكم</a>
-            <a id="logoutLink">خروج</a>
-          </div>
-        </div>
-      </div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button id="logoutLink" class="tb-btn ghost">خروج</button>
     </div>
+    <div class="tb-center">
+      <button id="ownerLink" class="tb-btn" style="display:none">لوحة التحكم</button>
+      <span id="ownerBadge" class="owner-pill" style="display:none">OWNER</span>
+    </div>
+    <div class="tb-right">
+      <button id="micBtn" class="tb-btn">🎙️ الاستيج</button>
+    </div>
+  </div>
 
+  <div class="wrap">
+    <div id="asLine" class="as-line">ترسل كـ: —</div>
     <div id="messages" class="messages"></div>
 
+    <!-- Stage Overlay -->
+    <div id="stageOverlay" class="stageOverlay" aria-hidden="true">
+      <div class="slots" id="slots">
+        <div class="slot" data-i="0"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
+        <div class="slot" data-i="1"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
+        <div class="slot" data-i="2"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
+        <div class="slot" data-i="3"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
+      </div>
+    </div>
+
+    <!-- Composer -->
     <div class="composer">
-      <div id="asLine" class="as">ترسل كـ: -</div>
+      <div class="row" style="margin-bottom:6px">
+        <input id="nameInput" class="in" placeholder="اسمك..." maxlength="18" />
+        <input id="passInput" class="in" style="max-width:180px" placeholder="كلمة سر (للأونر اختياري)" />
+      </div>
       <div class="row">
-        <button id="emojiBtn" class="emojiBtn">🙂</button>
-        <input id="msgInput" type="text" placeholder="اكتب رسالتك..."/>
-        <button id="sendBtn" class="sendBtn">إرسال</button>
-        <div id="emojiPanel" class="emojiPanel hidden" role="dialog" aria-label="الإيموجي">
-          <div class="emoji">😀</div><div class="emoji">😁</div><div class="emoji">😂</div><div class="emoji">🤣</div>
-          <div class="emoji">😊</div><div class="emoji">🥰</div><div class="emoji">😎</div><div class="emoji">🤔</div>
-          <div class="emoji">🙃</div><div class="emoji">😴</div><div class="emoji">😡</div><div class="emoji">😭</div>
-          <div class="emoji">👏</div><div class="emoji">👍</div><div class="emoji">🔥</div><div class="emoji">❤️</div>
-        </div>
+        <button id="emojiBtn" class="emoji-btn" title="إيموجي">🙂</button>
+        <textarea id="msgInput" class="in" placeholder="اكتب رسالتك..." rows="1"></textarea>
+        <button id="sendBtn" class="tb-btn send">إرسال</button>
+      </div>
+      <div id="emojiPanel" class="emoji-panel" aria-hidden="true">
+        <span class="emoji">😄</span><span class="emoji">😍</span><span class="emoji">😂</span>
+        <span class="emoji">🔥</span><span class="emoji">👏</span><span class="emoji">❤️</span>
+        <span class="emoji">🎧</span><span class="emoji">🎤</span><span class="emoji">✅</span>
       </div>
     </div>
   </div>
 
-  <!-- Stage Overlay -->
-  <div id="stageOverlay" class="stageOverlay" role="dialog" aria-label="الاستيج">
-    <div class="stage">
-      <h3>🎤 الاستيج</h3>
-      <div id="slots" class="slots"></div>
-      <!-- يفتح ويُغلق من زر المايك -->
-    </div>
-  </div>
-
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script type="module" src="./chat.js?v=12"></script>
+  <!-- Socket.IO (سيخدم من السيرفر) -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // متغيرات عامة يمكن تعديلها عالمياً قبل تحميل الصفحة
+    window.SERVER_URL = window.SERVER_URL || "https://kwpooop.onrender.com";
+    window.OWNER_PASS = window.OWNER_PASS || "6677";
+    window.roomId     = window.roomId     || (new URLSearchParams(location.search).get("room") || "lobby");
+  </script>
+  <script src="chat.js"></script>
 </body>
 </html>
