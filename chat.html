@@ -5,91 +5,65 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>شات صوتي</title>
   <style>
-    :root{
-      --bg:#0f1115; --card:#171a21; --muted:#7f8aa3; --text:#e9edf5; --accent:#4da3ff; --danger:#ff5d7a; --ok:#51d09d;
-      --bubble:#1d2230; --bubble-me:#23324a;
-    }
+    :root{ --bg:#0f1115; --card:#171a21; --muted:#7f8aa3; --text:#e9edf5; --accent:#4da3ff; --danger:#ff5d7a; --ok:#51d09d; --bubble:#1d2230; --bubble-me:#23324a; }
     *{box-sizing:border-box}
     html,body{height:100%; overflow:hidden}
-    body{
-      margin:0;background:linear-gradient(180deg,#0d1016 0%, #101522 50%, #0d1117 100%);
-      color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",Arial;
-      -webkit-tap-highlight-color:transparent;
-    }
+    body{ margin:0;background:linear-gradient(180deg,#0d1016 0%, #101522 50%, #0d1117 100%);
+      color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",Arial; -webkit-tap-highlight-color:transparent; }
 
-    /* ====== Top Bar ====== */
-    .topbar{
-      position:fixed; top:0; left:0; right:0; z-index:30; height:56px;
-      background:rgba(15,17,21,.86); backdrop-filter:saturate(130%) blur(10px); border-bottom:1px solid #1d2230;
-    }
-    .tb-left,.tb-right{position:absolute; top:10px; display:flex; align-items:center; gap:8px}
+    /* Topbar ثابت */
+    .topbar{ position:fixed; top:0; left:0; right:0; z-index:30; height:56px;
+      background:rgba(15,17,21,.86); backdrop-filter:saturate(130%) blur(10px); border-bottom:1px solid #1d2230; }
+    .tb-left,.tb-right{ position:absolute; top:10px; display:flex; align-items:center; gap:8px }
     .tb-left{ left:12px } .tb-right{ right:12px }
-    .tb-btn{
-      display:inline-flex; align-items:center; justify-content:center; gap:6px;
-      height:36px; padding:0 14px; border-radius:10px; border:1px solid #2a3142; background:#151925; color:var(--text);
-      font-weight:700; cursor:pointer; user-select:none
-    }
+    .tb-btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; padding:0 14px;
+      border-radius:10px; border:1px solid #2a3142; background:#151925; color:var(--text); font-weight:700; cursor:pointer }
     .ghost{background:transparent}
 
-    /* ====== Panels ====== */
-    .panel{
-      position:fixed; z-index:25;
-      background:rgba(12,18,32,.97); border:1px solid #1e2a44; border-radius:14px; padding:10px;
-      box-shadow:0 10px 30px rgba(0,0,0,.35);
-      opacity:0; transform:translateY(-8px); pointer-events:none; transition:.15s ease;
-    }
-    .panel.show{opacity:1; transform:translateY(0); pointer-events:auto}
+    /* Panels */
+    .panel{ position:fixed; z-index:25; background:rgba(12,18,32,.97); border:1px solid #1e2a44; border-radius:14px; padding:10px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); opacity:0; transform:translateY(-8px); pointer-events:none; transition:.15s ease; }
+    .panel.show{ opacity:1; transform:translateY(0); pointer-events:auto }
+    .menuPanel{ width:220px }
+    .menu-item{ display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:10px;
+      border:1px solid #27314a; background:#0e1422; margin-bottom:8px; cursor:pointer; font-weight:600 }
+    .menu-item:last-child{ margin-bottom:0 }
 
-    .menuPanel{width:220px}
-    .menu-item{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 12px; border-radius:10px; border:1px solid #27314a; background:#0e1422; margin-bottom:8px; cursor:pointer;
-      font-weight:600;
-    }
-    .menu-item:last-child{margin-bottom:0}
-    .hidden{display:none !important}
-
-    /* ====== Stage (نفسه ما لمسناه) ====== */
-    .stagePanel{width:min(420px, calc(100% - 24px))}
-    .slots{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
-    .slot{border:1px solid #2a3142; border-radius:14px; padding:10px; text-align:center; cursor:pointer;
-      background:linear-gradient(180deg,#121a2b,#0d1422); transition:.15s transform ease}
-    .slot:hover{transform:translateY(-2px)}
-    .micCircle{width:44px; height:44px; border-radius:50%; margin:0 auto 6px; display:flex; align-items:center; justify-content:center;
-      border:2px solid #2a3142; font-size:20px; background:#0f1424}
+    /* الاستيج (كما هو) */
+    .stagePanel{ width:min(420px, calc(100% - 24px)) }
+    .slots{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px }
+    .slot{ border:1px solid #2a3142; border-radius:14px; padding:10px; text-align:center; cursor:pointer;
+      background:linear-gradient(180deg,#121a2b,#0d1422); transition:.15s transform ease }
+    .slot:hover{ transform:translateY(-2px) }
+    .micCircle{ width:44px; height:44px; border-radius:50%; margin:0 auto 6px; display:flex; align-items:center; justify-content:center;
+      border:2px solid #2a3142; font-size:20px; background:#0f1424 }
     .slot.active .micCircle{ border-color:var(--ok); box-shadow:0 0 0 3px rgba(81,208,157,.15) inset }
-    .name{font-size:13px; color:#cfe1ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .name{ font-size:13px; color:#cfe1ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
     @media (max-width:520px){ .slots{grid-template-columns:repeat(2,1fr)} }
 
-    /* ====== ثابت الشاشة ====== */
-    .wrap{position:fixed; top:56px; bottom:0; left:0; right:0; display:flex; flex-direction:column;}
-    .messages{flex:1; overflow:auto; padding:14px 12px 10px; scroll-behavior:smooth;}
-    .msg{
-      max-width:85%; margin:8px 0; padding:10px 12px; border-radius:14px;
-      background:var(--bubble); word-break:break-word; overflow-wrap:anywhere; white-space:pre-wrap;
-      box-shadow:0 4px 12px rgba(0,0,0,.15);
-    }
-    .me{margin-inline-start:auto; background:var(--bubble-me);}
-    .meta{font-size:11px; color:var(--muted); margin:2px 2px 0}
-    .as-line{font-size:12px; color:#b7c7e6; padding:0 12px 6px}
+    /* Layout ثابت */
+    .wrap{ position:fixed; top:56px; bottom:0; left:0; right:0; display:flex; flex-direction:column }
+    .messages{ flex:1; overflow:auto; padding:14px 12px 10px; scroll-behavior:smooth }
+    .msg{ max-width:85%; margin:8px 0; padding:10px 12px; border-radius:14px; background:var(--bubble);
+      word-break:break-word; overflow-wrap:anywhere; white-space:pre-wrap; box-shadow:0 4px 12px rgba(0,0,0,.15) }
+    .me{ margin-inline-start:auto; background:var(--bubble-me) }
+    .meta{ font-size:11px; color:var(--muted); margin:2px 2px 0 }
+    .as-line{ font-size:12px; color:#b7c7e6; padding:0 12px 6px }
 
-    /* ====== Composer ====== */
-    .composer{position:relative; border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5;}
-    .row{display:flex; gap:6px;}
-    .in{
-      flex:1; min-height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; color:var(--text);
-      padding:10px 12px; outline:none; font-size:15px;
-    }
-    .send{min-width:86px}
-    .emoji-btn{width:44px; height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; font-size:20px; cursor:pointer;}
+    /* Composer */
+    .composer{ position:relative; border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5 }
+    .row{ display:flex; gap:6px }
+    .in{ flex:1; min-height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; color:var(--text);
+      padding:10px 12px; outline:none; font-size:15px }
+    .send{ min-width:86px }
+    .emoji-btn{ width:44px; height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; font-size:20px; cursor:pointer }
 
-    .emoji-panel{
-      display:none; position:absolute; bottom:56px; left:8px;
-      background:#0b1220; border:1px solid #1f2740; border-radius:12px; padding:8px; gap:6px; flex-wrap:wrap; max-width:90vw;
-    }
-    .emoji-panel.show{display:flex}
-    .emoji{cursor:pointer; font-size:22px; line-height:32px; padding:4px 6px; border-radius:8px}
-    .emoji:hover{background:#101a33}
+    /* Emoji فوق الزر */
+    .emoji-panel{ display:none; position:absolute; bottom:56px; left:8px; background:#0b1220; border:1px solid #1f2740;
+      border-radius:12px; padding:8px; gap:6px; flex-wrap:wrap; max-width:90vw }
+    .emoji-panel.show{ display:flex }
+    .emoji{ cursor:pointer; font-size:22px; line-height:32px; padding:4px 6px; border-radius:8px }
+    .emoji:hover{ background:#101a33 }
   </style>
 </head>
 <body>
@@ -102,13 +76,13 @@
     </div>
   </div>
 
-  <!-- قائمة الفتح (تنزل يسار تحت زر فتح) -->
+  <!-- قائمة الفتح (تنزل يسار تحت الزر) -->
   <div id="openMenu" class="panel menuPanel" aria-hidden="true">
     <div id="menuOwner" class="menu-item">لوحة التحكم <span>🛡️</span></div>
     <div id="menuExit"  class="menu-item">خروج <span>↩️</span></div>
   </div>
 
-  <!-- الاستيج (بدون تعديل) -->
+  <!-- الاستيج (بدون تغيير) -->
   <div id="stagePanel" class="panel stagePanel" aria-hidden="true">
     <div class="slots" id="slots">
       <div class="slot" data-i="0"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
@@ -122,9 +96,7 @@
     <div id="asLine" class="as-line">ترسل كـ: —</div>
     <div id="messages" class="messages"></div>
 
-    <!-- Composer -->
     <div class="composer">
-      <!-- تم حذف كلمة سر الأونر -->
       <div class="row">
         <button id="emojiBtn" class="emoji-btn" title="إيموجي">🙂</button>
         <textarea id="msgInput" class="in" placeholder="اكتب رسالتك..." rows="1"></textarea>
@@ -138,12 +110,13 @@
     </div>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
+  <!-- مهم: حمّل Socket.IO من السيرفر نفسه -->
   <script>
     window.SERVER_URL = window.SERVER_URL || "https://kwpooop.onrender.com";
     window.OWNER_PASS = window.OWNER_PASS || "6677";
     window.roomId     = window.roomId     || (new URLSearchParams(location.search).get("room") || "lobby");
   </script>
+  <script src="https://kwpooop.onrender.com/socket.io/socket.io.js"></script>
   <script src="chat.js"></script>
 </body>
 </html>
