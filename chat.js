@@ -1,22 +1,30 @@
-/* chat.js — Ahmed room wire (messages + emoji + stage 4 mics + owner menu)
-   متوافق مع HTML المرسل: micBtn / openBtn / menuDrop / ownerLink / messages / msgInput / sendBtn
-   stageOverlay + #slots (.slot) + emojiPanel(.hidden) + emojiBtn
+/* chat.js — room wire (messages + emoji + stage 4 mics + owner menu, race-safe)
+   متوافق مع HTML: micBtn / openBtn / menuDrop / ownerLink / logoutLink
+   messages / msgInput / sendBtn / asLine / emojiBtn / emojiPanel / stageOverlay / slots (.slot> .micCircle + .name)
 */
 
-// ====== إعدادات عامة ======
+/* ====== إعدادات عامة ====== */
 const SERVER_URL = (window.SERVER_URL || "https://kwpooop.onrender.com");
 const OWNER_PASS = (window.OWNER_PASS || "6677") + "";
 
-// هوية وروم
+/* ====== هوية وروم ====== */
 const savedId = localStorage.getItem("myId");
 window.myId = savedId || ("u" + Math.random().toString(36).slice(2,10));
 if (!savedId) localStorage.setItem("myId", window.myId);
 const qp = new URLSearchParams(location.search);
 window.roomId = qp.get("room") || "lobby";
 
-// ====== Socket.IO ======
+/* ====== Helpers ====== */
+const $  = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => root.querySelectorAll(sel);
+
+/* ====== Socket.IO (مع طابور رسائل احتياطي) ====== */
 (function connectSocket(){
   if (typeof io === "undefined") { console.error("Socket.IO not loaded"); return; }
+
+  // طابور مؤقت لأي رسائل توصل قبل تعريف appendMessage
+  window.__msgQueue = [];
+
   const socket = io(SERVER_URL, { transports:["websocket","polling"], path:"/socket.io" });
   window.socket = socket;
 
@@ -24,74 +32,86 @@ window.roomId = qp.get("room") || "lobby";
     socket.emit("joinRoom", { roomId: window.roomId, userId: window.myId });
   });
 
-  socket.on("chat:msg", ({ from, text, at }) => {
-    appendMessage({ from, text, self: from === window.myId, at });
+  socket.on("chat:msg", (m) => {
+    if (typeof window.appendMessage === "function") {
+      window.appendMessage({ from: m.from, text: m.text, self: m.from === window.myId, at: m.at });
+    } else {
+      window.__msgQueue.push(m);
+    }
   });
 
+  // لو وصل تحديث بدري: استدعِ فقط لو Stage جاهز
   socket.on("stage:update", (payload) => {
-    Stage.applyUpdate(payload);
+    if (window.Stage && typeof window.Stage.applyUpdate === "function") {
+      window.Stage.applyUpdate(payload);
+    }
   });
 })();
 
-// ====== مساعدات DOM ======
-const $  = (sel, root=document) => root.querySelector(sel);
-const $$ = (sel, root=document) => root.querySelectorAll(sel);
+/* ====== إغلاق قائمة "افتح" عند الضغط خارجها ====== */
 document.addEventListener("click", (e) => {
-  // إغلاق قائمة "افتح" إذا نقرت برّه
   const menu = $("#menuDrop"), btn = $("#openBtn");
   if (menu && !menu.classList.contains("hidden")) {
     if (!menu.contains(e.target) && e.target !== btn) menu.classList.add("hidden");
   }
 });
 
-// ====== قائمة "افتح" + لوحة التحكم ======
-(function wireMenu(){
+/* ====== قائمة "افتح" + لوحة التحكم (يمين + للأونر فقط) ====== */
+(function wireMenuV2(){
   const openBtn   = $("#openBtn");
   const menuDrop  = $("#menuDrop");
-  const ownerLink = $("#ownerLink"); // رابط لوحة التحكم (مخفي بكلاس hidden)
-  let ownerOK = localStorage.getItem("ownerOK") === "1";
+  const ownerLink = $("#ownerLink");
+  const logout    = $("#logoutLink");
 
-  if (ownerOK && ownerLink) ownerLink.classList.remove("hidden");
+  let isOwner = localStorage.getItem("ownerOK") === "1";
+  const PASS  = OWNER_PASS;
 
-  openBtn?.addEventListener("click", () => {
-    menuDrop?.classList.toggle("hidden");
+  function refreshMenu() {
+    if (menuDrop) { menuDrop.style.left = "auto"; menuDrop.style.right = "0"; }
+    if (ownerLink) ownerLink.classList.toggle("hidden", !isOwner);
+  }
+
+  openBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!menuDrop) return;
+    refreshMenu();
+    menuDrop.classList.toggle("hidden");
   });
 
-  // دبل كليك على "افتح" يطلب باس الأونر ويفعّل الرابط
-  openBtn?.addEventListener("dblclick", () => {
-    if (ownerOK) return;
+  // تفعيل أونر: ضغطة مطوّلة للموبايل + دبل كلك للديسكتوب
+  let pressTimer = null;
+  function askOwnerPass() {
+    if (isOwner) return refreshMenu();
     const p = prompt("أدخل كلمة سر الأونر:");
-    if (p === OWNER_PASS) {
-      ownerOK = true;
-      localStorage.setItem("ownerOK","1");
-      ownerLink?.classList.remove("hidden");
-      alert("تم تفعيل لوحة التحكم.");
-    } else if (p != null) {
-      alert("كلمة السر غير صحيحة");
-    }
-  });
+    if (p === PASS) {
+      isOwner = true; localStorage.setItem("ownerOK","1");
+      refreshMenu(); alert("تم تفعيل لوحة التحكم للأونر.");
+    } else if (p != null) { alert("كلمة السر غير صحيحة"); }
+  }
+  openBtn?.addEventListener("touchstart", () => { pressTimer = setTimeout(askOwnerPass, 600); });
+  openBtn?.addEventListener("touchend",   () => { if (pressTimer) clearTimeout(pressTimer); });
+  openBtn?.addEventListener("dblclick", askOwnerPass);
 
-  // لو الرابط ظاهر لكن تبينا نحميه بعد
   ownerLink?.addEventListener("click", (e) => {
-    if (!ownerOK) {
+    if (!isOwner) {
       e.preventDefault();
-      const p = prompt("أدخل كلمة سر الأونر:");
-      if (p === OWNER_PASS) {
-        ownerOK = true; localStorage.setItem("ownerOK","1");
-        ownerLink.classList.remove("hidden");
-        location.href = ownerLink.getAttribute("href");
-      } else if (p != null) alert("كلمة السر غير صحيحة");
+      askOwnerPass();
+      if (isOwner) location.href = ownerLink.getAttribute("href");
     }
   });
 
-  // زر خروج (اختياري لو موجود)
-  $("#logoutLink")?.addEventListener("click", () => {
+  logout?.addEventListener("click", () => {
     localStorage.removeItem("ownerOK");
-    location.href = "index.html";
+    isOwner = false;
+    refreshMenu();
+    // اختياري: رجّع لواجهة عامة
+    // location.href = "index.html";
   });
+
+  refreshMenu();
 })();
 
-// ====== الرسائل + حقل ثابت ======
+/* ====== الرسائل + حقل ثابت ====== */
 (function wireMessages(){
   const list   = $("#messages");
   const input  = $("#msgInput");
@@ -111,14 +131,11 @@ document.addEventListener("click", (e) => {
     input.value = ""; input.focus();
   }
 
-  // زر الإرسال
   send?.addEventListener("click", (e) => { e.preventDefault(); sendNow(); });
-  // Enter للإرسال
   input?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); sendNow(); }
   });
 
-  // دالة إضافة رسالة (ما نغيّر الستايل عندك)
   window.appendMessage = function({ from, text, self=false }){
     if (!list) return;
     const box = document.createElement("div");
@@ -127,9 +144,17 @@ document.addEventListener("click", (e) => {
     list.appendChild(box);
     try { list.scrollTo({ top: list.scrollHeight, behavior: "smooth" }); } catch {}
   };
+
+  // تفريغ أي رسائل وصلت قبل تعريف appendMessage
+  if (Array.isArray(window.__msgQueue) && window.__msgQueue.length) {
+    window.__msgQueue.forEach((m) => {
+      window.appendMessage({ from: m.from, text: m.text, self: m.from === window.myId, at: m.at });
+    });
+    window.__msgQueue.length = 0;
+  }
 })();
 
-// ====== لوحة الإيموجي ======
+/* ====== لوحة الإيموجي ====== */
 (function wireEmoji(){
   const btn   = $("#emojiBtn");
   const panel = $("#emojiPanel");
@@ -153,12 +178,11 @@ document.addEventListener("click", (e) => {
   });
 })();
 
-// ====== الاستيج: ٤ مايكات (micBtn + stageOverlay + #slots .slot) ======
+/* ====== الاستيج: ٤ مايكات (زر 🎤 يفتح/يقفل — الضغط على 🎤 داخل الخانة فقط يبدّل) ====== */
 const Stage = (() => {
   const state = { open:false, slots:[null,null,null,null] };
   let overlay, slotsWrap, micBtn, slotEls;
 
-  // يبني ٤ خانات إذا ناقصة
   function buildSlotsIfNeeded() {
     if (!slotsWrap) return;
     if (slotsWrap.children.length >= 4) return;
@@ -177,21 +201,19 @@ const Stage = (() => {
   function bind() {
     overlay   = $("#stageOverlay");
     slotsWrap = $("#slots");
-    micBtn    = $("#micBtn"); // مهم: id مطابق لصفحتك
+    micBtn    = $("#micBtn");
     if (!overlay || !slotsWrap || !micBtn) return;
 
     buildSlotsIfNeeded();
     slotEls = $$(".slot", slotsWrap);
 
-    // فتح/قفل الاستيج (نستخدم display:flex لأنه متوافق مع CSS الحالي)
-    micBtn.addEventListener("click", () => {
-      state.open ? close() : open();
-    });
+    // فتح/قفل الاستيج
+    micBtn.addEventListener("click", () => (state.open ? close() : open()));
 
-    // التبديل يكون فقط على "صورة المايك" داخل الخانة
+    // التبديل: فقط الضغط على أيقونة المايك داخل الخانة
     slotsWrap.addEventListener("click", (e) => {
       const micIcon = e.target.closest(".micCircle");
-      if (!micIcon) return;                    // تجاهل أي ضغط خارج الأيقونة
+      if (!micIcon) return; // تجاهل الضغط على غير الأيقونة
       const slot = micIcon.closest(".slot");
       if (!slot) return;
       const idx = [...slotEls].indexOf(slot);
@@ -212,7 +234,7 @@ const Stage = (() => {
     if (!overlay) return;
     overlay.style.display = "none";
     state.open = false;
-    // نزّلني لو كنت فوق
+    // نزّلني إذا كنت فوق
     const i = state.slots.indexOf(window.myId);
     if (i > -1) leave();
   }
@@ -230,7 +252,7 @@ const Stage = (() => {
   }
 
   function join(i){
-    const idx = Math.max(0, Math.min(3, i|0));
+    const idx  = Math.max(0, Math.min(3, i|0));
     const prev = state.slots.indexOf(window.myId);
     if (prev > -1) state.slots[prev] = null;
     if (!state.slots[idx]) state.slots[idx] = window.myId;
