@@ -1,278 +1,242 @@
-/* chat.js — All-in-One + Offline Fallback (رسائل + إيموجي + استيج)
-   يعمل حتى لو السيرفر مو شغال/غلط — وضع طوارئ محلي.
-   المتطلبات (للعمل أونلاين):
-   1) Socket.IO قبل هذا الملف:
-      <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-   2) config.js فيه:
-      window.SERVER_URL = "https://YOUR-RENDER-OR-SERVER";
+/* chat.js — Stable Wire v3 (رسائل + إيموجي + استيج + لوحة تحكم)
+   - ما نغيّر CSS نهائياً؛ بس نضيف/نحذف كلاس open أو style.display عند الحاجة.
+   - يلتقط العناصر بأكثر من مُعرِّف. لو عنصر ناقص: يتجاهله (ما يكسّر الصفحة).
 */
 
-/* ================== Helpers ================== */
-function onReady(cb){ if (document.readyState!=='loading') cb(); else document.addEventListener('DOMContentLoaded', cb, {once:true}); }
-function $(sel, root=document){ return root.querySelector(sel); }
-function $all(sel, root=document){ return root.querySelectorAll(sel); }
-function ensureEl(tag, id, parent=document.body, setup){
-  let el = id ? document.getElementById(id) : null;
-  if (!el){ el = document.createElement(tag); if (id) el.id = id; setup && setup(el); parent.appendChild(el); }
-  return el;
-}
+/* ========= Helpers ========= */
+const $$ = (sel, root=document) => root.querySelector(sel);
+const $$$ = (sel, root=document) => root.querySelectorAll(sel);
+const onReady = (cb)=> (document.readyState!=='loading' ? cb() : document.addEventListener('DOMContentLoaded', cb, {once:true}));
+const textIncludes = (el, t)=> el && (el.textContent || '').trim().includes(t);
 
-/* ============== Identity (قبل السوكِت) ============== */
+/* ========= Identity ========= */
 const stored = localStorage.getItem('myId');
 window.myId  = stored || ('u' + Math.random().toString(36).slice(2, 10));
 if (!stored) localStorage.setItem('myId', window.myId);
-const params = new URLSearchParams(location.search);
+const params  = new URLSearchParams(location.search);
 window.roomId = params.get('room') || 'lobby';
+window.isOwner = false;
 
-/* ============== Local Bus (للطوارئ) ============== */
-const LocalBus = {
-  _h: {},
-  on(evt, fn){ (this._h[evt] ??= []).push(fn); },
-  emit(evt, payload){ (this._h[evt]||[]).forEach(fn => { try{ fn(payload); }catch(e){ console.error(e); } }); }
-};
-
-/* ============== Socket (مع Fallback) ============== */
+/* ========= Socket.IO ========= */
 (function initSocket(){
-  function useFallback(reason){
-    console.warn('[Socket] Using offline fallback:', reason || 'unknown');
-    const fake = {
-      connected: true,
-      on(evt, fn){ LocalBus.on(evt, fn); },
-      emit(evt, payload){
-        // محاكاة بسيطة محلية
-        if (evt === 'chat:msg'){
-          // بث الرسالة محلياً
-          LocalBus.emit('chat:msg', { from: payload.from, text: payload.text, at: Date.now() });
-        } else if (evt === 'stage:join'){
-          // تحديث محلي للاستيج
-          window.__stageLocal = window.__stageLocal || { slots:[null,null,null,null] };
-          const s = window.__stageLocal.slots;
-          const uid = window.myId;
-          const prev = s.indexOf(uid);
-          if (prev>-1) s[prev] = null;
-          const i = Math.max(0, Math.min(3, payload.slotIndex|0));
-          if (!s[i]) s[i] = uid;
-          LocalBus.emit('stage:update', { slots: s.slice(), forceClose:false });
-        } else if (evt === 'stage:leave'){
-          window.__stageLocal = window.__stageLocal || { slots:[null,null,null,null] };
-          const s = window.__stageLocal.slots;
-          const i = s.indexOf(window.myId);
-          if (i>-1) s[i] = null;
-          LocalBus.emit('stage:update', { slots: s.slice(), forceClose:false });
-        } else if (evt === 'joinRoom'){
-          // تجاهل محلياً
-        }
-      },
-      close(){},
-    };
-    window.socket = fake;
-    // اربط سماعات محلية
-    LocalBus.on('stage:update', (p)=> window.Stage?.applyUpdate(p));
-  }
+  if (typeof io === 'undefined') { console.error('[Socket] Socket.IO غير محمّل'); return; }
+  if (!window.SERVER_URL)       { console.error('[Socket] SERVER_URL مفقود في config.js'); return; }
+  const socket = io(window.SERVER_URL, { transports:['websocket','polling'], path:'/socket.io' });
+  window.socket = socket;
 
-  // إذا Socket.IO مو محمّل أو SERVER_URL مو محدد → طوارئ
-  if (typeof io === 'undefined' || !window.SERVER_URL) return useFallback('io missing or SERVER_URL missing');
-
-  let connected = false;
-  try {
-    const socket = io(window.SERVER_URL, {
-      transports:['websocket','polling'],
-      path:'/socket.io',
-      withCredentials:false,
-    });
-    window.socket = socket;
-
-    const timeout = setTimeout(() => {
-      if (!connected) {
-        try{ socket.close(); }catch{}
-        useFallback('connect timeout');
-      }
-    }, 3500);
-
-    socket.on('connect', () => {
-      connected = true; clearTimeout(timeout);
-      console.log('[Socket] connected:', socket.id);
-      socket.emit('joinRoom', { roomId: window.roomId, userId: window.myId });
-    });
-
-    socket.on('disconnect', (r)=> console.warn('[Socket] disconnect:', r));
-    socket.on('chat:msg', (m)=> LocalBus.emit('chat:msg', m));
-    socket.on('stage:update', (p)=> LocalBus.emit('stage:update', p));
-
-  } catch (e){
-    console.error('[Socket] error:', e);
-    useFallback('exception');
-  }
+  socket.on('connect', ()=> {
+    socket.emit('joinRoom', { roomId: window.roomId, userId: window.myId });
+  });
+  socket.on('chat:msg', ({ from, text, at })=>{
+    appendMessage({ from, text, self: from===window.myId, at });
+  });
+  socket.on('stage:update', (payload)=> Stage.applyUpdate(payload));
 })();
 
-/* ============== واجهة الرسائل ============== */
+/* ========= رسائل الشات ========= */
 onReady(() => {
-  // لو ناقص عناصر الرسائل، نبني بديل بسيط (ما يتدخل إذا موجود)
-  const messages = ensureEl('div', 'messages', document.body, (el)=>{
-    el.style.minHeight='40vh'; el.style.maxHeight='50vh'; el.style.overflow='auto';
-    el.style.padding='10px'; el.style.background='#0f0f0f'; el.style.color='#eee'; el.style.margin='10px';
-  });
-  const formWrap = ensureEl('div', 'composerWrap', document.body, (el)=>{
-    el.style.display='flex'; el.style.gap='8px'; el.style.padding='10px'; el.style.background='#111'; el.style.margin='10px';
-  });
-  let form = $('#msgForm'); if (!form){ form = document.createElement('form'); form.id='msgForm'; formWrap.appendChild(form); }
-  let input = $('#msgInput'); if (!input){ input = document.createElement('input'); input.id='msgInput'; input.placeholder='اكتب رسالة...'; input.autocomplete='off'; input.style.flex='1'; input.style.padding='10px'; input.style.borderRadius='8px'; input.style.border='1px solid #333'; input.style.background='#0f0f0f'; input.style.color='#eee'; form.appendChild(input); }
-  if (!$('#sendBtn')){ const sb=document.createElement('button'); sb.id='sendBtn'; sb.type='submit'; sb.textContent='إرسال'; form.appendChild(sb); }
-  // زر إيموجي لو ناقص
-  let emojiBtn = $('#emojiBtn') || $('#btnEmoji');
-  if (!emojiBtn){ emojiBtn = document.createElement('button'); emojiBtn.id='emojiBtn'; emojiBtn.type='button'; emojiBtn.textContent='🙂'; formWrap.insertBefore(emojiBtn, form); }
+  // يمسك العناصر بدون تغيير التصميم
+  const list  = $$('#messages') || $$('.messages') || $$('[data-role="messages"]');
+  const form  = $$('#msgForm') || $$('form#msgForm') || $$('[data-role="msg-form"]');
+  const input = $$('#msgInput') || $$('#messageInput') || $$('textarea#msgInput') || $$('[data-role="msg-input"]');
+  const sendBtn = $$('#sendBtn') || $$('.send-btn') || $$('button[type="submit"]');
+
+  // ثبّت خانة الكتابة (لا تكبر ولا تصغر)
+  if (input) {
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('maxlength', '2000');
+    // لو كانت textarea
+    if (input.tagName.toLowerCase() === 'textarea') {
+      input.setAttribute('rows', '1');
+      input.style.height = '44px';
+      input.style.resize = 'none';
+      input.style.overflowY = 'auto';
+      input.addEventListener('input', ()=> { input.style.height = '44px'; }); // يظل ثابت
+    }
+  }
 
   // إرسال
-  form.addEventListener('submit', (e) => {
+  form && form.addEventListener('submit', (e)=>{
     e.preventDefault();
-    const text = (input.value || '').trim();
+    const text = (input?.value || '').trim();
     if (!text) return;
     window.socket?.emit('chat:msg', { roomId: window.roomId, from: window.myId, text });
     appendMessage({ from: window.myId, text, self:true, at: Date.now() });
-    input.value=''; input.focus();
+    input.value = '';
+    input.focus();
   });
 
-  function scrollToBottom(){ try{ messages.scrollTo({ top: messages.scrollHeight, behavior:'smooth' }); }catch{} }
-
-  window.appendMessage = function ({ from, text, self=false, at }){
+  // دالة عامة لإضافة رسالة (ما تغيّر ستايلك)
+  window.appendMessage = function ({ from, text, self=false }) {
+    if (!list) return;
     const item = document.createElement('div');
     item.className = self ? 'msg me' : 'msg';
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    Object.assign(bubble.style, { padding:'10px 12px', background:self?'#2a2a2a':'#1c1c1c',
-      borderRadius:'14px', maxWidth:'80%', whiteSpace:'pre-wrap', wordBreak:'break-word', overflowWrap:'anywhere',
-      margin:self?'6px 0 6px auto':'6px auto 6px 0', color:'#eee'
-    });
+    // فقط نضمن لفّ النص
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.style.wordBreak = 'break-word';
+    bubble.style.overflowWrap = 'anywhere';
     bubble.textContent = text;
     item.appendChild(bubble);
-    messages.appendChild(item);
-    scrollToBottom();
+    list.appendChild(item);
+    try { list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' }); } catch {}
   };
-
-  // استقبال رسائل من الأونلاين/الطوارئ
-  LocalBus.on('chat:msg', ({ from, text, at }) => {
-    appendMessage({ from, text, self: from===window.myId, at });
-  });
 });
 
-/* ============== لوحة الإيموجي ============== */
+/* ========= لوحة الإيموجي ========= */
 onReady(() => {
-  const btn   = $('#emojiBtn') || $('#btnEmoji');
-  const input = $('#msgInput') || $('#messageInput');
-  if (!btn || !input) return;
-  let panel = $('#emojiPanel') || $('#emojis');
-  if (!panel){
-    panel = document.createElement('div'); panel.id='emojiPanel';
-    Object.assign(panel.style, { position:'fixed', right:'12px', bottom:'70px', background:'#111',
-      border:'1px solid #333', borderRadius:'10px', padding:'8px', maxWidth:'320px', maxHeight:'40vh',
-      overflow:'auto', display:'none', zIndex:9999, color:'#fff'
-    });
-    document.body.appendChild(panel);
+  const emojiBtn = $$('#emojiBtn') || $$('.emoji-btn') || $$('[data-role="emoji"]');
+  const input    = $$('#msgInput') || $$('#messageInput') || $$('[data-role="msg-input"]');
+  const panel    = $$('#emojiPanel') || $$('#emojis') || $$('[data-role="emoji-panel"]');
+
+  if (!emojiBtn || !input) return;
+
+  let p = panel;
+  if (!p) {
+    // ما نضيف ستايل خارجي؛ نخليها بسيطة ومخفية لين يضغط
+    p = document.createElement('div');
+    p.id = 'emojiPanel';
+    p.style.display = 'none';
+    p.style.position = 'fixed';
+    p.style.right = '12px';
+    p.style.bottom = '70px';
+    p.style.background = 'var(--panel-bg, #111)';
+    p.style.border = '1px solid rgba(255,255,255,.1)';
+    p.style.borderRadius = '10px';
+    p.style.padding = '8px';
+    p.style.maxHeight = '40vh';
+    p.style.overflow = 'auto';
+    p.style.zIndex = '9999';
+    document.body.appendChild(p);
   }
-  const emojis = "😀😁😂🤣😊😍😘😎🤩🤔😴😡👍👋🙏🔥✨🎉❤️💔💯⭐⚡🎧🎵🎮🏆🎯🧠🐱‍👤".split('');
-  if (!panel.dataset.filled){
-    panel.innerHTML = emojis.map(e=>`<button type="button" data-emoji="${e}" style="background:transparent;border:none;font-size:22px;padding:6px;cursor:pointer">${e}</button>`).join('');
-    panel.dataset.filled='1';
+  if (!p.dataset.ready) {
+    const emojis = "😀😁😂🤣😊😍😘😎🤩🤔😴😡👍👋🙏🔥✨🎉❤️💔💯⭐⚡🎧🎵🎮🏆🎯🧠".split('');
+    p.innerHTML = emojis.map(e=>`<button type="button" data-e="${e}" style="background:transparent;border:none;font-size:22px;padding:6px;cursor:pointer">${e}</button>`).join('');
+    p.dataset.ready = '1';
   }
-  const open = ()=> panel.style.display='block';
-  const close= ()=> panel.style.display='none';
-  btn.addEventListener('click', (e)=>{ e.stopPropagation(); panel.style.display==='block'?close():open(); });
-  panel.addEventListener('click', (e)=>{
+
+  const open  = ()=> { p.style.display = 'block'; };
+  const close = ()=> { p.style.display = 'none';  };
+  emojiBtn.addEventListener('click', (e)=> { e.stopPropagation(); (p.style.display==='block'? close(): open()); });
+  p.addEventListener('click', (e)=>{
     const t = e.target;
-    if (t && t.dataset && t.dataset.emoji){
-      const emoji = t.dataset.emoji;
+    if (t && t.dataset && t.dataset.e){
+      const emoji = t.dataset.e;
       const start = input.selectionStart ?? input.value.length;
       const end   = input.selectionEnd   ?? input.value.length;
-      input.value = input.value.slice(0,start) + emoji + input.value.slice(end);
+      input.value = input.value.slice(0, start) + emoji + input.value.slice(end);
       input.focus();
-      input.setSelectionRange(start+emoji.length, start+emoji.length);
+      input.setSelectionRange(start + emoji.length, start + emoji.length);
     }
   });
-  document.addEventListener('click', (e)=>{ if (!panel.contains(e.target) && e.target!==btn) close(); });
+  document.addEventListener('click', (e)=> { if (!p.contains(e.target) && e.target!==emojiBtn) close(); });
 });
 
-/* ============== الاستيج (4 خانات) ============== */
-onReady(() => {
-  // زر مايك لو ناقص
-  let micBtn = $('#btnMic') || $('#micToggle') || $('#openStageBtn');
-  if (!micBtn){
-    micBtn = document.createElement('button');
-    micBtn.id='btnMic'; micBtn.type='button'; micBtn.textContent='🎙️';
-    // نحطه زاوية فوق — بس إذا ما فيه توب بار عندك
-    micBtn.style.position='fixed'; micBtn.style.top='12px'; micBtn.style.right='12px'; micBtn.style.zIndex='9999';
-    document.body.appendChild(micBtn);
+/* ========= الاستيج: ٤ مايكات ========= */
+const Stage = (() => {
+  const state = { open:false, slots:[null,null,null,null] };
+  let   overlay, micBtn, slotEls;
+
+  function bindDOM(){
+    overlay = $$('#stageOverlay') || $$('.stage-overlay') || $$('[data-role="stage"]');
+    micBtn  = $$('#btnMic') || $$('#micToggle') || $$('.mic-btn') || $$('[data-role="mic"]');
+    slotEls = overlay ? $$$('.stage-slot', overlay) : null;
   }
 
-  let overlay = $('#stageOverlay');
-  if (!overlay){
-    overlay = document.createElement('div'); overlay.id='stageOverlay';
-    Object.assign(overlay.style, { position:'fixed', inset:'0', background:'rgba(0,0,0,.55)', backdropFilter:'blur(2px)',
-      display:'none', padding:'20px', zIndex:9998
-    });
-    const grid = document.createElement('div'); grid.className='stage-grid';
-    Object.assign(grid.style, { display:'grid', gridTemplateColumns:'repeat(2, minmax(160px, 1fr))', gap:'12px', maxWidth:'520px', margin:'40px auto' });
-    for (let i=0;i<4;i++){
-      const slot = document.createElement('div'); slot.className='stage-slot';
-      Object.assign(slot.style, { background:'#111', border:'1px dashed #444', borderRadius:'12px', padding:'22px', textAlign:'center', color:'#ddd' });
-      const label = document.createElement('span'); label.className='label'; label.textContent='فارغ';
-      slot.appendChild(label); grid.appendChild(slot);
-    }
-    overlay.appendChild(grid); document.body.appendChild(overlay);
-  }
-  const slotEls = $all('.stage-slot', overlay);
-  const state = window.__stageLocal || { slots:[null,null,null,null] }; // يشارك مع الطوارئ
+  function open(){ if (!overlay) return; overlay.classList.add('open'); overlay.style.display = 'block'; state.open=true; }
+  function close(){ if (!overlay) return; overlay.classList.remove('open'); overlay.style.display = 'none'; state.open=false; leave(); }
 
   function render(){
+    if (!slotEls) return;
     slotEls.forEach((el, idx) => {
       const uid = state.slots[idx];
       el.dataset.uid = uid || '';
-      el.style.outline = uid ? (uid===window.myId ? '2px solid #6cf' : '2px solid #444') : '1px dashed #444';
-      const label = $('.label', el);
+      const label = $$('.label', el);
       if (label) label.textContent = uid ? (uid===window.myId ? 'أنت' : 'مشغول') : 'فارغ';
+      // ما نعدّل CSS عندك؛ فقط نضيف mine/occupied لو موجودة بالستايل
+      el.classList.toggle('occupied', !!uid);
+      el.classList.toggle('mine', uid === window.myId);
     });
   }
-  function open(){ overlay.classList.add('open'); overlay.style.display='block'; }
-  function close(){ overlay.classList.remove('open'); overlay.style.display='none'; leave(); }
 
-  micBtn.addEventListener('click', ()=> (overlay.style.display==='block'? close(): open()));
-
-  slotEls.forEach((el, idx) => {
-    el.addEventListener('click', () => {
-      const mine  = el.dataset.uid === window.myId;
-      const empty = !el.dataset.uid;
-      if (mine) leave();
-      else if (empty) join(idx);
-    });
-  });
-
-  function join(slotIndex){
+  function join(i){
+    if (!overlay || !slotEls) return;
+    const idx = Math.max(0, Math.min(3, i|0));
     const prev = state.slots.indexOf(window.myId);
     if (prev>-1) state.slots[prev] = null;
-    const i = Math.max(0, Math.min(3, slotIndex|0));
-    if (!state.slots[i]) state.slots[i] = window.myId;
+    if (!state.slots[idx]) state.slots[idx] = window.myId;
     render();
-    window.socket?.emit('stage:join', { roomId: window.roomId, slotIndex:i });
+    window.socket?.emit('stage:join', { roomId: window.roomId, slotIndex: idx });
   }
+
   function leave(){
+    if (!overlay || !slotEls) return;
     const i = state.slots.indexOf(window.myId);
     if (i>-1) state.slots[i] = null;
     render();
     window.socket?.emit('stage:leave', { roomId: window.roomId });
   }
 
-  window.addEventListener('beforeunload', () => { if (state.slots.indexOf(window.myId)>-1) window.socket?.emit('stage:leave', { roomId: window.roomId }); });
-
-  // ربط تحديثات من الأونلاين/الطوارئ
-  LocalBus.on('stage:update', (payload) => {
+  function applyUpdate(payload){
     if (!payload || !Array.isArray(payload.slots)) return;
-    state.slots = payload.slots.slice(); render();
+    state.slots = payload.slots;
+    if (payload.forceClose) close();
+    render();
+  }
+
+  onReady(() => {
+    bindDOM();
+    if (!overlay) return; // لو التصميم ما فيه استيج، نسكت بدون كسر
+
+    // تفعيل زر المايك
+    micBtn && micBtn.addEventListener('click', ()=> (state.open ? close() : open()));
+
+    // ربط الخانات
+    slotEls && slotEls.forEach((el, idx) => {
+      el.addEventListener('click', () => {
+        const mine  = el.dataset.uid === window.myId;
+        const empty = !el.dataset.uid;
+        if (mine) leave();
+        else if (empty) join(idx);
+      });
+    });
+    render();
   });
 
-  // واجهة Stage للنداء الخارجي
-  window.Stage = {
-    applyUpdate(payload){ if (payload && Array.isArray(payload.slots)){ state.slots = payload.slots.slice(); render(); } },
-    open, close, join, leave, state
-  };
+  return { open, close, join, leave, applyUpdate };
+})();
 
-  render();
+/* ========= لوحة التحكم (للأونر فقط) ========= */
+onReady(() => {
+  // زر فتح لوحة التحكم (نلتقطه بأي طريقة)
+  let ownerBtn =
+    $$('#ownerBtn') || $$('.owner-btn') || $$('[data-role="owner"]') ||
+    [...document.querySelectorAll('button, a, [role="button"]')].find(el => textIncludes(el, 'لوحة التحكم'));
+
+  // عنصر لوحة التحكم نفسه (ما نضيف ستايل — بس نظهره/نخفيه)
+  const panel = $$('#ownerPanel') || $$('.owner-panel') || $$('[data-owner-panel]');
+  const PASS  = (window.OWNER_PASS || '6677') + '';
+
+  function showPanel(){
+    if (!panel) return;
+    // شيله من display:none أو hidden
+    panel.removeAttribute('hidden');
+    panel.style.display = ''; // نرجعه للي عندك بالCSS
+    // لو مستخدم حاطينه في مودال/اوفِرلاي، الكلاس عنده مسؤول
+    panel.classList.add('open'); // إذا عندك ستايل لكلاس open يشتغل، وإلا ما يضر
+  }
+
+  if (ownerBtn) {
+    ownerBtn.addEventListener('click', () => {
+      if (window.isOwner) { showPanel(); return; }
+      const p = prompt('أدخل كلمة سر الأونر:');
+      if (p === PASS) {
+        window.isOwner = true;
+        showPanel();
+      } else if (p != null) {
+        alert('كلمة السر غير صحيحة');
+      }
+    });
+  }
 });
