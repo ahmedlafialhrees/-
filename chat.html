@@ -64,6 +64,31 @@
     .emoji-panel.show{ display:flex }
     .emoji{ cursor:pointer; font-size:22px; line-height:32px; padding:4px 6px; border-radius:8px }
     .emoji:hover{ background:#101a33 }
+
+    /* ====== Badges (Owner/Admin) ====== */
+    .badge{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:18px; height:18px; border-radius:50%; margin-inline-start:6px;
+      font-size:12px; line-height:1; box-shadow:0 0 10px rgba(0,0,0,.3);
+    }
+    .badge-owner{
+      background:radial-gradient(circle at 30% 30%, #fff6c0, #f5c542 60%, #8a5d00 100%);
+      border:1px solid #b98513; animation:shineGold 1.6s linear infinite;
+    }
+    .badge-admin{
+      background:radial-gradient(circle at 30% 30%, #ffd1d1, #ff4d4d 60%, #8a0000 100%);
+      border:1px solid #b31313; animation:shineRed 1.6s linear infinite;
+    }
+    @keyframes shineGold{
+      0%{ box-shadow:0 0 4px rgba(245,197,66,.6) }
+      50%{ box-shadow:0 0 10px rgba(245,197,66,1) }
+      100%{ box-shadow:0 0 4px rgba(245,197,66,.6) }
+    }
+    @keyframes shineRed{
+      0%{ box-shadow:0 0 4px rgba(255,77,77,.6) }
+      50%{ box-shadow:0 0 10px rgba(255,77,77,1) }
+      100%{ box-shadow:0 0 4px rgba(255,77,77,.6) }
+    }
   </style>
 </head>
 <body>
@@ -82,7 +107,7 @@
     <div id="menuExit"  class="menu-item">خروج <span>↩️</span></div>
   </div>
 
-  <!-- الاستيج (بدون تغيير) -->
+  <!-- الاستيج (بدون تغيير في الهيكل) -->
   <div id="stagePanel" class="panel stagePanel" aria-hidden="true">
     <div class="slots" id="slots">
       <div class="slot" data-i="0"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
@@ -110,7 +135,6 @@
     </div>
   </div>
 
-  <!-- مهم: حمّل Socket.IO من السيرفر نفسه -->
   <script>
     window.SERVER_URL = window.SERVER_URL || "https://kwpooop.onrender.com";
     window.OWNER_PASS = window.OWNER_PASS || "6677";
