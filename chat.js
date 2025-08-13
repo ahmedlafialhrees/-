@@ -196,3 +196,9 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
   updateAsLine();
 });
+
+// منع تحريك أو تمرير الصفحة بالكامل
+document.body.style.overflow = "hidden";
+document.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+}, { passive: false });
