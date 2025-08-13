@@ -183,11 +183,22 @@ const Stage = (() => {
   const state = { open:false, slots:[null,null,null,null] };
   let overlay, slotsWrap, micBtn, slotEls;
 
-  function buildSlotsIfNeeded() {
+  // ——— ربط قوي + إعادة محاولة حتى يجد العناصر ———
+  function onReady(cb){
+    if (document.readyState !== 'loading') cb();
+    else document.addEventListener('DOMContentLoaded', cb, { once:true });
+  }
+  function getEls(){
+    overlay   = document.getElementById("stageOverlay");
+    slotsWrap = document.getElementById("slots");
+    micBtn    = document.getElementById("micBtn");
+    return !!(overlay && slotsWrap && micBtn);
+  }
+  function ensureFourSlots() {
     if (!slotsWrap) return;
     if (slotsWrap.children.length >= 4) return;
     slotsWrap.innerHTML = "";
-    for (let i=0;i<4;i++){
+    for (let i = 0; i < 4; i++) {
       const slot = document.createElement("div");
       slot.className = "slot";
       slot.innerHTML = `
@@ -197,17 +208,10 @@ const Stage = (() => {
       slotsWrap.appendChild(slot);
     }
   }
+  function bindHandlers(){
+    slotEls = slotsWrap.querySelectorAll(".slot");
 
-  function bind() {
-    overlay   = $("#stageOverlay");
-    slotsWrap = $("#slots");
-    micBtn    = $("#micBtn");
-    if (!overlay || !slotsWrap || !micBtn) return;
-
-    buildSlotsIfNeeded();
-    slotEls = $$(".slot", slotsWrap);
-
-    // فتح/قفل الاستيج
+    // فتح/قفل من زر 🎤
     micBtn.addEventListener("click", () => (state.open ? close() : open()));
 
     // التبديل: فقط الضغط على أيقونة المايك داخل الخانة
@@ -227,6 +231,17 @@ const Stage = (() => {
     });
 
     render();
+    console.log("[Stage] bound.");
+  }
+  function tryBind(tries = 30){
+    if (getEls()) {
+      ensureFourSlots();
+      bindHandlers();
+    } else if (tries > 0) {
+      setTimeout(() => tryBind(tries - 1), 200);
+    } else {
+      console.warn("[Stage] elements not found (#stageOverlay / #slots / #micBtn).");
+    }
   }
 
   function open(){ if (!overlay) return; overlay.style.display = "flex"; state.open = true; }
@@ -278,7 +293,6 @@ const Stage = (() => {
     if (i > -1) window.socket?.emit("stage:leave", { roomId: window.roomId });
   });
 
-  document.addEventListener("DOMContentLoaded", bind);
-
+  onReady(() => tryBind()); // يربط حتى لو DOM جاهز قبل السكربت
   return { open, close, join, leave, applyUpdate };
 })();
