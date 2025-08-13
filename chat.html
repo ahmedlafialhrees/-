@@ -10,7 +10,7 @@
       --bubble:#1d2230; --bubble-me:#23324a;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
+    html,body{height:100%; overflow:hidden}
     body{
       margin:0;background:linear-gradient(180deg,#0d1016 0%, #101522 50%, #0d1117 100%);
       color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",Arial;
@@ -19,7 +19,7 @@
 
     /* ====== Top Bar ====== */
     .topbar{
-      position:sticky; top:0; inset-inline:0; z-index:30;
+      position:fixed; top:0; inset-inline:0; z-index:30;
       height:56px; display:flex; align-items:center; justify-content:space-between;
       padding:0 12px; background:rgba(15,17,21,.86); backdrop-filter:saturate(130%) blur(10px); border-bottom:1px solid #1d2230;
     }
@@ -31,14 +31,17 @@
     .ghost{background:transparent}
     .tb-left,.tb-right{display:flex; align-items:center; gap:8px}
 
-    /* ====== Dropdowns (تحت الهيدر) ====== */
+    /* ====== Dropdown Panels ====== */
     .panel{
-      position:fixed; top:56px; z-index:25;
+      position:fixed; z-index:25;
       background:rgba(12,18,32,.97); border:1px solid #1e2a44; border-radius:14px; padding:10px;
-      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      opacity:0; transform:translateY(-8px); pointer-events:none; transition:.15s ease;
     }
-    .panel.show{display:block}
-    .menuPanel{left:12px; width:220px}
+    .panel.show{opacity:1; transform:translateY(0); pointer-events:auto}
+
+    /* قائمة فتح – عرضها ثابت وتتموضع تحت زر "فتح" باليسار */
+    .menuPanel{width:220px}
     .menu-item{
       display:flex; align-items:center; justify-content:space-between;
       padding:10px 12px; border-radius:10px; border:1px solid #27314a; background:#0e1422; margin-bottom:8px; cursor:pointer;
@@ -47,10 +50,9 @@
     .menu-item:last-child{margin-bottom:0}
     .menu-item.disabled{opacity:.5; pointer-events:none}
 
-    .stagePanel{right:12px; width:min(420px, calc(100% - 24px))}
-    .slots{
-      display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
-    }
+    /* نافذة الاستيج – يمين وتنزل لتحت */
+    .stagePanel{width:min(420px, calc(100% - 24px))}
+    .slots{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
     .slot{
       border:1px solid #2a3142; border-radius:14px; padding:10px; text-align:center; cursor:pointer;
       background:linear-gradient(180deg,#121a2b,#0d1422); transition:.15s transform ease;
@@ -64,8 +66,11 @@
     .name{font-size:13px; color:#cfe1ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
     @media (max-width:520px){ .slots{grid-template-columns:repeat(2,1fr)} }
 
-    /* ====== Messages ====== */
-    .wrap{position:relative; height:calc(100% - 56px); display:flex; flex-direction:column;}
+    /* ====== Layout ثابت ====== */
+    .wrap{
+      position:fixed; top:56px; bottom:0; left:0; right:0;
+      display:flex; flex-direction:column;
+    }
     .messages{flex:1; overflow:auto; padding:14px 12px 10px; scroll-behavior:smooth;}
     .msg{
       max-width:85%; margin:8px 0; padding:10px 12px; border-radius:14px;
@@ -77,7 +82,7 @@
     .as-line{font-size:12px; color:#b7c7e6; padding:0 12px 6px}
 
     /* ====== Composer ====== */
-    .composer{border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5;}
+    .composer{position:relative; border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5;}
     .row{display:flex; gap:6px;}
     .in{
       flex:1; min-height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; color:var(--text);
@@ -87,9 +92,12 @@
     .emoji-btn{
       width:44px; height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; font-size:20px; cursor:pointer;
     }
+
+    /* لوحة الإيموجي فوق زر الإيموجي */
     .emoji-panel{
-      display:none; position:relative; margin-top:6px; background:#0b1220; border:1px solid #1f2740; border-radius:12px; padding:8px;
-      gap:6px; flex-wrap:wrap;
+      display:none; position:absolute; bottom:56px; /* فوق صف الكتابة مباشرة */
+      left:8px; background:#0b1220; border:1px solid #1f2740; border-radius:12px; padding:8px;
+      gap:6px; flex-wrap:wrap; max-width:90vw;
     }
     .emoji-panel.show{display:flex}
     .emoji{cursor:pointer; font-size:22px; line-height:32px; padding:4px 6px; border-radius:8px}
@@ -102,13 +110,11 @@
       <button id="openBtn" class="tb-btn ghost">فتح</button>
     </div>
     <div class="tb-right">
-      <button id="micBtn" class="tb-btn" aria-expanded="false" title="الاستيج">
-        🎙️
-      </button>
+      <button id="micBtn" class="tb-btn" aria-expanded="false" title="الاستيج">🎙️</button>
     </div>
   </div>
 
-  <!-- قائمة الفتح (يسار) -->
+  <!-- قائمة الفتح (تتموضع تحت زر فتح) -->
   <div id="openMenu" class="panel menuPanel" aria-hidden="true">
     <div id="menuOwner" class="menu-item">لوحة التحكم <span>🛡️</span></div>
     <div id="menuExit"  class="menu-item">خروج <span>↩️</span></div>
@@ -130,15 +136,16 @@
 
     <!-- Composer -->
     <div class="composer">
+      <!-- شلنا حقل الاسم، وخليّنا فقط كلمة سر للأونر -->
       <div class="row" style="margin-bottom:6px">
-        <input id="nameInput" class="in" placeholder="اسمك..." maxlength="18" />
-        <input id="passInput" class="in" style="max-width:180px" placeholder="كلمة سر (للأونر اختياري)" />
+        <input id="passInput" class="in" style="max-width:220px" placeholder="كلمة سر (للأونر اختياري)" />
       </div>
       <div class="row">
         <button id="emojiBtn" class="emoji-btn" title="إيموجي">🙂</button>
         <textarea id="msgInput" class="in" placeholder="اكتب رسالتك..." rows="1"></textarea>
         <button id="sendBtn" class="tb-btn send">إرسال</button>
       </div>
+
       <div id="emojiPanel" class="emoji-panel" aria-hidden="true">
         <span class="emoji">😄</span><span class="emoji">😍</span><span class="emoji">😂</span>
         <span class="emoji">🔥</span><span class="emoji">👏</span><span class="emoji">❤️</span>
