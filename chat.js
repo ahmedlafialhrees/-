@@ -1,109 +1,133 @@
-import { SERVER_URL, OWNER_NAME } from "./config.js?v=12";
+/* ===================== Stage Wiring (no layout changes) ===================== */
+/* يعتمد على وجود:
+   - overlay: عنصر id="stageOverlay"
+   - أربع خانات داخل overlay بكلاس .stage-slot، وبكل خانة span.label
+   - زر المايك: أحد المعرفات التالية #btnMic أو #micToggle أو #openStageBtn
+   - متغيرات عامة: window.socket, window.roomId, window.myId (موجودة عندك)
+*/
 
-/* تثبيت الارتفاع للجوال */
-const setVh = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
-setVh(); addEventListener('resize', setVh);
+(function () {
+  const StageManager = {
+    state: {
+      open: false,
+      meOnStage: false,
+      slots: [null, null, null, null], // أربع خانات
+    },
+    els: {
+      overlay: null,
+      micBtn: null,
+      slots: [],
+    },
 
-/* الهوية */
-const name = (localStorage.getItem("name")||"").trim();
-const role = localStorage.getItem("role") || "user";
-const pass = localStorage.getItem("pass") || "";
-if(!name){ location.href="index.html"; }
-const isOwnerMain = role==="ownerMain" && name===OWNER_NAME;
+    init() {
+      // عناصر DOM
+      this.els.overlay = document.getElementById('stageOverlay');
+      this.els.micBtn =
+        document.querySelector('#btnMic') ||
+        document.querySelector('#micToggle') ||
+        document.querySelector('#openStageBtn');
 
-/* عناصر UI */
-const messagesEl = document.getElementById("messages");
-const msgInput = document.getElementById("msgInput");
-const sendBtn = document.getElementById("sendBtn");
-const asLine = document.getElementById("asLine");
-asLine.textContent = `ترسل كـ: ${name}`;
+      if (!this.els.overlay) {
+        console.warn('[Stage] لا يوجد #stageOverlay في الصفحة.');
+        return;
+      }
 
-const emojiBtn = document.getElementById("emojiBtn");
-const emojiPanel = document.getElementById("emojiPanel");
-emojiBtn.addEventListener("click",()=> emojiPanel.classList.toggle("hidden"));
-emojiPanel.addEventListener("click",(e)=>{
-  const el = e.target.closest(".emoji"); if(!el) return;
-  msgInput.value += el.textContent; msgInput.focus();
-});
-document.addEventListener("click",(e)=>{
-  if(!emojiBtn.contains(e.target) && !emojiPanel.contains(e.target)) emojiPanel.classList.add("hidden");
-});
+      this.els.slots = this.els.overlay.querySelectorAll('.stage-slot');
 
-/* زر «افتح» (يمين) */
-const openBtn   = document.getElementById("openBtn");
-const menuDrop  = document.getElementById("menuDrop");
-const ownerLink = document.getElementById("ownerLink");
-const logoutLink= document.getElementById("logoutLink");
-if (isOwnerMain) ownerLink.classList.remove("hidden");
-openBtn.addEventListener("click", ()=> menuDrop.classList.toggle("hidden"));
-document.addEventListener("click",(e)=>{
-  if(!openBtn.contains(e.target) && !menuDrop.contains(e.target)) menuDrop.classList.add("hidden");
-});
-logoutLink.addEventListener("click", ()=>{ localStorage.clear(); location.href="index.html"; });
+      // ربط زر المايك
+      if (this.els.micBtn) {
+        this.els.micBtn.addEventListener('click', () => {
+          this.state.open ? this.close() : this.open();
+        });
+      }
 
-/* Socket */
-const socket = io(SERVER_URL, { transports:["websocket"] });
-socket.on("connect", ()=>{
-  socket.emit("join", { name, role, pass });
-  socket.emit("stage:request");
-});
+      // ربط الخانات (صعود/نزول)
+      this.els.slots.forEach((el, idx) => {
+        el.addEventListener('click', () => {
+          const mine = el.dataset.uid === window.myId;
+          const empty = !el.dataset.uid;
+          if (mine) this.leave();
+          else if (!this.state.meOnStage && empty) this.join(idx);
+        });
+      });
 
-/* رسائل */
-socket.on("message", (p)=> addMessage(p, p.name===name));
-function send(){
-  const text = (msgInput.value||"").trim();
-  if(!text) return;
-  addMessage({ name, text, ts: Date.now() }, true);
-  try { socket.emit("message",{ text }); } catch(e){}
-  msgInput.value=""; msgInput.focus();
-}
-sendBtn.addEventListener("click", send);
-msgInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
+      // سوكت: استلام تحديثات الاستيج
+      if (window.socket) {
+        window.socket.on('stage:update', (payload) => {
+          if (!payload || !Array.isArray(payload.slots)) return;
+          this.state.slots = payload.slots;
+          if (payload.forceClose) this.close();
+          this.render();
+        });
+      }
 
-function addMessage({ name:n, text, ts }, mine=false){
-  const div = document.createElement("div");
-  div.className = "msg" + (mine?" me":"");
-  const when = ts ? new Date(ts) : new Date();
-  div.innerHTML = `<div class="meta"><span class="name">${esc(n)}</span> • ${when.toLocaleTimeString()}</div>${esc(text)}`;
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+      // نزول تلقائي قبل الإغلاق
+      window.addEventListener('beforeunload', () => {
+        if (this.state.meOnStage && window.socket) {
+          window.socket.emit('stage:leave', { roomId: window.roomId });
+        }
+      });
 
-/* الاستيج: ٤ خانات — يفتح/يغلق من زر المايك (يسار) */
-const micBtn = document.getElementById("micBtn");
-const stageOverlay = document.getElementById("stageOverlay");
-const slotsEl = document.getElementById("slots");
-let stageVisible = false;
-let lastStage = { slots:[null,null,null,null] };
+      this.render();
+      console.log('[Stage] جاهز بدون أي تغيير في الستايل.');
+    },
 
-const toggleStage = ()=>{
-  stageVisible = !stageVisible;
-  stageOverlay.style.display = stageVisible ? "flex" : "none";
-  if (stageVisible) socket.emit("stage:request");
-};
-micBtn.addEventListener("click", toggleStage);
+    open() {
+      if (!this.els.overlay) return;
+      this.els.overlay.classList.add('open');
+      this.state.open = true;
+    },
 
-socket.on("stage:update",(stage)=> renderStage(stage));
+    close() {
+      if (!this.els.overlay) return;
+      this.els.overlay.classList.remove('open');
+      this.state.open = false;
+      if (this.state.meOnStage) this.leave();
+    },
 
-function renderStage(stage){
-  lastStage = stage || lastStage;
-  slotsEl.innerHTML = "";
-  lastStage.slots.forEach((slot, i)=>{
-    const isMe = slot && slot.name===name;
-    const state = slot ? (isMe ? "me" : "on") : "off";
-    const d = document.createElement("div");
-    d.className = `slot ${state}`;
-    d.innerHTML = `
-      <div class="micCircle">🎙️</div>
-      <div class="name">${slot ? esc(slot.name) : "فارغ"}</div>
-    `;
-    d.title = slot ? (isMe ? "اضغط للنزول" : "اضغط لتبديل مقعدك") : "اضغط للصعود";
-    d.addEventListener("click", ()=> socket.emit("stage:toggle",{ index:i }));
-    slotsEl.appendChild(d);
-  });
-}
+    render() {
+      this.els.slots.forEach((el, idx) => {
+        const uid = this.state.slots[idx];
+        el.dataset.uid = uid || '';
+        el.classList.toggle('occupied', !!uid);
+        el.classList.toggle('mine', uid === window.myId);
+        const label = el.querySelector('.label');
+        if (label) label.textContent = uid ? (uid === window.myId ? 'أنت' : 'مشغول') : 'فارغ';
+      });
+    },
 
-/* طرد/حظر */
-socket.on("kicked", (reason)=> { alert(`تم طردك: ${reason||""}`); localStorage.clear(); location.href="index.html"; });
-socket.on("banned", (untilTs)=> { alert(`تم حظرك حتى ${new Date(untilTs).toLocaleString()}`); localStorage.clear(); location.href="index.html"; });
+    join(slotIndex) {
+      this.state.meOnStage = true;
+      // إزالة أي تواجد سابق
+      const prev = this.state.slots.indexOf(window.myId);
+      if (prev > -1) this.state.slots[prev] = null;
+
+      this.state.slots[slotIndex] = window.myId;
+      this.render();
+      if (window.socket) {
+        window.socket.emit('stage:join', { roomId: window.roomId, slotIndex });
+      }
+    },
+
+    leave() {
+      this.state.meOnStage = false;
+      const i = this.state.slots.indexOf(window.myId);
+      if (i > -1) this.state.slots[i] = null;
+      this.render();
+      if (window.socket) {
+        window.socket.emit('stage:leave', { roomId: window.roomId });
+      }
+    },
+  };
+
+  // ننتظر لحد ما socket + roomId + myId يصيرون جاهزين عندك
+  function waitReady(fn, tries = 60) {
+    if (window.socket && window.roomId && window.myId) return fn();
+    if (tries <= 0) return console.warn('[Stage] ما حصلت socket/roomId/myId');
+    setTimeout(() => waitReady(fn, tries - 1), 250);
+  }
+
+  waitReady(() => StageManager.init());
+  // إذا تبي توصّلها يدوي: استدعِ StageManager.init() بعد ما تجهّز المتغيرات.
+  window.StageManager = StageManager; // اختياري: لو تبي تستخدمه من الكونسول
+})();
