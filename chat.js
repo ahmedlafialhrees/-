@@ -1,159 +1,258 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>شات صوتي</title>
-  <style>
-    :root{
-      --bg:#0f1115; --card:#171a21; --muted:#7f8aa3; --text:#e9edf5; --accent:#4da3ff; --danger:#ff5d7a; --ok:#51d09d;
-      --bubble:#1d2230; --bubble-me:#23324a;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;background:linear-gradient(180deg,#0d1016 0%, #101522 50%, #0d1117 100%);
-      color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",Arial;
-      -webkit-tap-highlight-color:transparent;
-    }
+/* chat.js — تصميم جديد:
+   - زر فتح (يسار) يفتح قائمة فيها خروج + لوحة التحكم
+   - زر 🎙️ (يمين) يفتح نافذة الاستيج تسقط لتحت من اليمين (4 خانات)
+   - رسايل/كتابة/إيموجي طبيعية
+*/
 
-    /* ====== Top Bar ====== */
-    .topbar{
-      position:sticky; top:0; inset-inline:0; z-index:30;
-      height:56px; display:flex; align-items:center; justify-content:space-between;
-      padding:0 12px; background:rgba(15,17,21,.86); backdrop-filter:saturate(130%) blur(10px); border-bottom:1px solid #1d2230;
-    }
-    .tb-btn{
-      display:inline-flex; align-items:center; justify-content:center; gap:6px;
-      height:36px; padding:0 14px; border-radius:10px; border:1px solid #2a3142; background:#151925; color:var(--text);
-      font-weight:700; cursor:pointer; user-select:none
-    }
-    .ghost{background:transparent}
-    .tb-left,.tb-right{display:flex; align-items:center; gap:8px}
+/* ====== إعدادات عامة ====== */
+const SERVER_URL = (window.SERVER_URL || "https://kwpooop.onrender.com");
+const OWNER_PASS = (window.OWNER_PASS || "6677") + "";
 
-    /* ====== Dropdowns (تحت الهيدر) ====== */
-    .panel{
-      position:fixed; top:56px; z-index:25;
-      background:rgba(12,18,32,.97); border:1px solid #1e2a44; border-radius:14px; padding:10px;
-      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none;
-    }
-    .panel.show{display:block}
-    .menuPanel{left:12px; width:220px}
-    .menu-item{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 12px; border-radius:10px; border:1px solid #27314a; background:#0e1422; margin-bottom:8px; cursor:pointer;
-      font-weight:600;
-    }
-    .menu-item:last-child{margin-bottom:0}
-    .menu-item.disabled{opacity:.5; pointer-events:none}
+/* ====== هوية وروم ====== */
+const savedId = localStorage.getItem("myId");
+window.myId = savedId || ("u" + Math.random().toString(36).slice(2,10));
+if (!savedId) localStorage.setItem("myId", window.myId);
 
-    .stagePanel{right:12px; width:min(420px, calc(100% - 24px))}
-    .slots{
-      display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
-    }
-    .slot{
-      border:1px solid #2a3142; border-radius:14px; padding:10px; text-align:center; cursor:pointer;
-      background:linear-gradient(180deg,#121a2b,#0d1422); transition:.15s transform ease;
-    }
-    .slot:hover{transform:translateY(-2px)}
-    .micCircle{
-      width:44px; height:44px; border-radius:50%; margin:0 auto 6px; display:flex; align-items:center; justify-content:center;
-      border:2px solid #2a3142; font-size:20px; background:#0f1424;
-    }
-    .slot.active .micCircle{ border-color:var(--ok); box-shadow:0 0 0 3px rgba(81,208,157,.15) inset }
-    .name{font-size:13px; color:#cfe1ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-    @media (max-width:520px){ .slots{grid-template-columns:repeat(2,1fr)} }
+const qp = new URLSearchParams(location.search);
+window.roomId = window.roomId || qp.get("room") || "lobby";
 
-    /* ====== Messages ====== */
-    .wrap{position:relative; height:calc(100% - 56px); display:flex; flex-direction:column;}
-    .messages{flex:1; overflow:auto; padding:14px 12px 10px; scroll-behavior:smooth;}
-    .msg{
-      max-width:85%; margin:8px 0; padding:10px 12px; border-radius:14px;
-      background:var(--bubble); word-break:break-word; overflow-wrap:anywhere; white-space:pre-wrap;
-      box-shadow:0 4px 12px rgba(0,0,0,.15);
+/* ====== Helpers ====== */
+const $  = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => root.querySelectorAll(sel);
+
+function nowHHMM(){
+  const d = new Date();
+  return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+}
+function addMsg({from, text, me=false}){
+  const wrap = $("#messages");
+  const b = document.createElement("div");
+  b.className = "msg" + (me ? " me" : "");
+  b.textContent = text;
+  wrap.appendChild(b);
+  const m = document.createElement("div");
+  m.className = "meta";
+  m.textContent = `${from} • ${nowHHMM()}`;
+  wrap.appendChild(m);
+  wrap.scrollTop = wrap.scrollHeight + 9999;
+}
+function updateAsLine(){
+  const n = (localStorage.getItem("myName") || "مجهول");
+  $("#asLine").textContent = `ترسل كـ: ${n}`;
+}
+
+/* ====== حالة الاستيج ====== */
+const stage = {
+  open:false,
+  slots:[null,null,null,null],
+  meOnStageIndex:null,
+};
+function renderStage(){
+  const p = $("#stagePanel");
+  p.classList.toggle("show", stage.open);
+  p.setAttribute("aria-hidden", String(!stage.open));
+
+  $$("#slots .slot").forEach(el=>{
+    const i = +el.dataset.i;
+    const s = stage.slots[i];
+    $(".name", el).textContent = s ? s.name : "فارغ";
+    el.classList.toggle("active", !!s);
+  });
+}
+function tryJoinLeaveSlot(slotIndex){
+  if (stage.meOnStageIndex !== null){
+    const idx = stage.meOnStageIndex;
+    stage.slots[idx] = null;
+    stage.meOnStageIndex = null;
+    emitStageUpdate(); renderStage(); return;
+  }
+  const pick = (typeof slotIndex==="number" ? slotIndex : stage.slots.findIndex(s=>!s));
+  if (pick < 0) return;
+  stage.slots[pick] = { id:window.myId, name:(localStorage.getItem("myName")||"مجهول") };
+  stage.meOnStageIndex = pick;
+  emitStageUpdate(); renderStage();
+}
+
+/* ====== Socket ====== */
+let ioClient = null;
+try{ ioClient = io(SERVER_URL, {transports:["websocket"], path:"/socket.io"}); }
+catch(e){ console.warn("Socket.IO غير متاح.", e); }
+
+function joinRoom(){
+  const name = (localStorage.getItem("myName") || "مجهول");
+  if (ioClient){
+    ioClient.emit("room:join", { room:window.roomId, id:window.myId, name });
+  }
+}
+function emitStageUpdate(){
+  if (ioClient){
+    ioClient.emit("stage:update", { room:window.roomId, open:stage.open, slots:stage.slots });
+  }
+}
+
+/* ====== UI ====== */
+window.addEventListener("DOMContentLoaded", ()=>{
+  // عناصر عامة
+  const openBtn   = $("#openBtn");
+  const openMenu  = $("#openMenu");
+  const menuOwner = $("#menuOwner");
+  const menuExit  = $("#menuExit");
+
+  const micBtn    = $("#micBtn");
+  const stagePanel= $("#stagePanel");
+  const slotsRoot = $("#slots");
+
+  const nameInput = $("#nameInput");
+  const passInput = $("#passInput");
+  const msgInput  = $("#msgInput");
+  const sendBtn   = $("#sendBtn");
+  const messages  = $("#messages");
+
+  const emojiBtn  = $("#emojiBtn");
+  const emojiPanel= $("#emojiPanel");
+
+  // استعادة الاسم/الباس
+  nameInput.value = localStorage.getItem("myName") || "";
+  passInput.value = localStorage.getItem("enteredPass") || "";
+  updateAsLine();
+
+  // دخول روم + Socket
+  joinRoom();
+  if (ioClient){
+    ioClient.on("connect", ()=> joinRoom());
+
+    ioClient.on("chat:msg", (p)=>{
+      if (p.room !== window.roomId) return;
+      addMsg({ from:p.name||"عضو", text:p.text, me:(p.id===window.myId) });
+    });
+
+    ioClient.on("stage:state", (s)=>{
+      if (s.room !== window.roomId) return;
+      stage.open = !!s.open; stage.slots = Array.isArray(s.slots)? s.slots : [null,null,null,null];
+      const i = stage.slots.findIndex(x=> x && x.id === window.myId);
+      stage.meOnStageIndex = (i>=0? i : null);
+      renderStage();
+    });
+
+    ioClient.on("stage:update", (s)=>{
+      if (s.room !== window.roomId) return;
+      stage.open = !!s.open; stage.slots = s.slots;
+      const i = stage.slots.findIndex(x=> x && x.id === window.myId);
+      stage.meOnStageIndex = (i>=0? i : null);
+      renderStage();
+    });
+  }
+
+  /* ====== فتح (قائمة يسار) ====== */
+  function toggleMenu(){
+    const show = !openMenu.classList.contains("show");
+    // اقفل الاستيج إذا فتحنا القائمة (تجنّب تداخل)
+    if (show && stage.open){ stage.open=false; renderStage(); emitStageUpdate(); micBtn.setAttribute("aria-expanded","false"); }
+    openMenu.classList.toggle("show", show);
+    openMenu.setAttribute("aria-hidden", String(!show));
+  }
+  openBtn.addEventListener("click", toggleMenu);
+
+  // عناصر القائمة
+  menuExit.addEventListener("click", ()=>{ window.location.href = "index.html"; });
+  menuOwner.addEventListener("click", ()=>{
+    const ok = (passInput.value === OWNER_PASS);
+    if (!ok){ alert("لوحة التحكم للأونر فقط."); return; }
+    window.location.href = "owner.html";
+  });
+
+  /* ====== الاستيج (يمين) ====== */
+  function toggleStage(){
+    const show = !stage.open;
+    // اقفل القائمة إذا فتحنا الاستيج
+    if (show && openMenu.classList.contains("show")){ openMenu.classList.remove("show"); openMenu.setAttribute("aria-hidden","true"); }
+    stage.open = show;
+    if (!show && stage.meOnStageIndex !== null){
+      stage.slots[stage.meOnStageIndex] = null;
+      stage.meOnStageIndex = null;
     }
-    .me{margin-inline-start:auto; background:var(--bubble-me);}
-    .meta{font-size:11px; color:var(--muted); margin:2px 2px 0}
-    .as-line{font-size:12px; color:#b7c7e6; padding:0 12px 6px}
+    renderStage(); emitStageUpdate();
+    micBtn.setAttribute("aria-expanded", String(show));
+  }
+  micBtn.addEventListener("click", toggleStage);
 
-    /* ====== Composer ====== */
-    .composer{border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5;}
-    .row{display:flex; gap:6px;}
-    .in{
-      flex:1; min-height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; color:var(--text);
-      padding:10px 12px; outline:none; font-size:15px;
+  // الضغط على خانة استيج
+  slotsRoot.addEventListener("click", (e)=>{
+    const s = e.target.closest(".slot"); if (!s) return;
+    const idx = +s.dataset.i;
+    const current = stage.slots[idx];
+    if (current && current.id !== window.myId) return;
+    tryJoinLeaveSlot(idx);
+  });
+
+  /* ====== الكتابة ====== */
+  nameInput.addEventListener("input", ()=>{
+    localStorage.setItem("myName", nameInput.value.trim());
+    updateAsLine();
+    if (ioClient) ioClient.emit("user:rename", { room:window.roomId, id:window.myId, name:nameInput.value.trim() || "مجهول" });
+  });
+  passInput.addEventListener("input", ()=>{
+    localStorage.setItem("enteredPass", passInput.value);
+  });
+
+  function send(){
+    const text = msgInput.value.trim(); if (!text) return;
+    const name = (localStorage.getItem("myName") || "مجهول");
+    const payload = { room:window.roomId, id:window.myId, name, text };
+    if (ioClient) ioClient.emit("chat:msg", payload);
+    addMsg({ from:name, text, me:true });
+    msgInput.value = ""; msgInput.focus();
+  }
+  sendBtn.addEventListener("click", send);
+  msgInput.addEventListener("keydown", (e)=>{
+    if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); }
+  });
+
+  /* ====== إيموجي ====== */
+  emojiBtn.addEventListener("click", ()=>{
+    emojiPanel.classList.toggle("show");
+    emojiPanel.setAttribute("aria-hidden", String(!emojiPanel.classList.contains("show")));
+  });
+  emojiPanel.addEventListener("click", (e)=>{
+    const t = e.target.closest(".emoji"); if (!t) return;
+    const start = msgInput.selectionStart || msgInput.value.length;
+    const end   = msgInput.selectionEnd   || msgInput.value.length;
+    const before = msgInput.value.slice(0, start);
+    const after  = msgInput.value.slice(end);
+    msgInput.value = before + t.textContent + after;
+    const caret = start + t.textContent.length;
+    msgInput.focus(); msgInput.setSelectionRange(caret, caret);
+  });
+
+  /* ====== إغلاق بالنقر خارج ====== */
+  document.addEventListener("click", (e)=>{
+    const inMenu  = e.target.closest("#openMenu") || e.target.closest("#openBtn");
+    const inStage = e.target.closest("#stagePanel") || e.target.closest("#micBtn");
+    if (!inMenu && openMenu.classList.contains("show")){
+      openMenu.classList.remove("show"); openMenu.setAttribute("aria-hidden","true");
     }
-    .send{min-width:86px}
-    .emoji-btn{
-      width:44px; height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; font-size:20px; cursor:pointer;
+    if (!inStage && stage.open){
+      stage.open = false;
+      if (stage.meOnStageIndex !== null){ stage.slots[stage.meOnStageIndex] = null; stage.meOnStageIndex = null; }
+      renderStage(); emitStageUpdate(); micBtn.setAttribute("aria-expanded","false");
     }
-    .emoji-panel{
-      display:none; position:relative; margin-top:6px; background:#0b1220; border:1px solid #1f2740; border-radius:12px; padding:8px;
-      gap:6px; flex-wrap:wrap;
-    }
-    .emoji-panel.show{display:flex}
-    .emoji{cursor:pointer; font-size:22px; line-height:32px; padding:4px 6px; border-radius:8px}
-    .emoji:hover{background:#101a33}
-  </style>
-</head>
-<body>
-  <div class="topbar">
-    <div class="tb-left">
-      <button id="openBtn" class="tb-btn ghost">فتح</button>
-    </div>
-    <div class="tb-right">
-      <button id="micBtn" class="tb-btn" aria-expanded="false" title="الاستيج">
-        🎙️
-      </button>
-    </div>
-  </div>
+  });
+});
 
-  <!-- قائمة الفتح (يسار) -->
-  <div id="openMenu" class="panel menuPanel" aria-hidden="true">
-    <div id="menuOwner" class="menu-item">لوحة التحكم <span>🛡️</span></div>
-    <div id="menuExit"  class="menu-item">خروج <span>↩️</span></div>
-  </div>
-
-  <!-- نافذة الاستيج (يمين) -->
-  <div id="stagePanel" class="panel stagePanel" aria-hidden="true">
-    <div class="slots" id="slots">
-      <div class="slot" data-i="0"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
-      <div class="slot" data-i="1"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
-      <div class="slot" data-i="2"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
-      <div class="slot" data-i="3"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <div id="asLine" class="as-line">ترسل كـ: —</div>
-    <div id="messages" class="messages"></div>
-
-    <!-- Composer -->
-    <div class="composer">
-      <div class="row" style="margin-bottom:6px">
-        <input id="nameInput" class="in" placeholder="اسمك..." maxlength="18" />
-        <input id="passInput" class="in" style="max-width:180px" placeholder="كلمة سر (للأونر اختياري)" />
-      </div>
-      <div class="row">
-        <button id="emojiBtn" class="emoji-btn" title="إيموجي">🙂</button>
-        <textarea id="msgInput" class="in" placeholder="اكتب رسالتك..." rows="1"></textarea>
-        <button id="sendBtn" class="tb-btn send">إرسال</button>
-      </div>
-      <div id="emojiPanel" class="emoji-panel" aria-hidden="true">
-        <span class="emoji">😄</span><span class="emoji">😍</span><span class="emoji">😂</span>
-        <span class="emoji">🔥</span><span class="emoji">👏</span><span class="emoji">❤️</span>
-        <span class="emoji">🎧</span><span class="emoji">🎤</span><span class="emoji">✅</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Socket.IO -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    window.SERVER_URL = window.SERVER_URL || "https://kwpooop.onrender.com";
-    window.OWNER_PASS = window.OWNER_PASS || "6677";
-    window.roomId     = window.roomId     || (new URLSearchParams(location.search).get("room") || "lobby");
-  </script>
-  <script src="chat.js"></script>
-</body>
-</html>
+/* ====== مرجع أحداث للسيرفر ====== */
+/*
+io.on("connection",(s)=>{
+  s.on("room:join", ({room,id,name})=>{
+    s.join(room); s.data = {room,id,name};
+    const st = rooms[room]?.stage || {open:false, slots:[null,null,null,null]};
+    s.emit("stage:state", { room, ...st });
+  });
+  s.on("chat:msg", (p)=> io.to(p.room).emit("chat:msg", p));
+  s.on("user:rename", ({room,id,name})=>{});
+  s.on("stage:update", ({room,open,slots})=>{
+    rooms[room] = rooms[room] || {};
+    rooms[room].stage = {open, slots};
+    io.to(room).emit("stage:update", {room, open, slots});
+  });
+});
+*/
