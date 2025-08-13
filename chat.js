@@ -240,4 +240,32 @@ window.addEventListener("DOMContentLoaded", ()=>{
     }
     if (!inStage && stage.open){
       stage.open = false;
-      if (stage.meOnStageIndex !==
+      if (stage.meOnStageIndex !== null){ stage.slots[stage.meOnStageIndex] = null; stage.meOnStageIndex = null; }
+      renderStage(); emitStageUpdate(); micBtn.setAttribute("aria-expanded","false");
+    }
+    if (!inEmoji && emojiPanel.classList.contains("show")){
+      emojiPanel.classList.remove("show"); emojiPanel.setAttribute("aria-hidden","true");
+    }
+  });
+
+  /* تأكيد الاسم في السطر */
+  updateAsLine();
+});
+
+/* ====== مرجع للسيرفر ====== */
+/*
+io.on("connection",(s)=>{
+  s.on("room:join", ({room,id,name})=>{
+    s.join(room); s.data = {room,id,name};
+    const st = rooms[room]?.stage || {open:false, slots:[null,null,null,null]};
+    s.emit("stage:state", { room, ...st });
+  });
+  s.on("chat:msg", (p)=> io.to(p.room).emit("chat:msg", p));
+  s.on("user:rename", ({room,id,name})=>{});
+  s.on("stage:update", ({room,open,slots})=>{
+    rooms[room] = rooms[room] || {};
+    rooms[room].stage = {open, slots};
+    io.to(room).emit("stage:update", {room, open, slots});
+  });
+});
+*/
