@@ -17,21 +17,27 @@
       -webkit-tap-highlight-color:transparent;
     }
 
-    /* ====== Top Bar ====== */
+    /* ====== Top Bar (ثابت) ====== */
     .topbar{
-      position:fixed; top:0; inset-inline:0; z-index:30;
-      height:56px; display:flex; align-items:center; justify-content:space-between;
-      padding:0 12px; background:rgba(15,17,21,.86); backdrop-filter:saturate(130%) blur(10px); border-bottom:1px solid #1d2230;
+      position:fixed; top:0; left:0; right:0; z-index:30; height:56px;
+      display:block; background:rgba(15,17,21,.86);
+      backdrop-filter:saturate(130%) blur(10px); border-bottom:1px solid #1d2230;
+      padding-top:env(safe-area-inset-top);
     }
+    .tb-left,.tb-right{
+      position:absolute; top:calc(10px + env(safe-area-inset-top));
+      display:flex; align-items:center; gap:8px;
+    }
+    .tb-left{ left:12px }
+    .tb-right{ right:12px }
     .tb-btn{
       display:inline-flex; align-items:center; justify-content:center; gap:6px;
       height:36px; padding:0 14px; border-radius:10px; border:1px solid #2a3142; background:#151925; color:var(--text);
       font-weight:700; cursor:pointer; user-select:none
     }
     .ghost{background:transparent}
-    .tb-left,.tb-right{display:flex; align-items:center; gap:8px}
 
-    /* ====== Dropdown Panels ====== */
+    /* ====== Panels (قوائم منسدلة) ====== */
     .panel{
       position:fixed; z-index:25;
       background:rgba(12,18,32,.97); border:1px solid #1e2a44; border-radius:14px; padding:10px;
@@ -40,7 +46,6 @@
     }
     .panel.show{opacity:1; transform:translateY(0); pointer-events:auto}
 
-    /* قائمة فتح – عرضها ثابت وتتموضع تحت زر "فتح" باليسار */
     .menuPanel{width:220px}
     .menu-item{
       display:flex; align-items:center; justify-content:space-between;
@@ -48,9 +53,7 @@
       font-weight:600;
     }
     .menu-item:last-child{margin-bottom:0}
-    .menu-item.disabled{opacity:.5; pointer-events:none}
 
-    /* نافذة الاستيج – يمين وتنزل لتحت */
     .stagePanel{width:min(420px, calc(100% - 24px))}
     .slots{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
     .slot{
@@ -82,7 +85,10 @@
     .as-line{font-size:12px; color:#b7c7e6; padding:0 12px 6px}
 
     /* ====== Composer ====== */
-    .composer{position:relative; border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5;}
+    .composer{
+      position:relative; border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5;
+      padding-bottom:calc(8px + env(safe-area-inset-bottom));
+    }
     .row{display:flex; gap:6px;}
     .in{
       flex:1; min-height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; color:var(--text);
@@ -95,7 +101,7 @@
 
     /* لوحة الإيموجي فوق زر الإيموجي */
     .emoji-panel{
-      display:none; position:absolute; bottom:56px; /* فوق صف الكتابة مباشرة */
+      display:none; position:absolute; bottom:56px;
       left:8px; background:#0b1220; border:1px solid #1f2740; border-radius:12px; padding:8px;
       gap:6px; flex-wrap:wrap; max-width:90vw;
     }
@@ -114,13 +120,13 @@
     </div>
   </div>
 
-  <!-- قائمة الفتح (تتموضع تحت زر فتح) -->
+  <!-- قائمة الفتح -->
   <div id="openMenu" class="panel menuPanel" aria-hidden="true">
     <div id="menuOwner" class="menu-item">لوحة التحكم <span>🛡️</span></div>
     <div id="menuExit"  class="menu-item">خروج <span>↩️</span></div>
   </div>
 
-  <!-- نافذة الاستيج (يمين) -->
+  <!-- نافذة الاستيج -->
   <div id="stagePanel" class="panel stagePanel" aria-hidden="true">
     <div class="slots" id="slots">
       <div class="slot" data-i="0"><div class="micCircle">🎙️</div><div class="name">فارغ</div></div>
@@ -136,7 +142,7 @@
 
     <!-- Composer -->
     <div class="composer">
-      <!-- شلنا حقل الاسم، وخليّنا فقط كلمة سر للأونر -->
+      <!-- شلنا الاسم، أبقينا كلمة سر الأونر -->
       <div class="row" style="margin-bottom:6px">
         <input id="passInput" class="in" style="max-width:220px" placeholder="كلمة سر (للأونر اختياري)" />
       </div>
@@ -154,7 +160,6 @@
     </div>
   </div>
 
-  <!-- Socket.IO -->
   <script src="/socket.io/socket.io.js"></script>
   <script>
     window.SERVER_URL = window.SERVER_URL || "https://kwpooop.onrender.com";
