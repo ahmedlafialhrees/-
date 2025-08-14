@@ -21,6 +21,7 @@
       -webkit-tap-highlight-color:transparent;
       -webkit-user-select:none; -webkit-touch-callout:none;
       background:linear-gradient(180deg,#0d1016 0%, #101522 50%, #0d1117 100%);
+      touch-action: manipulation; /* نمنع الإيماءات العامة */
     }
 
     /* ===== Topbar ثابت ===== */
@@ -46,7 +47,6 @@
     }
     .panel.show{ opacity:1; transform:translateY(0); pointer-events:auto }
     .menuPanel{ width:220px }
-
     .menu-item{
       display:flex; align-items:center; justify-content:space-between;
       padding:10px 12px; border-radius:10px; margin-bottom:8px; cursor:pointer; font-weight:600;
@@ -54,17 +54,18 @@
     }
     .menu-item:last-child{ margin-bottom:0 }
 
-    /* ===== الاستيج Overlay مرتب ===== */
+    /* ===== الاستيج Overlay ===== */
     #stageOverlay{
-      position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50;
+      position:fixed; inset:0; display:none; z-index:50;
       background:rgba(8,10,15,.6);
+      /* لا نوسّطه هنا — chat.js يحدد مكان الكرت */
     }
     #stageCard{
       width:min(560px,92vw); background:#171a21; border:1px solid #2a344a; border-radius:14px; padding:14px;
+      position:absolute; /* يتحدد مكانه من chat.js */
     }
     .slots{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px }
     @media (min-width:521px){ .slots{ grid-template-columns:repeat(4,1fr) } }
-
     .slot{
       border:1px solid #2a3142; border-radius:14px; padding:12px; text-align:center; cursor:pointer;
       background:linear-gradient(180deg,#121a2b,#0d1422); transition:.15s transform ease;
@@ -84,10 +85,9 @@
       display:flex; flex-direction:column;
       padding-bottom:env(safe-area-inset-bottom);
     }
-
     .messages{
       flex:1; overflow:auto; padding:14px 12px 10px; scroll-behavior:smooth;
-      -webkit-overflow-scrolling:touch;
+      -webkit-overflow-scrolling:touch; touch-action: pan-y; /* مسموح سحب رأسي داخل الرسائل */
     }
     .msg{
       max-width:85%; margin:8px 0; padding:10px 12px; border-radius:14px; background:var(--bubble);
@@ -97,22 +97,20 @@
     .meta{ font-size:11px; color:var(--muted); margin:2px 2px 0 }
     .as-line{ font-size:12px; color:#b7c7e6; padding:0 12px 6px }
 
-    /* ===== Composer ثابت أسفل ===== */
+    /* ===== Composer ===== */
     .composer{
       position:relative; border-top:1px solid #1d2230; padding:8px; background:#0f1320; z-index:5
     }
     .row{ display:flex; gap:6px; align-items:center }
     .in{
       flex:1; min-height:44px; max-height:36vh; border-radius:12px; border:1px solid #2a3142;
-      background:#0e1422; color:var(--text); padding:10px 12px; outline:none; font-size:16px; /* 16px لمنع زووم iOS */
+      background:#0e1422; color:var(--text); padding:10px 12px; outline:none; font-size:16px;
       resize:none; line-height:1.4;
     }
     .send{ min-width:86px }
     .emoji-btn{
       width:44px; height:44px; border-radius:12px; border:1px solid #2a3142; background:#0e1422; font-size:20px; cursor:pointer
     }
-
-    /* Emoji فوق الزر */
     .emoji-panel{
       display:none; position:absolute; bottom:56px; left:8px; background:#0b1220; border:1px solid #1f2740;
       border-radius:12px; padding:8px; gap:6px; flex-wrap:wrap; max-width:90vw
@@ -120,10 +118,6 @@
     .emoji-panel.show{ display:flex }
     .emoji{ cursor:pointer; font-size:22px; line-height:32px; padding:4px 6px; border-radius:8px }
     .emoji:hover{ background:#101a33 }
-
-    /* منع سحب للتحديث/زووم بالإيماءات (نسمح pan-y داخل الرسائل فقط) */
-    body{ touch-action: manipulation }
-    .messages{ touch-action: pan-y }
   </style>
 </head>
 <body>
@@ -133,13 +127,13 @@
     <button id="micBtn" class="tb-btn" aria-expanded="false" title="الاستيج">🎙️</button>
   </div>
 
-  <!-- قائمة الفتح (تنزل يسار تحت الزر) -->
+  <!-- قائمة الفتح -->
   <div id="openMenu" class="panel menuPanel" aria-hidden="true">
     <div id="menuOwner" class="menu-item">لوحة التحكم <span>🛡️</span></div>
     <div id="menuExit"  class="menu-item">خروج <span>↩️</span></div>
   </div>
 
-  <!-- الاستيج Overlay + كرت -->
+  <!-- الاستيج -->
   <div id="stageOverlay" aria-hidden="true">
     <div id="stageCard">
       <div class="slots" id="slots">
@@ -151,7 +145,7 @@
     </div>
   </div>
 
-  <!-- محتوى الشات -->
+  <!-- المحتوى -->
   <div class="wrap">
     <div id="asLine" class="as-line">ترسل كـ: —</div>
     <div id="messages" class="messages"></div>
@@ -170,7 +164,7 @@
     </div>
   </div>
 
-  <!-- إعدادات عامة (ما لمسنا السيرفر) -->
+  <!-- إعدادات عامة -->
   <script>
     window.SERVER_URL = window.SERVER_URL || "https://kwpooop.onrender.com";
     window.OWNER_PASS = window.OWNER_PASS || "6677";
@@ -178,131 +172,7 @@
   </script>
   <script src="https://kwpooop.onrender.com/socket.io/socket.io.js"></script>
 
-  <!-- سكربت ضبط الواجهة فقط (لا يتعارض مع socket بكودك) -->
-  <script>
-    (function uiFixes(){
-      const openBtn = document.getElementById('openBtn');
-      const openMenu = document.getElementById('openMenu');
-      const micBtn = document.getElementById('micBtn');
-      const stageOverlay = document.getElementById('stageOverlay');
-      const stageCard = document.getElementById('stageCard');
-      const slots = document.getElementById('slots');
-      const emojiBtn = document.getElementById('emojiBtn');
-      const emojiPanel = document.getElementById('emojiPanel');
-      const msgInput = document.getElementById('msgInput');
-      const messages = document.getElementById('messages');
-
-      // ===== منع الدبل-تاب زووم + إيماءات الزووم =====
-      let lastTouchEnd = 0;
-      document.addEventListener('gesturestart', e => e.preventDefault());
-      document.addEventListener('gesturechange', e => e.preventDefault());
-      document.addEventListener('gestureend', e => e.preventDefault());
-      document.addEventListener('touchend', (e)=>{
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) e.preventDefault();
-        lastTouchEnd = now;
-      }, {passive:false});
-
-      // ===== افتح/سكر قائمة "فتح" (اختياري، ما لمسنا منطقها) =====
-      if (openBtn && openMenu){
-        const placeMenu = ()=>{
-          const r = openBtn.getBoundingClientRect();
-          openMenu.style.left = r.left + 'px';
-          openMenu.style.top  = (r.bottom + 6) + 'px';
-        };
-        openBtn.addEventListener('click', ()=>{
-          placeMenu();
-          openMenu.classList.toggle('show');
-          openMenu.setAttribute('aria-hidden', openMenu.classList.contains('show') ? 'false':'true');
-        });
-        document.addEventListener('click', (e)=>{
-          if (!openMenu.contains(e.target) && e.target !== openBtn){
-            openMenu.classList.remove('show');
-            openMenu.setAttribute('aria-hidden','true');
-          }
-        });
-        window.addEventListener('resize', placeMenu);
-      }
-
-      // ===== الاستيج: طقة وحدة =====
-      function toggleStage(force){
-        const show = typeof force === 'boolean' ? force : (stageOverlay.style.display !== 'flex');
-        stageOverlay.style.display = show ? 'flex' : 'none';
-        stageOverlay.setAttribute('aria-hidden', show ? 'false' : 'true');
-        micBtn?.setAttribute('aria-expanded', show ? 'true' : 'false');
-        // نخلي الجسم مقفول التمرير دايم (طلبك "شاشة ثابتة")
-        document.body.style.overflow = 'hidden';
-      }
-      micBtn?.addEventListener('click', ()=> toggleStage());
-      stageOverlay?.addEventListener('click', (e)=>{
-        if (e.target === stageOverlay) toggleStage(false); // لمس الخلفية يسكر
-      });
-
-      // ===== طلوع/نزول على الخانة بنقرة وحدة =====
-      const myName = (window.displayName || 'أنا');
-      slots?.addEventListener('click', (e)=>{
-        const slot = e.target.closest('.slot'); if (!slot) return;
-        const nameEl = slot.querySelector('.name');
-        if (nameEl.textContent === 'فارغ'){
-          nameEl.textContent = myName;
-          slot.classList.add('active');
-        } else if (nameEl.textContent === myName){
-          nameEl.textContent = 'فارغ';
-          slot.classList.remove('active');
-        } else {
-          // مشغولة بشخص ثاني — نتركها بدون تغيير
-        }
-      });
-
-      // ===== الرسائل ثابتة + الكيبورد ما يهز الشاشة =====
-      function autoGrow(){
-        msgInput.style.height = 'auto';
-        msgInput.style.height = Math.min(msgInput.scrollHeight, window.innerHeight * 0.36) + 'px';
-        messages.scrollTop = messages.scrollHeight;
-      }
-      msgInput?.addEventListener('input', autoGrow);
-      msgInput?.addEventListener('focus', ()=> setTimeout(()=> messages.scrollTop = messages.scrollHeight, 80));
-
-      // نعوّض ارتفاع الكيبورد برفع الـcomposer بدون ما تتحرك الصفحة
-      if (window.visualViewport){
-        const vv = window.visualViewport;
-        const onVV = ()=>{
-          const composer = document.querySelector('.composer');
-          if (!composer) return;
-          const bottomInset = Math.max(0, (window.innerHeight - (vv.height + vv.offsetTop)));
-          composer.style.transform = `translateY(-${bottomInset}px)`;
-        };
-        vv.addEventListener('resize', onVV);
-        vv.addEventListener('scroll', onVV);
-        onVV();
-      }
-
-      // داخل الرسائل مسموح سحب رأسي؛ خارجها نمنع حتى تظل الصفحة ثابتة
-      document.addEventListener('touchmove', (e)=>{
-        if (!messages.contains(e.target)) e.preventDefault();
-      }, {passive:false});
-
-      // إيموجي: إدخال مباشر وطقه برا يقفل
-      emojiBtn?.addEventListener('click', ()=>{
-        emojiPanel.classList.toggle('show');
-        emojiPanel.setAttribute('aria-hidden', emojiPanel.classList.contains('show') ? 'false':'true');
-      });
-      emojiPanel?.addEventListener('click', (e)=>{
-        const em = e.target.closest('.emoji'); if (!em) return;
-        const start = msgInput.selectionStart || msgInput.value.length;
-        const end   = msgInput.selectionEnd   || msgInput.value.length;
-        msgInput.value = msgInput.value.slice(0,start) + em.textContent + msgInput.value.slice(end);
-        autoGrow(); msgInput.focus();
-      });
-      document.addEventListener('click', (e)=>{
-        if (e.target !== emojiBtn && !emojiPanel.contains(e.target)){
-          emojiPanel.classList.remove('show'); emojiPanel.setAttribute('aria-hidden','true');
-        }
-      });
-    })();
-  </script>
-
-  <!-- سكربتك الأساسي (سوكِت وغيره) -->
+  <!-- IMPORTANT: لا سكربت داخلي لضبط الواجهة — كل التحكم داخل chat.js -->
   <script src="chat.js"></script>
 </body>
 </html>
