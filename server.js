@@ -1,163 +1,108 @@
-// server.js — Single Room + Stage + Roles control (مع حفظ دائم roles.json)
+// server.js — StageChat (Express + Socket.IO)
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
-const ROLES_PATH = path.join(__dirname, "roles.json");
-
-const OWNER_NAME = process.env.OWNER_NAME || "احمد";
 
 const app = express();
 app.use(cors());
-app.use(express.static(".")); // قدّم الواجهة من نفس المجلد
+app.get("/", (_,res)=> res.send("StageChat server running"));
 
 const server = http.createServer(app);
-const io = new Server(server, { cors:{ origin:"*", methods:["GET","POST"] } });
+const io = new Server(server, {
+  cors: { origin: "*", methods: ["GET","POST"] },
+  path: "/socket.io",
+  transports: ["websocket","polling"]
+});
 
-// جلسات
-const users = new Map(); // socket.id -> {name, role}
-const bans  = new Map(); // name -> untilTs
+// حالة الرومات بالذاكرة
+const rooms = new Map();
+// شكل الحالة: { stage:{open:false, slots:[null,null,null,null]}, users:Map, history:Array }
 
-// صلاحيات مخزّنة: name -> {role:"admin"|"owner", pass:""}
-const allowed = new Map();
-
-// الاستيج (4 خانات)
-const stage = { slots: [null,null,null,null] };
-const broadcastStage = ()=> io.emit("stage:update", stage);
-
-// تحميل/حفظ الصلاحيات إلى ملف
-function loadRoles(){
-  try{
-    const raw = fs.readFileSync(ROLES_PATH, "utf8");
-    const obj = JSON.parse(raw);
-    allowed.clear();
-    Object.entries(obj).forEach(([name, rec])=>{
-      if(rec && (rec.role==="admin" || rec.role==="owner") && typeof rec.pass==="string"){
-        allowed.set(name, { role: rec.role, pass: rec.pass });
-      }
+function ensureRoom(roomId){
+  if (!rooms.has(roomId)){
+    rooms.set(roomId, {
+      stage: { open:false, slots:[null,null,null,null] },
+      users: new Map(),     // id -> {id,name,role}
+      history: []           // [{id,name,role,text,ts}]
     });
-    console.log("Loaded roles:", allowed.size);
-  }catch(e){ /* أول تشغيل بدون ملف */ }
+  }
+  return rooms.get(roomId);
 }
-function saveRoles(){
-  const obj = {};
-  for(const [name, rec] of allowed.entries()) obj[name] = rec;
-  fs.writeFile(ROLES_PATH, JSON.stringify(obj, null, 2), ()=>{});
-}
-loadRoles();
-
-function isBanned(name){ const u=bans.get(name); if(!u) return false; if(Date.now()>u){bans.delete(name);return false;} return true; }
-function isOwnerMainSocket(sock){ const u = users.get(sock.id); return u && u.role==="ownerMain" && u.name===OWNER_NAME; }
 
 io.on("connection", (socket)=>{
-  socket.on("join", ({ name, role, pass })=>{
-    name = String(name||"").trim();
-    role = String(role||"user");
-    pass = String(pass||"");
+  // انضمام روم
+  socket.on("room:join", ({room, id, name, role})=>{
+    if (!room || !id) return;
+    socket.join(room);
+    socket.data.room = room;
+    socket.data.id   = id;
 
-    if(!name){ socket.disconnect(); return; }
-    if(isBanned(name)){ socket.emit("banned", bans.get(name)); socket.disconnect(); return; }
+    const R = ensureRoom(room);
+    R.users.set(id, {id, name: name||"عضو", role: role||"member"});
 
-    if (role === "admin") {
-      const rec = allowed.get(name);
-      if (!(rec && rec.role==="admin" && rec.pass===pass)) role = "user";
-    } else if (role === "owner") {
-      const rec = allowed.get(name);
-      if (!(rec && rec.role==="owner" && rec.pass===pass)) role = "user";
-    } else if (role === "ownerMain") {
-      if (name !== OWNER_NAME) role = "user";
-    }
+    // رجّع الحالة الحالية للمستمعين
+    io.to(room).emit("stage:state", { room, ...R.stage });
 
-    users.set(socket.id, { name, role });
-    socket.data.name = name;
-    socket.emit("stage:update", stage);
+    // خيار: ترجع آخر 30 رسالة للي توه داخل
+    const last = R.history.slice(-30);
+    last.forEach(msg => socket.emit("chat:msg", { room, ...msg }));
   });
 
-  // رسائل
-  socket.on("message", ({ text })=>{
-    const u = users.get(socket.id); if(!u) return;
-    const t = String(text||"").trim(); if(!t) return;
-    io.emit("message", { name: u.name, role: u.role, text: t, ts: Date.now() });
+  // رسالة شات
+  socket.on("chat:msg", ({room, id, name, role, text})=>{
+    if (!room || !id || !text) return;
+    const R = ensureRoom(room);
+    const clean = (""+text).slice(0, 2000); // حمايه طول
+    const payload = { id, name: name||"عضو", role: role||"member", text: clean, ts: Date.now() };
+    R.history.push(payload);
+    if (R.history.length > 500) R.history.shift(); // نحافظ على الحجم
+    io.to(room).emit("chat:msg", { room, ...payload });
   });
 
-  // Stage
-  socket.on("stage:request", ()=> socket.emit("stage:update", stage));
-  socket.on("stage:toggle", ({ index, forceDown })=>{
-    const u = users.get(socket.id); if(!u) return;
-    if (typeof index!=="number" || index<0 || index>3) return;
+  // تحديث الاستيج
+  socket.on("stage:update", ({room, open, slots})=>{
+    if (!room) return;
+    const R = ensureRoom(room);
 
-    if (forceDown){
-      const myIdx = stage.slots.findIndex(s=>s && s.name===u.name);
-      if (myIdx!==-1) stage.slots[myIdx] = null;
-      return broadcastStage();
-    }
+    // تثبيت القيم
+    const safeOpen  = !!open;
+    const safeSlots = Array.isArray(slots) ? slots.slice(0,4) : [null,null,null,null];
 
-    if (stage.slots[index] && stage.slots[index].name===u.name){
-      stage.slots[index]=null; return broadcastStage();
-    }
-    const exists = stage.slots.findIndex(s=>s && s.name===u.name);
-    if (exists!==-1) stage.slots[exists]=null;
+    // تنظيف البينات (نخلي فقط الحقول الضرورية)
+    const cleaned = safeSlots.map(s=>{
+      if (!s) return null;
+      return { id: s.id, name: s.name, role: s.role || "member" };
+    });
 
-    if (!stage.slots[index]) stage.slots[index] = { name: u.name };
-    broadcastStage();
+    R.stage.open  = safeOpen;
+    R.stage.slots = cleaned;
+
+    io.to(room).emit("stage:update", { room, open: R.stage.open, slots: R.stage.slots });
   });
 
-  // لوحة التحكم (roles)
-  socket.on("roles:request", ()=>{
-    if (!isOwnerMainSocket(socket)) return;
-    socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
-  });
-
-  // حفظ (alias للمنح السابق)
-  socket.on("roles:save", ({ target, role, pass })=>{
-    if (!isOwnerMainSocket(socket)) return;
-    target = String(target||"").trim();
-    role   = (role==="owner") ? "owner" : "admin";
-    pass   = String(pass||"").trim();
-    if (!target || !pass) return;
-
-    allowed.set(target, { role, pass });
-    saveRoles();
-
-    // حدّث الدور لو المستخدم متصل
-    for (const [id,u] of users.entries()){
-      if (u.name === target) { u.role = role; users.set(id, u); }
-    }
-    socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
-  });
-
-  // ما زلنا ندعم الحدث القديم للمتوافقية
-  socket.on("roles:grant", (payload)=> io.emit("noop") || socket.emit("roles:save", payload));
-
-  socket.on("roles:revoke", ({ target })=>{
-    if (!isOwnerMainSocket(socket)) return;
-    target = String(target||"").trim(); if(!target) return;
-
-    allowed.delete(target);
-    saveRoles();
-
-    for (const [id,u] of users.entries()){
-      if (u.name === target) { u.role = "user"; users.set(id, u); }
-    }
-    socket.emit("roles:list", Array.from(allowed, ([name, rec]) => ({ name, role: rec.role })));
-  });
-
+  // فصل المستخدم: ننزله من الاستيج لو كان موجود
   socket.on("disconnect", ()=>{
-    const u = users.get(socket.id);
-    if (u){
-      const idx = stage.slots.findIndex(s=>s && s.name===u.name);
-      if (idx!==-1) stage.slots[idx] = null;
+    const room = socket.data.room;
+    const id   = socket.data.id;
+    if (!room || !id) return;
+    const R = rooms.get(room);
+    if (!R) return;
+
+    // حذف من المستخدمين
+    R.users.delete(id);
+
+    // إزالة من الاستيج إن كان فوق
+    let changed = false;
+    for (let i=0;i<4;i++){
+      const s = R.stage.slots[i];
+      if (s && s.id === id){ R.stage.slots[i] = null; changed = true; }
     }
-    users.delete(socket.id);
-    broadcastStage();
+    if (changed){
+      io.to(room).emit("stage:update", { room, open: R.stage.open, slots: R.stage.slots });
+    }
   });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, ()=> console.log("Chat server on http://localhost:"+PORT));
+server.listen(PORT, ()=> console.log("StageChat server on http://localhost:"+PORT));
