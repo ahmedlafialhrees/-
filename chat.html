@@ -10,7 +10,34 @@
     html,body{height:100%; overflow:hidden}
     body{ margin:0;background:linear-gradient(180deg,#0d1016 0%, #101522 50%, #0d1117 100%);
       color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",Arial; -webkit-tap-highlight-color:transparent; }
-
+<!-- منع التكبير والتصغير واهتزاز الشاشة -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<style>
+  /* شاشة ثابتة وما تتحرك */
+  html,body{height:100%; margin:0; overflow:hidden; background:#0f1115; -webkit-user-select:none; -webkit-touch-callout:none;}
+  body{ position:fixed; inset:0; }
+  *{ box-sizing:border-box; }
+  /* منع تكبير الآيفون عند التركيز على المدخلات: لازم 16px+ */
+  input, textarea, button { font-size:16px; -webkit-text-size-adjust:100%; }
+  /* منطقة الرسائل ثابتة */
+  .chat-wrap{ position:relative; width:100%; height:100svh; display:flex; flex-direction:column; padding-bottom: env(safe-area-inset-bottom); }
+  #messages{ flex:1; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px; }
+  /* شريط الإدخال ثابت أسفل */
+  .composer{ position:relative; display:flex; gap:8px; padding:10px; border-top:1px solid #1f2737; background:#141925; align-items:center; }
+  #msgInput{ flex:1; resize:none; max-height:36vh; line-height:1.4; padding:10px 12px; border-radius:10px; border:1px solid #2a344a; background:#1b2232; color:#e9edf5; }
+  /* الاستيج Overlay مرتب */
+  #stageOverlay{ position:fixed; inset:0; background:rgba(8,10,15,.6); display:none; align-items:center; justify-content:center; z-index:50; }
+  #stageCard{ width:min(560px,92vw); background:#171a21; border:1px solid #2a344a; border-radius:14px; padding:14px; }
+  .stageGrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .slot{ display:flex; align-items:center; gap:10px; padding:12px; border-radius:12px; background:#1d2230; border:1px solid #2a344a; }
+  .micCircle{ width:44px; height:44px; border-radius:50%; background:#23324a; display:grid; place-items:center; font-size:18px; }
+  .name{ color:#e9edf5; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* زر المايك ثابت */
+  .topbar{ position:fixed; top:env(safe-area-inset-top); left:0; right:0; height:48px; display:flex; align-items:center; justify-content:space-between; padding:0 12px; z-index:60; background:linear-gradient(180deg,rgba(13,16,22,.9),rgba(13,16,22,.2)); backdrop-filter:blur(6px);}
+  #micBtn, #logoutBtn, #ownerLink{ appearance:none; border:0; background:#1d2230; color:#e9edf5; padding:8px 12px; border-radius:10px; }
+  /* منع سحب للتحديث/الزووم بالإيماءات */
+  body, #messages { touch-action: pan-y pinch-zoom; }
+</style>
     /* Topbar ثابت */
     .topbar{ position:fixed; top:0; left:0; right:0; z-index:30; height:56px;
       background:rgba(15,17,21,.86); backdrop-filter:saturate(130%) blur(10px); border-bottom:1px solid #1d2230; }
